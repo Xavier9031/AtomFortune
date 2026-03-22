@@ -196,15 +196,15 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   const [selectedAsset, setSelectedAsset] = useState('')
   const [quantity, setQuantity] = useState(holding?.quantity?.toString() ?? '')
   const [note, setNote] = useState('')
-  const { data: accounts } = useSWR<Account[]>('/api/v1/accounts', fetcher)
-  const { data: assets } = useSWR<Asset[]>('/api/v1/assets', fetcher)
+  const { data: accounts } = useSWR<Account[]>(`${BASE}/accounts`, fetcher)
+  const { data: assets } = useSWR<Asset[]>(`${BASE}/assets`, fetcher)
 
   async function handleSave() {
-    await fetch(`/api/v1/holdings/${selectedAsset || holding!.assetId}/${selectedAccount || holding!.accountId}`,
+    await fetch(`${BASE}/holdings/${selectedAsset || holding!.assetId}/${selectedAccount || holding!.accountId}`,
       { method: 'PUT', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ quantity: parseFloat(quantity) }) })
     if (note) {
-      await fetch('/api/v1/transactions', { method: 'POST',
+      await fetch(`${BASE}/transactions`, { method: 'POST',
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ assetId: selectedAsset || holding!.assetId,
           accountId: selectedAccount || holding!.accountId,
@@ -215,7 +215,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   }
 
   async function handleDelete() {
-    await fetch(`/api/v1/holdings/${holding!.assetId}/${holding!.accountId}`,
+    await fetch(`${BASE}/holdings/${holding!.assetId}/${holding!.accountId}`,
       { method: 'DELETE' })
     onClose()
   }
@@ -334,7 +334,7 @@ import { HoldingsList } from '@/components/holdings/HoldingsList'
 import { HoldingSidePanel } from '@/components/holdings/HoldingSidePanel'
 
 export default function HoldingsPage() {
-  const { data: holdings, mutate } = useSWR<Holding[]>('/api/v1/holdings', fetcher)
+  const { data: holdings, mutate } = useSWR<Holding[]>(`${BASE}/holdings`, fetcher)
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelMode, setPanelMode] = useState<'add'|'edit'>('add')
   const [selected, setSelected] = useState<Holding | undefined>()
@@ -499,7 +499,7 @@ export function AssetFormModal({ open, asset, onClose }: Props) {
   }
 
   async function handleSubmit() {
-    const url = isEdit ? `/api/v1/assets/${asset!.id}` : '/api/v1/assets'
+    const url = isEdit ? `${BASE}/assets/${asset!.id}` : `${BASE}/assets`
     const body = isEdit
       ? { name: form.name, symbol: form.symbol, market: form.market }
       : form
@@ -523,12 +523,12 @@ import { AssetsTable } from '@/components/assets/AssetsTable'
 import { AssetFormModal } from '@/components/assets/AssetFormModal'
 
 export default function AssetsPage() {
-  const { data: assets, mutate } = useSWR<Asset[]>('/api/v1/assets', fetcher)
+  const { data: assets, mutate } = useSWR<Asset[]>(`${BASE}/assets`, fetcher)
   const [modalOpen, setModalOpen] = useState(false)
 
   async function handleDelete(id: string) {
     if (!confirm('確認刪除？若有持倉或快照將無法刪除。')) return
-    const res = await fetch(`/api/v1/assets/${id}`, { method: 'DELETE' })
+    const res = await fetch(`${BASE}/assets/${id}`, { method: 'DELETE' })
     if (!res.ok) alert('刪除失敗：請先移除所有持倉與快照')
     else mutate()
   }
@@ -593,17 +593,17 @@ interface SnapshotRow { snapshotDate: string; total_qty: number; price: number; 
 
 export function AssetDetailView({ asset }: { asset: Asset }) {
   const { data: snapshots } = useSWR<SnapshotRow[]>(
-    `/api/v1/prices?asset_id=${asset.id}`, fetcher)
+    `${BASE}/prices?assetId=${asset.id}`, fetcher)
   const { data: txns } = useSWR<Transaction[]>(
-    `/api/v1/transactions?asset_id=${asset.id}`, fetcher)
+    `${BASE}/transactions?assetId=${asset.id}`, fetcher)
   const [priceModalOpen, setPriceModalOpen] = useState(false)
 
   // Build chart data: GET /snapshots/history returns summary-only (no per-asset rows).
-  // Use GET /snapshots/items?asset_id=&range=30d instead — this endpoint is defined in
+  // Use GET /snapshots/items?assetId=&range=30d instead — this endpoint is defined in
   // Backend Services plan Task 5 as an extension to support asset-level time series.
   // Returns: [{snapshotDate, valueInBase}] (summed across accounts for this asset)
   const { data: assetHistory } = useSWR<{snapshotDate: string; valueInBase: number}[]>(
-    `/api/v1/snapshots/items?asset_id=${asset.id}&range=30d`, fetcher)
+    `${BASE}/snapshots/items?assetId=${asset.id}&range=30d`, fetcher)
   const chartData = (assetHistory ?? []).map(d => ({ date: d.snapshotDate, value: d.valueInBase }))
 
   return (
@@ -666,7 +666,7 @@ export function ManualPriceModal({ assetId, open, onClose }: Props) {
   const [price, setPrice] = useState('')
 
   async function handleSubmit() {
-    await fetch('/api/v1/prices/manual', { method: 'POST',
+    await fetch(`${BASE}/prices/manual`, { method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ assetId: assetId, priceDate: date, price: parseFloat(price) }) })
     onClose()
@@ -814,7 +814,7 @@ export function AccountFormModal({ open, account, onClose }: { open: boolean; ac
   useEffect(() => { if (account) setForm({ ...account, institution: account.institution ?? '', note: account.note ?? '' }) }, [account])
 
   async function handleSubmit() {
-    const url = account ? `/api/v1/accounts/${account.id}` : '/api/v1/accounts'
+    const url = account ? `${BASE}/accounts/${account.id}` : `${BASE}/accounts`
     await fetch(url, { method: account ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
     onClose()
@@ -843,8 +843,8 @@ export function AccountFormModal({ open, account, onClose }: { open: boolean; ac
 // web/app/accounts/page.tsx  (key structure)
 'use client'
 export default function AccountsPage() {
-  const { data: accounts, mutate } = useSWR<Account[]>('/api/v1/accounts', fetcher)
-  const { data: holdings } = useSWR<Holding[]>('/api/v1/holdings', fetcher)
+  const { data: accounts, mutate } = useSWR<Account[]>(`${BASE}/accounts`, fetcher)
+  const { data: holdings } = useSWR<Holding[]>(`${BASE}/holdings`, fetcher)
   // compute holdingsCount: { [accountId]: count }
   const holdingsCount = useMemo(() => {
     const m: Record<string, number> = {}
@@ -915,7 +915,7 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
     setExpanded(date)
     onExpand(date)
     if (!details[date]) {
-      const res = await fetch(`/api/v1/snapshots/${date}`)
+      const res = await fetch(`${BASE}/snapshots/${date}`)
       const data = await res.json()
       // group items by category
       const grouped = groupByCategory(data.items as SnapshotItem[])
@@ -975,7 +975,7 @@ export default function SnapshotsPage() {
   const dates = (data ?? []).map(d => d.snapshotDate).sort().reverse()
 
   async function handleRebuild(date: string) {
-    await fetch(`/api/v1/snapshots/rebuild/${date}`, { method: 'POST' })
+    await fetch(`${BASE}/snapshots/rebuild/${date}`, { method: 'POST' })
     mutate()
   }
 
@@ -1087,7 +1087,7 @@ export default function SettingsPage() {
 ## Key Implementation Notes
 
 1. **SWR mutation after writes** — every `onClose` callback must call `mutate()` on the relevant SWR key to refresh the list.
-2. **Holdings delete semantics** — when quantity reaches 0, call `DELETE /holdings/{asset_id}/{account_id}` (not PUT with qty=0). The snapshot job skips non-existent holdings rows.
+2. **Holdings delete semantics** — when quantity reaches 0, call `DELETE /holdings/{assetId}/{accountId}` (not PUT with qty=0). The snapshot job skips non-existent holdings rows.
 3. **Asset immutable fields** — `assetClass`, `category`, `subKind`, `currencyCode`, `pricingMode` are frozen after any snapshot exists. The backend returns 422 on violation; the UI should pre-emptively disable these fields in edit mode.
 4. **Display currency** — stored in `localStorage` as `displayCurrency`. The TopBar (Part A) reads this and broadcasts it via React Context. All monetary values in tables/panels divide `valueInBase` (TWD) by the fx rate for the selected display currency.
 5. **Snapshot items for Asset Detail chart** — the trend chart aggregates `valueInBase` per date by calling `GET /snapshots/history?range=30d` and filtering items by `assetId`. The API already returns per-asset-per-account rows; sum them client-side.
