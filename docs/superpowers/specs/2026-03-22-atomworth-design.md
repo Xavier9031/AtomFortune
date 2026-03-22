@@ -20,20 +20,27 @@ AtomWorth 是一個個人資產淨值追蹤系統，對標 Percento 的開源替
 ## 1. 系統架構
 
 ```
-[Next.js App Router]  <--REST-->  [FastAPI + APScheduler]  <-->  [PostgreSQL]
+[Next.js App Router]  <--REST-->  [Hono API + node-cron]  <-->  [PostgreSQL]
         |                                    |
    Tailwind CSS                    每日 22:00 自動執行
-   Happy Hues Palette 8            yfinance（股票/ETF/crypto）
+   Happy Hues Palette 8            yahoo-finance2（股票/ETF/crypto）
    Light/Dark CSS variables        exchangerate-api（USD/JPY→TWD）
                                    CoinGecko（USDT→TWD）
 ```
+
+後端採用 **Controller-Service-Repository** 三層架構：
+- **Controller**（Hono route handler）：處理 HTTP request/response、輸入驗證（Zod）
+- **Service**：業務邏輯（驗證規則、資料計算、跨 repository 協調）
+- **Repository**：Drizzle ORM 查詢（純 DB I/O，不含業務邏輯）
+
+前後端共享型別定義於 `shared/types.ts`。
 
 ### Docker Compose Services
 
 | Service | 說明 |
 |---|---|
 | `web` | Next.js App Router，port 3000 |
-| `api` | FastAPI + APScheduler，port 8000 |
+| `api` | Hono + node-cron，port 8000 |
 | `db` | PostgreSQL 16，volume 持久化 |
 
 ### Environment Variables
@@ -683,13 +690,14 @@ GET /dashboard/net-worth-history?range=30d|1y|all&display_currency=TWD
 
 ### 技術選型
 
-- **Framework:** Next.js 15 (App Router)
-- **Styling:** Tailwind CSS + shadcn/ui
-- **Charts:** Recharts（折線圖 + Treemap）
-- **State:** React Context + SWR for data fetching
-- **Backend:** FastAPI (Python 3.12)
-- **Scheduler:** APScheduler（整合在 FastAPI lifespan）
+- **Frontend:** Next.js 15 (App Router)、Tailwind CSS、shadcn/ui、Recharts、SWR
+- **Backend:** Hono (TypeScript)、Controller-Service-Repository pattern
+- **Validation:** Zod（配合 Hono `zValidator`）
+- **ORM:** Drizzle ORM（TypeScript-first、SQL-like）
+- **Scheduler:** node-cron
+- **Stock prices:** yahoo-finance2
 - **Database:** PostgreSQL 16
+- **Shared types:** `shared/types.ts`（前後端共用）
 
 ---
 
