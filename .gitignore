@@ -10,3 +10,4 @@ legacy
 .claude/
 .vscode/
 dev_*
+.worktrees/
