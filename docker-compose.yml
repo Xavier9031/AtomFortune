@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: atomworth
+      POSTGRES_USER: atomworth
+      POSTGRES_PASSWORD: atomworth
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+  api:
+    build: ./api
+    environment:
+      DATABASE_URL: postgres://atomworth:atomworth@db:5432/atomworth
+      BASE_CURRENCY: TWD
+      SNAPSHOT_SCHEDULE: "0 22 * * *"
+      EXCHANGERATE_API_KEY: ${EXCHANGERATE_API_KEY}
+    ports:
+      - "8000:8000"
+    depends_on: [db]
+  web:
+    build: ./web
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://api:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on: [api]
+volumes:
+  pgdata:
