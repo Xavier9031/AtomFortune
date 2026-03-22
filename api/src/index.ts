@@ -11,6 +11,7 @@ import cron from 'node-cron'
 import { db } from './db/client'
 import { dailySnapshotJob } from './jobs/snapshot.job'
 import { snapshotsRouter } from './modules/snapshots/snapshots.controller'
+import { dashboardRouter } from './modules/dashboard/dashboard.controller'
 
 const app = new Hono()
 
@@ -23,6 +24,7 @@ app.route('/api/v1/transactions', transactionsController)
 app.route('/api/v1/prices', pricesController)
 app.route('/api/v1/fx-rates', fxRatesController)
 app.route('/api/v1/snapshots', snapshotsRouter)
+app.route('/api/v1/dashboard', dashboardRouter)
 
 // Manual trigger endpoint for dev/debug
 app.post('/snapshots/trigger', async (c) => {
