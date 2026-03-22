@@ -4,7 +4,7 @@
 
 **Goal:** Implement Holdings, Assets, Accounts, Snapshots, and Settings pages.
 
-**Architecture:** Next.js 15 App Router. Client Components with SWR for data. Side Panel pattern for Holdings add/edit (right-side drawer). Shared layout from Part A. All API responses use snake_case field names.
+**Architecture:** Next.js 15 App Router. Client Components with SWR for data. Side Panel pattern for Holdings add/edit (right-side drawer). Shared layout from Part A. All API responses use camelCase field names.
 
 **Tech Stack:** Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Recharts, SWR, lucide-react
 
@@ -29,29 +29,29 @@ export type AccountType = 'bank' | 'broker' | 'crypto_exchange' | 'e_wallet' | '
 export type TxnType = 'buy' | 'sell' | 'transfer_in' | 'transfer_out' | 'adjustment'
 
 export interface Asset {
-  id: string; name: string; asset_class: AssetClass; category: Category
-  sub_kind: SubKind; symbol?: string; market?: string
-  currency_code: string; pricing_mode: PricingMode
+  id: string; name: string; assetClass: AssetClass; category: Category
+  subKind: SubKind; symbol?: string; market?: string
+  currencyCode: string; pricingMode: PricingMode
 }
 export interface Account {
   id: string; name: string; institution?: string
-  account_type: AccountType; note?: string
+  accountType: AccountType; note?: string
 }
 export interface Holding {
-  asset_id: string; account_id: string; quantity: number
-  asset_name: string; asset_class: AssetClass; category: Category
-  sub_kind: SubKind; currency_code: string; pricing_mode: PricingMode
-  account_name: string; account_type: AccountType
-  latest_value_in_base: number | null; updated_at: string
+  assetId: string; accountId: string; quantity: number
+  assetName: string; assetClass: AssetClass; category: Category
+  subKind: SubKind; currencyCode: string; pricingMode: PricingMode
+  accountName: string; accountType: AccountType
+  latestValueInBase: number | null; updatedAt: string
 }
 export interface Transaction {
-  id: string; asset_id: string; account_id: string
-  txn_type: TxnType; quantity: number; txn_date: string; note?: string
+  id: string; assetId: string; accountId: string
+  txnType: TxnType; quantity: number; txnDate: string; note?: string
 }
 export interface SnapshotItem {
-  asset_id: string; account_id: string; asset_name: string; account_name: string
-  quantity: number; price: number; currency_code: string
-  fx_rate: number; value_in_base: number
+  assetId: string; accountId: string; assetName: string; accountName: string
+  quantity: number; price: number; currencyCode: string
+  fx_rate: number; valueInBase: number
 }
 ```
 
@@ -75,10 +75,10 @@ export interface SnapshotItem {
 import { render, screen } from '@testing-library/react'
 import { HoldingsList } from '@/components/holdings/HoldingsList'
 const mockHoldings: Holding[] = [
-  { asset_id: 'a1', account_id: 'acc1', quantity: 10, asset_name: 'AAPL',
-    account_name: '富途', latest_value_in_base: 87320, /* … */ },
-  { asset_id: 'a2', account_id: 'acc2', quantity: 5, asset_name: 'BTC',
-    account_name: '幣安', latest_value_in_base: null, /* … */ },
+  { assetId: 'a1', accountId: 'acc1', quantity: 10, assetName: 'AAPL',
+    accountName: '富途', latestValueInBase: 87320, /* … */ },
+  { assetId: 'a2', accountId: 'acc2', quantity: 5, assetName: 'BTC',
+    accountName: '幣安', latestValueInBase: null, /* … */ },
 ]
 it('groups holdings by account name as section headers', () => {
   render(<HoldingsList holdings={mockHoldings} onRowClick={jest.fn()} />)
@@ -107,9 +107,9 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
   const byAccount = useMemo(() => {
     const map = new Map<string, { name: string; items: Holding[] }>()
     for (const h of holdings) {
-      if (!map.has(h.account_id))
-        map.set(h.account_id, { name: h.account_name, items: [] })
-      map.get(h.account_id)!.items.push(h)
+      if (!map.has(h.accountId))
+        map.set(h.accountId, { name: h.accountName, items: [] })
+      map.get(h.accountId)!.items.push(h)
     }
     return Array.from(map.values())
   }, [holdings])
@@ -121,13 +121,13 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
           <h2 className="text-sm font-semibold text-[var(--color-muted)] uppercase mb-2">{name}</h2>
           <div className="rounded-lg border border-[var(--color-border)] divide-y">
             {items.map(h => (
-              <button key={`${h.asset_id}-${h.account_id}`}
+              <button key={`${h.assetId}-${h.accountId}`}
                 className="w-full flex justify-between px-4 py-3 hover:bg-[var(--color-bg)] text-left"
                 onClick={() => onRowClick(h)}>
-                <span className="font-medium">{h.asset_name}</span>
+                <span className="font-medium">{h.assetName}</span>
                 <span className="text-sm text-[var(--color-muted)]">
-                  {h.quantity} | {h.latest_value_in_base != null
-                    ? h.latest_value_in_base.toLocaleString() : '—'}
+                  {h.quantity} | {h.latestValueInBase != null
+                    ? h.latestValueInBase.toLocaleString() : '—'}
                 </span>
               </button>
             ))}
@@ -157,8 +157,8 @@ it('renders add mode with account selector as step 1', () => {
   expect(screen.getByText(/選擇帳戶/)).toBeInTheDocument()
 })
 it('renders edit mode with quantity input pre-filled', () => {
-  const holding = { asset_name: 'AAPL', account_name: '富途', quantity: 10,
-    latest_value_in_base: 87320, asset_id: 'a1', account_id: 'acc1' } as Holding
+  const holding = { assetName: 'AAPL', accountName: '富途', quantity: 10,
+    latestValueInBase: 87320, assetId: 'a1', accountId: 'acc1' } as Holding
   render(<HoldingSidePanel mode="edit" open={true} holding={holding} onClose={jest.fn()} />)
   expect(screen.getByDisplayValue('10')).toBeInTheDocument()
 })
@@ -176,7 +176,7 @@ The panel uses a controlled `open` prop and slides from the right via Tailwind `
 1. Select account (`GET /accounts` via SWR)
 2. Select existing asset (`GET /assets`) OR fill new asset fields
 3. Enter quantity
-4. Optional note (becomes `txn_type='adjustment'` transaction)
+4. Optional note (becomes `txnType='adjustment'` transaction)
 
 ```tsx
 // web/components/holdings/HoldingSidePanel.tsx  (key structure)
@@ -200,22 +200,22 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   const { data: assets } = useSWR<Asset[]>('/api/v1/assets', fetcher)
 
   async function handleSave() {
-    await fetch(`/api/v1/holdings/${selectedAsset || holding!.asset_id}/${selectedAccount || holding!.account_id}`,
+    await fetch(`/api/v1/holdings/${selectedAsset || holding!.assetId}/${selectedAccount || holding!.accountId}`,
       { method: 'PUT', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ quantity: parseFloat(quantity) }) })
     if (note) {
       await fetch('/api/v1/transactions', { method: 'POST',
         headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ asset_id: selectedAsset || holding!.asset_id,
-          account_id: selectedAccount || holding!.account_id,
-          txn_type: 'adjustment', quantity: parseFloat(quantity),
-          txn_date: new Date().toISOString().slice(0,10), note }) })
+        body: JSON.stringify({ assetId: selectedAsset || holding!.assetId,
+          accountId: selectedAccount || holding!.accountId,
+          txnType: 'adjustment', quantity: parseFloat(quantity),
+          txnDate: new Date().toISOString().slice(0,10), note }) })
     }
     onClose()
   }
 
   async function handleDelete() {
-    await fetch(`/api/v1/holdings/${holding!.asset_id}/${holding!.account_id}`,
+    await fetch(`/api/v1/holdings/${holding!.assetId}/${holding!.accountId}`,
       { method: 'DELETE' })
     onClose()
   }
@@ -231,9 +231,9 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
       {/* Body — edit mode */}
       {mode === 'edit' && holding && (
         <div className="p-4 space-y-4">
-          <p className="font-medium">{holding.asset_name} / {holding.account_name}</p>
+          <p className="font-medium">{holding.assetName} / {holding.accountName}</p>
           <p className="text-sm text-[var(--color-muted)]">
-            估值：{holding.latest_value_in_base?.toLocaleString() ?? '—'}
+            估值：{holding.latestValueInBase?.toLocaleString() ?? '—'}
           </p>
           <label className="block">
             <span className="text-sm">數量</span>
@@ -245,7 +245,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
             <input value={note} onChange={e => setNote(e.target.value)}
               className="mt-1 w-full border rounded px-3 py-2" />
           </label>
-          <a href={`/assets/${holding.asset_id}`}
+          <a href={`/assets/${holding.assetId}`}
             className="text-sm text-[var(--color-accent)] underline">查看資產詳情</a>
           <div className="flex gap-2 pt-4">
             <button onClick={handleSave}
@@ -375,7 +375,7 @@ export default function HoldingsPage() {
 
 ### Cascade dropdown logic
 
-`asset_class` → `category` → `sub_kind` → auto-set default `pricing_mode`:
+`assetClass` → `category` → `subKind` → auto-set default `pricingMode`:
 
 ```ts
 // web/lib/assetTaxonomy.ts
@@ -405,8 +405,8 @@ export const DEFAULT_PRICING_MODE: Record<SubKind, PricingMode> = {
 import { render, screen } from '@testing-library/react'
 import { AssetsTable } from '@/components/assets/AssetsTable'
 const assets: Asset[] = [
-  { id: '1', name: 'AAPL', asset_class: 'asset', category: 'investment',
-    sub_kind: 'stock', symbol: 'AAPL', currency_code: 'USD', pricing_mode: 'market' },
+  { id: '1', name: 'AAPL', assetClass: 'asset', category: 'investment',
+    subKind: 'stock', symbol: 'AAPL', currencyCode: 'USD', pricingMode: 'market' },
 ]
 it('renders asset row with all columns', () => {
   render(<AssetsTable assets={assets} onDelete={jest.fn()} />)
@@ -445,12 +445,12 @@ export function AssetsTable({ assets, onDelete }: { assets: Asset[]; onDelete: (
             <td className="px-4 py-2">
               <Link href={`/assets/${a.id}`} className="text-[var(--color-accent)] hover:underline">{a.name}</Link>
             </td>
-            <td className="px-4 py-2">{a.asset_class}</td>
+            <td className="px-4 py-2">{a.assetClass}</td>
             <td className="px-4 py-2">{a.category}</td>
-            <td className="px-4 py-2">{a.sub_kind}</td>
+            <td className="px-4 py-2">{a.subKind}</td>
             <td className="px-4 py-2">{a.symbol ?? '—'}</td>
-            <td className="px-4 py-2">{a.currency_code}</td>
-            <td className="px-4 py-2">{a.pricing_mode}</td>
+            <td className="px-4 py-2">{a.currencyCode}</td>
+            <td className="px-4 py-2">{a.pricingMode}</td>
             <td className="px-4 py-2">
               <button onClick={() => onDelete(a.id)} title="刪除">
                 <Trash2 size={14} className="text-[var(--color-muted)] hover:text-[var(--color-coral)]" />
@@ -481,9 +481,9 @@ interface Props { open: boolean; asset?: Asset; onClose: () => void }
 export function AssetFormModal({ open, asset, onClose }: Props) {
   const isEdit = !!asset
   const [form, setForm] = useState({
-    name: '', asset_class: 'asset' as AssetClass, category: 'investment' as Category,
-    sub_kind: 'stock' as SubKind, symbol: '', market: '',
-    currency_code: 'USD', pricing_mode: 'market' as PricingMode,
+    name: '', assetClass: 'asset' as AssetClass, category: 'investment' as Category,
+    subKind: 'stock' as SubKind, symbol: '', market: '',
+    currencyCode: 'USD', pricingMode: 'market' as PricingMode,
   })
 
   useEffect(() => { if (asset) setForm({ ...asset, symbol: asset.symbol ?? '', market: asset.market ?? '' }) }, [asset])
@@ -491,9 +491,9 @@ export function AssetFormModal({ open, asset, onClose }: Props) {
   function set(k: string, v: string) {
     setForm(prev => {
       const next = { ...prev, [k]: v }
-      if (k === 'asset_class') next.category = CATEGORY_BY_CLASS[v as AssetClass][0]
-      if (k === 'category') next.sub_kind = SUB_KIND_BY_CATEGORY[v as Category][0]
-      if (k === 'sub_kind') next.pricing_mode = DEFAULT_PRICING_MODE[v] ?? 'manual'
+      if (k === 'assetClass') next.category = CATEGORY_BY_CLASS[v as AssetClass][0]
+      if (k === 'category') next.subKind = SUB_KIND_BY_CATEGORY[v as Category][0]
+      if (k === 'subKind') next.pricingMode = DEFAULT_PRICING_MODE[v] ?? 'manual'
       return next
     })
   }
@@ -565,13 +565,13 @@ export default function AssetsPage() {
 // web/__tests__/AssetDetailView.test.tsx
 import { render, screen } from '@testing-library/react'
 import { AssetDetailView } from '@/components/assets/AssetDetailView'
-it('shows manual price button only for manual pricing_mode', () => {
-  const asset = { id: '1', name: 'My Fund', pricing_mode: 'manual', /* … */ } as Asset
+it('shows manual price button only for manual pricingMode', () => {
+  const asset = { id: '1', name: 'My Fund', pricingMode: 'manual', /* … */ } as Asset
   render(<AssetDetailView asset={asset} />)
   expect(screen.getByText('更新今日價格')).toBeInTheDocument()
 })
 it('hides manual price button for market assets', () => {
-  const asset = { id: '1', name: 'AAPL', pricing_mode: 'market', /* … */ } as Asset
+  const asset = { id: '1', name: 'AAPL', pricingMode: 'market', /* … */ } as Asset
   render(<AssetDetailView asset={asset} />)
   expect(screen.queryByText('更新今日價格')).not.toBeInTheDocument()
 })
@@ -589,7 +589,7 @@ The view fetches three data sources in parallel and renders four sections:
 import useSWR from 'swr'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
-interface SnapshotRow { snapshot_date: string; total_qty: number; price: number; fx_rate: number; value_in_base: number }
+interface SnapshotRow { snapshotDate: string; total_qty: number; price: number; fx_rate: number; valueInBase: number }
 
 export function AssetDetailView({ asset }: { asset: Asset }) {
   const { data: snapshots } = useSWR<SnapshotRow[]>(
@@ -601,16 +601,16 @@ export function AssetDetailView({ asset }: { asset: Asset }) {
   // Build chart data: GET /snapshots/history returns summary-only (no per-asset rows).
   // Use GET /snapshots/items?asset_id=&range=30d instead — this endpoint is defined in
   // Backend Services plan Task 5 as an extension to support asset-level time series.
-  // Returns: [{snapshot_date, value_in_base}] (summed across accounts for this asset)
-  const { data: assetHistory } = useSWR<{snapshot_date: string; value_in_base: number}[]>(
+  // Returns: [{snapshotDate, valueInBase}] (summed across accounts for this asset)
+  const { data: assetHistory } = useSWR<{snapshotDate: string; valueInBase: number}[]>(
     `/api/v1/snapshots/items?asset_id=${asset.id}&range=30d`, fetcher)
-  const chartData = (assetHistory ?? []).map(d => ({ date: d.snapshot_date, value: d.value_in_base }))
+  const chartData = (assetHistory ?? []).map(d => ({ date: d.snapshotDate, value: d.valueInBase }))
 
   return (
     <div className="space-y-8">
       {/* Info card */}
       <section className="rounded-lg border p-4 grid grid-cols-2 gap-2 text-sm">
-        {/* name, asset_class, category, sub_kind, symbol, currency, pricing_mode */}
+        {/* name, assetClass, category, subKind, symbol, currency, pricingMode */}
       </section>
 
       {/* Trend chart */}
@@ -637,11 +637,11 @@ export function AssetDetailView({ asset }: { asset: Asset }) {
       {/* Transaction log */}
       <section>
         <h2 className="font-semibold mb-2">交易紀錄</h2>
-        {/* timeline: txn_date / account / txn_type / quantity / note */}
+        {/* timeline: txnDate / account / txnType / quantity / note */}
       </section>
 
       {/* Manual price button */}
-      {asset.pricing_mode === 'manual' && (
+      {asset.pricingMode === 'manual' && (
         <button onClick={() => setPriceModalOpen(true)}
           className="bg-[var(--color-accent)] text-white px-4 py-2 rounded">更新今日價格</button>
       )}
@@ -668,7 +668,7 @@ export function ManualPriceModal({ assetId, open, onClose }: Props) {
   async function handleSubmit() {
     await fetch('/api/v1/prices/manual', { method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asset_id: assetId, price_date: date, price: parseFloat(price) }) })
+      body: JSON.stringify({ assetId: assetId, priceDate: date, price: parseFloat(price) }) })
     onClose()
   }
 
@@ -733,7 +733,7 @@ export default async function AssetDetailPage({ params }: { params: { id: string
 import { render, screen } from '@testing-library/react'
 import { AccountsTable } from '@/components/accounts/AccountsTable'
 const accounts: Account[] = [
-  { id: '1', name: '富途', institution: 'Futu', account_type: 'broker', note: '' },
+  { id: '1', name: '富途', institution: 'Futu', accountType: 'broker', note: '' },
 ]
 it('renders account row', () => {
   render(<AccountsTable accounts={accounts} holdingsCount={{ '1': 3 }} onEdit={jest.fn()} onDelete={jest.fn()} />)
@@ -778,7 +778,7 @@ export function AccountsTable({ accounts, holdingsCount, onEdit, onDelete }: Pro
           return (
             <tr key={a.id} className="border-b hover:bg-[var(--color-bg)]">
               <td className="px-4 py-2 font-medium">{a.name}</td>
-              <td className="px-4 py-2">{a.account_type}</td>
+              <td className="px-4 py-2">{a.accountType}</td>
               <td className="px-4 py-2">{a.institution ?? '—'}</td>
               <td className="px-4 py-2 text-[var(--color-muted)]">{a.note ?? '—'}</td>
               <td className="px-4 py-2">{count}</td>
@@ -810,7 +810,7 @@ import { useState, useEffect } from 'react'
 const ACCOUNT_TYPES: AccountType[] = ['bank','broker','crypto_exchange','e_wallet','cash','other']
 
 export function AccountFormModal({ open, account, onClose }: { open: boolean; account?: Account; onClose: () => void }) {
-  const [form, setForm] = useState({ name: '', institution: '', account_type: 'bank' as AccountType, note: '' })
+  const [form, setForm] = useState({ name: '', institution: '', accountType: 'bank' as AccountType, note: '' })
   useEffect(() => { if (account) setForm({ ...account, institution: account.institution ?? '', note: account.note ?? '' }) }, [account])
 
   async function handleSubmit() {
@@ -825,7 +825,7 @@ export function AccountFormModal({ open, account, onClose }: { open: boolean; ac
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
       <div className="bg-[var(--color-surface)] rounded-lg p-6 w-96 space-y-4">
         <h2 className="font-semibold">{account ? '編輯帳戶' : '新增帳戶'}</h2>
-        {/* name, institution, account_type select, note textarea */}
+        {/* name, institution, accountType select, note textarea */}
         <div className="flex gap-2">
           <button onClick={onClose} className="flex-1 border rounded py-2">取消</button>
           <button onClick={handleSubmit}
@@ -845,10 +845,10 @@ export function AccountFormModal({ open, account, onClose }: { open: boolean; ac
 export default function AccountsPage() {
   const { data: accounts, mutate } = useSWR<Account[]>('/api/v1/accounts', fetcher)
   const { data: holdings } = useSWR<Holding[]>('/api/v1/holdings', fetcher)
-  // compute holdingsCount: { [account_id]: count }
+  // compute holdingsCount: { [accountId]: count }
   const holdingsCount = useMemo(() => {
     const m: Record<string, number> = {}
-    for (const h of holdings ?? []) m[h.account_id] = (m[h.account_id] ?? 0) + 1
+    for (const h of holdings ?? []) m[h.accountId] = (m[h.accountId] ?? 0) + 1
     return m
   }, [holdings])
   // … modal state, handleDelete, render AccountsTable + AccountFormModal
@@ -940,10 +940,10 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
                 <div key={category}>
                   <p className="text-xs font-semibold uppercase text-[var(--color-muted)] mb-1">{category}</p>
                   {items.map(item => (
-                    <div key={`${item.asset_id}-${item.account_id}`}
+                    <div key={`${item.assetId}-${item.accountId}`}
                       className="flex justify-between text-sm py-1">
-                      <span>{item.asset_name} / {item.account_name}</span>
-                      <span>{item.value_in_base.toLocaleString()}</span>
+                      <span>{item.assetName} / {item.accountName}</span>
+                      <span>{item.valueInBase.toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
@@ -968,11 +968,11 @@ import useSWR from 'swr'
 import { SnapshotsList } from '@/components/snapshots/SnapshotsList'
 
 export default function SnapshotsPage() {
-  // GET /snapshots/history returns a top-level array: SnapshotDateOut[] = [{snapshot_date, net_worth}]
-  // NOT a {data: [...]} wrapper. Field is snapshot_date, not date.
-  const { data, mutate } = useSWR<{ snapshot_date: string; net_worth: number }[]>(
+  // GET /snapshots/history returns a top-level array: SnapshotDateOut[] = [{snapshotDate, netWorth}]
+  // NOT a {data: [...]} wrapper. Field is snapshotDate, not date.
+  const { data, mutate } = useSWR<{ snapshotDate: string; netWorth: number }[]>(
     '/api/v1/snapshots/history?range=all', fetcher)
-  const dates = (data ?? []).map(d => d.snapshot_date).sort().reverse()
+  const dates = (data ?? []).map(d => d.snapshotDate).sort().reverse()
 
   async function handleRebuild(date: string) {
     await fetch(`/api/v1/snapshots/rebuild/${date}`, { method: 'POST' })
@@ -1088,7 +1088,7 @@ export default function SettingsPage() {
 
 1. **SWR mutation after writes** — every `onClose` callback must call `mutate()` on the relevant SWR key to refresh the list.
 2. **Holdings delete semantics** — when quantity reaches 0, call `DELETE /holdings/{asset_id}/{account_id}` (not PUT with qty=0). The snapshot job skips non-existent holdings rows.
-3. **Asset immutable fields** — `asset_class`, `category`, `sub_kind`, `currency_code`, `pricing_mode` are frozen after any snapshot exists. The backend returns 422 on violation; the UI should pre-emptively disable these fields in edit mode.
-4. **Display currency** — stored in `localStorage` as `displayCurrency`. The TopBar (Part A) reads this and broadcasts it via React Context. All monetary values in tables/panels divide `value_in_base` (TWD) by the fx rate for the selected display currency.
-5. **Snapshot items for Asset Detail chart** — the trend chart aggregates `value_in_base` per date by calling `GET /snapshots/history?range=30d` and filtering items by `asset_id`. The API already returns per-asset-per-account rows; sum them client-side.
+3. **Asset immutable fields** — `assetClass`, `category`, `subKind`, `currencyCode`, `pricingMode` are frozen after any snapshot exists. The backend returns 422 on violation; the UI should pre-emptively disable these fields in edit mode.
+4. **Display currency** — stored in `localStorage` as `displayCurrency`. The TopBar (Part A) reads this and broadcasts it via React Context. All monetary values in tables/panels divide `valueInBase` (TWD) by the fx rate for the selected display currency.
+5. **Snapshot items for Asset Detail chart** — the trend chart aggregates `valueInBase` per date by calling `GET /snapshots/history?range=30d` and filtering items by `assetId`. The API already returns per-asset-per-account rows; sum them client-side.
 6. **Side Panel accessibility** — trap focus inside the panel when open and close on `Escape` key for keyboard accessibility.

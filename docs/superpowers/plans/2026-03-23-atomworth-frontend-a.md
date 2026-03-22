@@ -264,25 +264,25 @@ export type Currency = 'TWD' | 'USD' | 'JPY'
 export type Category = 'liquid' | 'investment' | 'fixed' | 'receivable' | 'debt'
 
 export interface DashboardSummary {
-  snapshot_date: string
-  display_currency: Currency
-  net_worth: number
-  total_assets: number
-  total_liabilities: number
-  change_amount: number | null   // null when no previous snapshot exists (fresh install)
-  change_pct: number | null      // null when no previous snapshot exists
-  missing_assets: string[]
+  snapshotDate: string
+  displayCurrency: Currency
+  netWorth: number
+  totalAssets: number
+  totalLiabilities: number
+  changeAmount: number | null   // null when no previous snapshot exists (fresh install)
+  changePct: number | null      // null when no previous snapshot exists
+  missingAssets: string[]
 }
 
-export interface AllocationItem { asset_id: string; name: string; value: number; pct: number }
+export interface AllocationItem { assetId: string; name: string; value: number; pct: number }
 export interface AllocationCategory {
   category: Category; label: string; value: number; pct: number; color: string
   items: AllocationItem[]
 }
-export interface AllocationData { snapshot_date: string; display_currency: Currency; categories: AllocationCategory[] }
+export interface AllocationData { snapshotDate: string; displayCurrency: Currency; categories: AllocationCategory[] }
 
-export interface NetWorthPoint { date: string; net_worth: number }
-export interface NetWorthHistory { display_currency: Currency; data: NetWorthPoint[] }
+export interface NetWorthPoint { date: string; netWorth: number }
+export interface NetWorthHistory { displayCurrency: Currency; data: NetWorthPoint[] }
 ```
 
 `web/lib/api.ts` — SWR hooks over `NEXT_PUBLIC_API_BASE_URL`:
@@ -295,13 +295,13 @@ export const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:80
 export const fetcher = (url: string) => fetch(url).then(r => { if (!r.ok) throw new Error(r.statusText); return r.json() })
 
 export const useDashboardSummary = (currency: Currency) =>
-  useSWR<DashboardSummary>(`${BASE}/dashboard/summary?display_currency=${currency}`, fetcher)
+  useSWR<DashboardSummary>(`${BASE}/dashboard/summary?displayCurrency=${currency}`, fetcher)
 
 export const useAllocation = (currency: Currency, date?: string) =>
-  useSWR<AllocationData>(`${BASE}/dashboard/allocation?display_currency=${currency}${date ? `&date=${date}` : ''}`, fetcher)
+  useSWR<AllocationData>(`${BASE}/dashboard/allocation?displayCurrency=${currency}${date ? `&date=${date}` : ''}`, fetcher)
 
 export const useNetWorthHistory = (currency: Currency, range = '30d') =>
-  useSWR<NetWorthHistory>(`${BASE}/dashboard/net-worth-history?range=${range}&display_currency=${currency}`, fetcher)
+  useSWR<NetWorthHistory>(`${BASE}/dashboard/net-worth-history?range=${range}&displayCurrency=${currency}`, fetcher)
 ```
 
 `web/lib/utils.ts`:
@@ -512,9 +512,9 @@ import { render, screen } from '@testing-library/react'
 import NetWorthHeader from '../components/dashboard/NetWorthHeader'
 
 const summary = {
-  snapshot_date: '2026-03-22', display_currency: 'TWD' as const,
-  net_worth: 12847320, total_assets: 13199320, total_liabilities: 352000,
-  change_amount: 289000, change_pct: 2.30, missing_assets: [],
+  snapshotDate: '2026-03-22', displayCurrency: 'TWD' as const,
+  netWorth: 12847320, totalAssets: 13199320, totalLiabilities: 352000,
+  changeAmount: 289000, changePct: 2.30, missingAssets: [],
 }
 
 test('renders net worth value', () => {
@@ -542,22 +542,22 @@ import type { DashboardSummary } from '@/lib/types'
 import { formatValue } from '@/lib/utils'
 
 export default function NetWorthHeader({ summary }: { summary: DashboardSummary }) {
-  const positive = summary.change_pct >= 0
+  const positive = summary.changePct >= 0
   return (
     <div className="mb-6">
-      <p className="text-sm text-muted mb-1">Net Worth · 資料截至 {summary.snapshot_date}</p>
+      <p className="text-sm text-muted mb-1">Net Worth · 資料截至 {summary.snapshotDate}</p>
       <div className="flex items-end gap-3">
         <span data-testid="net-worth-value" className="text-4xl font-bold">
-          {formatValue(summary.net_worth, summary.display_currency)}
+          {formatValue(summary.netWorth, summary.displayCurrency)}
         </span>
         <span data-testid="change-badge"
           className={`mb-1 px-2 py-0.5 rounded text-sm font-medium ${positive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-          {positive ? '+' : ''}{summary.change_pct.toFixed(2)}%
+          {positive ? '+' : ''}{summary.changePct.toFixed(2)}%
         </span>
       </div>
       <div className="flex gap-6 mt-2 text-sm text-muted">
-        <span>Assets: {formatValue(summary.total_assets, summary.display_currency)}</span>
-        <span>Liabilities: <span className="text-coral">{formatValue(summary.total_liabilities, summary.display_currency)}</span></span>
+        <span>Assets: {formatValue(summary.totalAssets, summary.displayCurrency)}</span>
+        <span>Liabilities: <span className="text-coral">{formatValue(summary.totalLiabilities, summary.displayCurrency)}</span></span>
       </div>
     </div>
   )
@@ -584,10 +584,10 @@ import AllocationTreemap from '../components/dashboard/AllocationTreemap'
 
 // Recharts renders SVG; jest-environment-jsdom supports this
 const alloc = {
-  snapshot_date: '2026-03-22', display_currency: 'TWD' as const,
+  snapshotDate: '2026-03-22', displayCurrency: 'TWD' as const,
   categories: [
     { category: 'investment' as const, label: '投資', value: 8456320, pct: 65.8,
-      color: '#7c3aed', items: [{ asset_id: 'a1', name: 'AAPL', value: 87320, pct: 0.68 }] },
+      color: '#7c3aed', items: [{ assetId: 'a1', name: 'AAPL', value: 87320, pct: 0.68 }] },
   ],
 }
 const onSelect = jest.fn()
@@ -638,7 +638,7 @@ export default function AllocationTreemap({ data, onCategorySelect }: Props) {
       <ResponsiveContainer width="100%" height="100%">
         <Treemap data={treeData} dataKey="size" aspectRatio={4 / 3}
           content={<CustomCell onClick={(c: any) => onCategorySelect(c.category)} />}>
-          <Tooltip formatter={(v: number) => formatValue(v, data.display_currency)} />
+          <Tooltip formatter={(v: number) => formatValue(v, data.displayCurrency)} />
         </Treemap>
       </ResponsiveContainer>
     </div>
@@ -665,10 +665,10 @@ import { render, screen } from '@testing-library/react'
 import NetWorthChart from '../components/dashboard/NetWorthChart'
 
 const history = {
-  display_currency: 'TWD' as const,
+  displayCurrency: 'TWD' as const,
   data: [
-    { date: '2026-01-01', net_worth: 11200000 },
-    { date: '2026-01-02', net_worth: 11350000 },
+    { date: '2026-01-01', netWorth: 11200000 },
+    { date: '2026-01-02', netWorth: 11350000 },
   ],
 }
 
@@ -690,7 +690,7 @@ import type { NetWorthHistory } from '@/lib/types'
 import { formatValue } from '@/lib/utils'
 
 export default function NetWorthChart({ data }: { data: NetWorthHistory }) {
-  const fmt = (v: number) => formatValue(v, data.display_currency)
+  const fmt = (v: number) => formatValue(v, data.displayCurrency)
   return (
     <div data-testid="net-worth-chart" className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
@@ -700,7 +700,7 @@ export default function NetWorthChart({ data }: { data: NetWorthHistory }) {
             tickFormatter={d => d.slice(5)} />
           <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted)' }} tickFormatter={fmt} width={80} />
           <Tooltip formatter={fmt} labelStyle={{ color: 'var(--color-text)' }} />
-          <Line type="monotone" dataKey="net_worth" stroke="var(--color-accent)"
+          <Line type="monotone" dataKey="netWorth" stroke="var(--color-accent)"
             strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
         </LineChart>
       </ResponsiveContainer>
@@ -728,10 +728,10 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import HoldingsAccordion from '../components/dashboard/HoldingsAccordion'
 
 const alloc = {
-  snapshot_date: '2026-03-22', display_currency: 'TWD' as const,
+  snapshotDate: '2026-03-22', displayCurrency: 'TWD' as const,
   categories: [
     { category: 'investment' as const, label: '投資', value: 8456320, pct: 65.8, color: '#7c3aed',
-      items: [{ asset_id: 'a1', name: 'AAPL', value: 87320, pct: 0.68 }] },
+      items: [{ assetId: 'a1', name: 'AAPL', value: 87320, pct: 0.68 }] },
   ],
 }
 
@@ -755,7 +755,7 @@ test('hides items when expandedCategory is null', () => {
 
 Key design points:
 - `expandedCategory` prop is controlled externally (set by Treemap click or user click on header).
-- Row click navigates to `/assets/[asset_id]` via Next.js `<Link>`.
+- Row click navigates to `/assets/[assetId]` via Next.js `<Link>`.
 - Category header color uses `categoryColor(category)`.
 
 ```tsx
@@ -785,18 +785,18 @@ export default function HoldingsAccordion({ data, expandedCategory }: Props) {
               <span className="text-muted font-normal">{cat.pct.toFixed(1)}%</span>
             </span>
             <span className="flex items-center gap-2">
-              <span>{formatValue(cat.value, data.display_currency)}</span>
+              <span>{formatValue(cat.value, data.displayCurrency)}</span>
               {active === cat.category ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </span>
           </button>
           {active === cat.category && (
             <ul className="divide-y divide-border bg-bg">
               {cat.items.map(item => (
-                <li key={item.asset_id}>
-                  <Link href={`/assets/${item.asset_id}`}
+                <li key={item.assetId}>
+                  <Link href={`/assets/${item.assetId}`}
                     className="flex justify-between px-6 py-2 text-sm hover:bg-surface transition-colors">
                     <span>{item.name}</span>
-                    <span className="text-muted">{formatValue(item.value, data.display_currency)}</span>
+                    <span className="text-muted">{formatValue(item.value, data.displayCurrency)}</span>
                   </Link>
                 </li>
               ))}
@@ -914,8 +914,8 @@ After all tasks pass:
 
 | Endpoint | Used by |
 |---|---|
-| `GET /dashboard/summary?display_currency=` | `NetWorthHeader` |
-| `GET /dashboard/allocation?display_currency=` | `AllocationTreemap`, `HoldingsAccordion` |
-| `GET /dashboard/net-worth-history?range=&display_currency=` | `NetWorthChart` |
+| `GET /dashboard/summary?displayCurrency=` | `NetWorthHeader` |
+| `GET /dashboard/allocation?displayCurrency=` | `AllocationTreemap`, `HoldingsAccordion` |
+| `GET /dashboard/net-worth-history?range=&displayCurrency=` | `NetWorthChart` |
 
 All other endpoints (`/assets`, `/holdings`, `/accounts`, etc.) are consumed in Part B.

@@ -45,7 +45,7 @@ api/tests/
 
 ### Overview
 
-`fetchMarketPrices(assets)` accepts an array of asset records. It filters to `pricing_mode = 'market'` assets with a non-null `symbol`, batches the symbols into a single `yahooFinance.quote(symbols)` call, and returns `Map<assetId, price>`. Assets with no valid quote are silently skipped — the caller handles fallback.
+`fetchMarketPrices(assets)` accepts an array of asset records. It filters to `pricingMode = 'market'` assets with a non-null `symbol`, batches the symbols into a single `yahooFinance.quote(symbols)` call, and returns `Map<assetId, price>`. Assets with no valid quote are silently skipped — the caller handles fallback.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -296,12 +296,12 @@ git commit -m "feat: add FX service using exchangerate-api and CoinGecko"
 
 ### Overview
 
-`dailySnapshotJob(db, snapshotDate?)` is the orchestrator. It calls `fetchMarketPrices` and `fetchFxRates`, writes those to the `prices` and `fx_rates` tables, then opens a Drizzle transaction that: deletes today's `snapshot_items`, iterates every `holding`, resolves price and fx_rate (with fallback), computes `value_in_base`, and inserts a new row. Assets that cannot be resolved are collected in `missingAssets` and logged.
+`dailySnapshotJob(db, snapshotDate?)` is the orchestrator. It calls `fetchMarketPrices` and `fetchFxRates`, writes those to the `prices` and `fxRates` tables, then opens a Drizzle transaction that: deletes today's `snapshotItems`, iterates every `holding`, resolves price and fxRate (with fallback), computes `valueInBase`, and inserts a new row. Assets that cannot be resolved are collected in `missingAssets` and logged.
 
 **Fallback rules:**
 - `market`/`manual` price: search `prices` table within last 30 days (most recent first)
 - `fixed` pricing: price is always 1.0
-- fx_rate: search `fx_rates` table within last 7 days (most recent first)
+- fxRate: search `fxRates` table within last 7 days (most recent first)
 - TWD assets: fx_rate = 1.0 always
 
 - [ ] **Step 1: Write the failing test**
@@ -642,7 +642,7 @@ describe('GET /snapshots/history', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body).toHaveLength(1)
-    expect(body[0].snapshot_date).toBe('2026-03-22')
+    expect(body[0].snapshotDate).toBe('2026-03-22')
   })
 
   it('returns 400 for invalid range param', async () => {
@@ -735,7 +735,7 @@ export async function getSnapshotHistory(db: DrizzleDB, range: RangeParam) {
   const base = db
     .select({
       snapshotDate: snapshotItems.snapshotDate,
-      netWorth: sql<string>`SUM(CASE WHEN ${assets.assetClass}='liability' THEN -${snapshotItems.valueInBase} ELSE ${snapshotItems.valueInBase} END)`.as('net_worth'),
+      netWorth: sql<string>`SUM(CASE WHEN ${assets.assetClass}='liability' THEN -${snapshotItems.valueInBase} ELSE ${snapshotItems.valueInBase} END)`.as('netWorth'),
     })
     .from(snapshotItems)
     .innerJoin(assets, eq(snapshotItems.assetId, assets.id))
@@ -752,7 +752,7 @@ export async function getSnapshotItemsByAsset(db: DrizzleDB, assetId: string, ra
   const base = db
     .select({
       snapshotDate: snapshotItems.snapshotDate,
-      valueInBase: sql<string>`SUM(${snapshotItems.valueInBase})`.as('value_in_base'),
+      valueInBase: sql<string>`SUM(${snapshotItems.valueInBase})`.as('valueInBase'),
     })
     .from(snapshotItems)
     .where(eq(snapshotItems.assetId, assetId))
@@ -851,16 +851,16 @@ snapshotsRouter.get('/history',
   async (c) => {
     const { range } = c.req.valid('query')
     const rows = await service.listHistory(range)
-    return c.json(rows.map(r => ({ snapshot_date: r.snapshotDate, net_worth: r.netWorth })))
+    return c.json(rows.map(r => ({ snapshotDate: r.snapshotDate, netWorth: r.netWorth })))
   }
 )
 
 snapshotsRouter.get('/items',
-  zValidator('query', z.object({ asset_id: z.string().uuid(), range: rangeSchema })),
+  zValidator('query', z.object({ assetId: z.string().uuid(), range: rangeSchema })),
   async (c) => {
-    const { asset_id, range } = c.req.valid('query')
-    const rows = await service.listItemsByAsset(asset_id, range)
-    return c.json(rows.map(r => ({ snapshot_date: r.snapshotDate, value_in_base: r.valueInBase })))
+    const { assetId, range } = c.req.valid('query')
+    const rows = await service.listItemsByAsset(assetId, range)
+    return c.json(rows.map(r => ({ snapshotDate: r.snapshotDate, valueInBase: r.valueInBase })))
   }
 )
 
@@ -917,7 +917,7 @@ git commit -m "feat: add snapshots repository, service, and controller (5 endpoi
 
 ### Overview
 
-`GET /dashboard/summary?display_currency=TWD` returns the latest snapshot's net worth, total assets, total liabilities, change from previous snapshot, and any assets with missing prices. Display currency conversion: `displayed = value_in_base_TWD ÷ fx_rate(display_currency→TWD, latest date)`.
+`GET /dashboard/summary?displayCurrency=TWD` returns the latest snapshot's net worth, total assets, total liabilities, change from previous snapshot, and any assets with missing prices. Display currency conversion: `displayed = valueInBase_TWD ÷ fxRate(displayCurrency→TWD, latest date)`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -941,7 +941,7 @@ import * as repo from '../src/modules/dashboard/dashboard.repository'
 describe('GET /dashboard/summary', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('returns 200 with correct net_worth and change fields', async () => {
+  it('returns 200 with correct netWorth and change fields', async () => {
     vi.mocked(repo.getLatestSnapshotDate).mockResolvedValue('2026-03-22')
     vi.mocked(repo.getSummaryForDate).mockResolvedValue({
       totalAssets: '13199320.00', totalLiabilities: '352000.00',
@@ -949,13 +949,13 @@ describe('GET /dashboard/summary', () => {
     vi.mocked(repo.getPreviousSummary).mockResolvedValue({ netWorth: '12558320.00' })
     vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(1.0)
 
-    const res = await testClient(app).dashboard.summary.$get({ query: { display_currency: 'TWD' } })
+    const res = await testClient(app).dashboard.summary.$get({ query: { displayCurrency: 'TWD' } })
     expect(res.status).toBe(200)
     const body = await res.json()
-    expect(body.snapshot_date).toBe('2026-03-22')
-    expect(body.net_worth).toBeCloseTo(13199320 - 352000)
-    expect(body.change_amount).not.toBeNull()
-    expect(body.change_pct).not.toBeNull()
+    expect(body.snapshotDate).toBe('2026-03-22')
+    expect(body.netWorth).toBeCloseTo(13199320 - 352000)
+    expect(body.changeAmount).not.toBeNull()
+    expect(body.changePct).not.toBeNull()
   })
 
   it('returns null change fields when no previous snapshot exists', async () => {
@@ -966,15 +966,15 @@ describe('GET /dashboard/summary', () => {
     vi.mocked(repo.getPreviousSummary).mockResolvedValue(null)
     vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(1.0)
 
-    const res = await testClient(app).dashboard.summary.$get({ query: { display_currency: 'TWD' } })
+    const res = await testClient(app).dashboard.summary.$get({ query: { displayCurrency: 'TWD' } })
     const body = await res.json()
-    expect(body.change_amount).toBeNull()
-    expect(body.change_pct).toBeNull()
+    expect(body.changeAmount).toBeNull()
+    expect(body.changePct).toBeNull()
   })
 
   it('returns 404 when no snapshots exist at all', async () => {
     vi.mocked(repo.getLatestSnapshotDate).mockResolvedValue(null)
-    const res = await testClient(app).dashboard.summary.$get({ query: { display_currency: 'TWD' } })
+    const res = await testClient(app).dashboard.summary.$get({ query: { displayCurrency: 'TWD' } })
     expect(res.status).toBe(404)
   })
 
@@ -987,10 +987,10 @@ describe('GET /dashboard/summary', () => {
     // 1 USD = 32.5 TWD, so displayed = 3250000 / 32.5 = 100000 USD
     vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(32.5)
 
-    const res = await testClient(app).dashboard.summary.$get({ query: { display_currency: 'USD' } })
+    const res = await testClient(app).dashboard.summary.$get({ query: { displayCurrency: 'USD' } })
     const body = await res.json()
-    expect(body.net_worth).toBeCloseTo(100000)
-    expect(body.display_currency).toBe('USD')
+    expect(body.netWorth).toBeCloseTo(100000)
+    expect(body.displayCurrency).toBe('USD')
   })
 })
 ```
@@ -1119,21 +1119,12 @@ const displayCurrencySchema = z.enum(['TWD', 'USD', 'JPY']).default('TWD')
 export const dashboardRouter = new Hono()
 
 dashboardRouter.get('/summary',
-  zValidator('query', z.object({ display_currency: displayCurrencySchema })),
+  zValidator('query', z.object({ displayCurrency: displayCurrencySchema })),
   async (c) => {
-    const { display_currency } = c.req.valid('query')
-    const summary = await service.getSummary(display_currency)
+    const { displayCurrency } = c.req.valid('query')
+    const summary = await service.getSummary(displayCurrency)
     if (!summary) return c.json({ error: 'No snapshot data available' }, 404)
-    return c.json({
-      snapshot_date: summary.snapshotDate,
-      display_currency: summary.displayCurrency,
-      net_worth: summary.netWorth,
-      total_assets: summary.totalAssets,
-      total_liabilities: summary.totalLiabilities,
-      change_amount: summary.changeAmount,
-      change_pct: summary.changePct,
-      missing_assets: summary.missingAssets,
-    })
+    return c.json(summary)
   }
 )
 ```
@@ -1159,7 +1150,7 @@ git commit -m "feat: add dashboard repository, service, and summary endpoint"
 
 ### Overview
 
-`GET /dashboard/allocation?date=&display_currency=TWD` returns a Treemap-ready structure grouped by `category`. If `date` is omitted, use the latest snapshot date. Each category entry includes a list of individual asset items with their share percentage. Liabilities are excluded from percentage calculation for the Treemap (category `debt` is shown separately).
+`GET /dashboard/allocation?date=&displayCurrency=TWD` returns a Treemap-ready structure grouped by `category`. If `date` is omitted, use the latest snapshot date. Each category entry includes a list of individual asset items with their share percentage. Liabilities are excluded from percentage calculation for the Treemap (category `debt` is shown separately).
 
 Category display labels and colors must match the spec:
 
@@ -1185,7 +1176,7 @@ describe('GET /dashboard/allocation', () => {
     vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(1.0)
 
     const res = await testClient(app).dashboard.allocation.$get({
-      query: { display_currency: 'TWD' },
+      query: { displayCurrency: 'TWD' },
     })
     expect(res.status).toBe(200)
     const body = await res.json()
@@ -1210,7 +1201,7 @@ export async function getAllocationForDate(db: DrizzleDB, date: string) {
       category: assets.category,
       assetId: snapshotItems.assetId,
       name: assets.name,
-      valueInBase: sql<string>`SUM(${snapshotItems.valueInBase})`.as('value_in_base'),
+      valueInBase: sql<string>`SUM(${snapshotItems.valueInBase})`.as('valueInBase'),
     })
     .from(snapshotItems)
     .innerJoin(assets, eq(snapshotItems.assetId, assets.id))
@@ -1257,7 +1248,7 @@ export async function getAllocation(date: string | undefined, displayCurrency: D
       pct: totalValue > 0 ? Math.round((catValue / totalValue) * 10000) / 100 : 0,
       color: meta.color,
       items: items.map(i => ({
-        asset_id: i.assetId,
+        assetId: i.assetId,
         name: i.name,
         value: Math.round(Number(i.valueInBase) / fxRate * 100) / 100,
         pct: totalValue > 0 ? Math.round((Number(i.valueInBase) / totalValue) * 10000) / 100 : 0,
@@ -1276,11 +1267,11 @@ export async function getAllocation(date: string | undefined, displayCurrency: D
 dashboardRouter.get('/allocation',
   zValidator('query', z.object({
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-    display_currency: displayCurrencySchema,
+    displayCurrency: displayCurrencySchema,
   })),
   async (c) => {
-    const { date, display_currency } = c.req.valid('query')
-    const result = await service.getAllocation(date, display_currency)
+    const { date, displayCurrency } = c.req.valid('query')
+    const result = await service.getAllocation(date, displayCurrency)
     if (!result) return c.json({ error: 'No snapshot data available' }, 404)
     return c.json(result)
   }
@@ -1309,14 +1300,14 @@ git commit -m "feat: add dashboard allocation endpoint with Treemap-ready catego
 
 ### Overview
 
-`GET /dashboard/net-worth-history?range=30d|1y|all&display_currency=TWD` queries `snapshot_items` grouped by date, applies the `CASE WHEN liability` sign convention, and converts to display currency. Wire up `dashboardRouter` in `index.ts` under the `/dashboard` prefix.
+`GET /dashboard/net-worth-history?range=30d|1y|all&displayCurrency=TWD` queries `snapshotItems` grouped by date, applies the `CASE WHEN liability` sign convention, and converts to display currency. Wire up `dashboardRouter` in `index.ts` under the `/dashboard` prefix.
 
 - [ ] **Step 1: Write the failing test**
 
 ```ts
 // api/tests/dashboard.test.ts  — net-worth-history section (append)
 describe('GET /dashboard/net-worth-history', () => {
-  it('returns data array with correct net_worth per date', async () => {
+  it('returns data array with correct netWorth per date', async () => {
     vi.mocked(repo.getNetWorthHistory).mockResolvedValue([
       { snapshotDate: '2026-03-21', netWorth: '12558320.00' },
       { snapshotDate: '2026-03-22', netWorth: '12847320.00' },
@@ -1325,14 +1316,14 @@ describe('GET /dashboard/net-worth-history', () => {
     vi.mocked(repo.getLatestSnapshotDate).mockResolvedValue('2026-03-22')
 
     const res = await testClient(app).dashboard['net-worth-history'].$get({
-      query: { range: '30d', display_currency: 'USD' },
+      query: { range: '30d', displayCurrency: 'USD' },
     })
     expect(res.status).toBe(200)
     const body = await res.json()
-    expect(body.display_currency).toBe('USD')
+    expect(body.displayCurrency).toBe('USD')
     expect(body.data).toHaveLength(2)
-    expect(body.data[0].net_worth).toBeCloseTo(12558320 / 32.5, 0)
-    expect(body.data[1].net_worth).toBeCloseTo(12847320 / 32.5, 0)
+    expect(body.data[0].netWorth).toBeCloseTo(12558320 / 32.5, 0)
+    expect(body.data[1].netWorth).toBeCloseTo(12847320 / 32.5, 0)
   })
 
   it('returns 400 for invalid range', async () => {
@@ -1361,7 +1352,7 @@ export async function getNetWorthHistory(db: DrizzleDB, range: '30d' | '1y' | 'a
   const base = db
     .select({
       snapshotDate: snapshotItems.snapshotDate,
-      netWorth: sql<string>`SUM(CASE WHEN ${assets.assetClass}='liability' THEN -${snapshotItems.valueInBase} ELSE ${snapshotItems.valueInBase} END)`.as('net_worth'),
+      netWorth: sql<string>`SUM(CASE WHEN ${assets.assetClass}='liability' THEN -${snapshotItems.valueInBase} ELSE ${snapshotItems.valueInBase} END)`.as('netWorth'),
     })
     .from(snapshotItems)
     .innerJoin(assets, eq(snapshotItems.assetId, assets.id))
@@ -1385,7 +1376,7 @@ export async function getNetWorthHistoryData(range: '30d' | '1y' | 'all', displa
     displayCurrency,
     data: rows.map(r => ({
       date: r.snapshotDate,
-      net_worth: Math.round(Number(r.netWorth) / fxRate * 100) / 100,
+      netWorth: Math.round(Number(r.netWorth) / fxRate * 100) / 100,
     })),
   }
 }
@@ -1398,11 +1389,11 @@ export async function getNetWorthHistoryData(range: '30d' | '1y' | 'all', displa
 dashboardRouter.get('/net-worth-history',
   zValidator('query', z.object({
     range: z.enum(['30d', '1y', 'all']).default('30d'),
-    display_currency: displayCurrencySchema,
+    displayCurrency: displayCurrencySchema,
   })),
   async (c) => {
-    const { range, display_currency } = c.req.valid('query')
-    const result = await service.getNetWorthHistoryData(range, display_currency)
+    const { range, displayCurrency } = c.req.valid('query')
+    const result = await service.getNetWorthHistoryData(range, displayCurrency)
     return c.json(result)
   }
 )

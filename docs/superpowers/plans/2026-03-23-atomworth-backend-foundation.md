@@ -6,7 +6,7 @@
 
 **Architecture:** Hono (TypeScript) + Drizzle ORM + PostgreSQL 16. Every module has controller/service/repository. Zod validates all inputs. Tests use Vitest + @hono/testing against a real PostgreSQL test database.
 
-**Serialization convention:** Drizzle returns camelCase TypeScript objects. All API responses are explicitly serialized to **snake_case** in the controller layer (e.g., `asset_class`, `currency_code`, `pricing_mode`). This keeps the REST API consistent with conventional JSON naming and matches the frontend's TypeScript interface definitions.
+**Serialization convention:** Drizzle column names match TypeScript property names — all **camelCase** throughout (DB columns, ORM properties, API JSON responses). No case conversion needed in controllers; Drizzle returns camelCase objects which are returned directly as JSON.
 
 **Tech Stack:** TypeScript, Hono, Drizzle ORM, postgres (node-postgres), Zod, Vitest
 
@@ -297,76 +297,76 @@ import { pgTable, uuid, text, numeric, date, timestamp, primaryKey } from 'drizz
 export const assets = pgTable('assets', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull(),
-  assetClass: text('asset_class').notNull(),
+  assetClass: text('assetClass').notNull(),
   category: text('category').notNull(),
-  subKind: text('sub_kind').notNull(),
+  subKind: text('subKind').notNull(),
   symbol: text('symbol'),
   market: text('market'),
-  currencyCode: text('currency_code').notNull(),
-  pricingMode: text('pricing_mode').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  currencyCode: text('currencyCode').notNull(),
+  pricingMode: text('pricingMode').notNull(),
+  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 })
 
 export const accounts = pgTable('accounts', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull(),
   institution: text('institution'),
-  accountType: text('account_type').notNull(),
+  accountType: text('accountType').notNull(),
   note: text('note'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 })
 
 export const holdings = pgTable('holdings', {
-  assetId: uuid('asset_id').notNull().references(() => assets.id, { onDelete: 'cascade' }),
-  accountId: uuid('account_id').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+  assetId: uuid('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  accountId: uuid('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
   quantity: numeric('quantity', { precision: 24, scale: 8 }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ pk: primaryKey({ columns: [t.assetId, t.accountId] }) }))
 
 export const transactions = pgTable('transactions', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  assetId: uuid('asset_id').notNull().references(() => assets.id, { onDelete: 'cascade' }),
-  accountId: uuid('account_id').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
-  txnType: text('txn_type').notNull(),
+  assetId: uuid('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  accountId: uuid('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+  txnType: text('txnType').notNull(),
   quantity: numeric('quantity', { precision: 24, scale: 8 }).notNull(),
-  txnDate: date('txn_date').notNull(),
+  txnDate: date('txnDate').notNull(),
   note: text('note'),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 })
 
 export const prices = pgTable('prices', {
-  assetId: uuid('asset_id').notNull().references(() => assets.id, { onDelete: 'cascade' }),
-  priceDate: date('price_date').notNull(),
+  assetId: uuid('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  priceDate: date('priceDate').notNull(),
   price: numeric('price', { precision: 24, scale: 8 }).notNull(),
   source: text('source').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ pk: primaryKey({ columns: [t.assetId, t.priceDate] }) }))
 
-export const fxRates = pgTable('fx_rates', {
-  fromCurrency: text('from_currency').notNull(),
-  toCurrency: text('to_currency').notNull(),
-  rateDate: date('rate_date').notNull(),
+export const fxRates = pgTable('fxRates', {
+  fromCurrency: text('fromCurrency').notNull(),
+  toCurrency: text('toCurrency').notNull(),
+  rateDate: date('rateDate').notNull(),
   rate: numeric('rate', { precision: 24, scale: 10 }).notNull(),
   source: text('source').notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ pk: primaryKey({ columns: [t.fromCurrency, t.toCurrency, t.rateDate] }) }))
 
-export const snapshotItems = pgTable('snapshot_items', {
-  snapshotDate: date('snapshot_date').notNull(),
-  assetId: uuid('asset_id').notNull().references(() => assets.id, { onDelete: 'cascade' }),
-  accountId: uuid('account_id').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+export const snapshotItems = pgTable('snapshotItems', {
+  snapshotDate: date('snapshotDate').notNull(),
+  assetId: uuid('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  accountId: uuid('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
   quantity: numeric('quantity', { precision: 24, scale: 8 }).notNull(),
   price: numeric('price', { precision: 24, scale: 8 }).notNull(),
-  fxRate: numeric('fx_rate', { precision: 24, scale: 10 }).notNull(),
-  valueInBase: numeric('value_in_base', { precision: 24, scale: 8 }).notNull(),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  fxRate: numeric('fxRate', { precision: 24, scale: 10 }).notNull(),
+  valueInBase: numeric('valueInBase', { precision: 24, scale: 8 }).notNull(),
+  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ pk: primaryKey({ columns: [t.snapshotDate, t.assetId, t.accountId] }) }))
 ```
 
@@ -494,7 +494,7 @@ export const testDb = drizzle(client, { schema })
 export async function cleanDb() {
   // Truncate in dependency order (children first)
   await testDb.execute(
-    `TRUNCATE snapshot_items, transactions, holdings, prices, fx_rates, accounts, assets RESTART IDENTITY CASCADE`
+    `TRUNCATE "snapshotItems", transactions, holdings, prices, "fxRates", accounts, assets RESTART IDENTITY CASCADE`
   )
 }
 
@@ -518,9 +518,9 @@ export async function closeDb() {
 - Test: `api/tests/assets.test.ts`
 
 ### Business Rules (Service layer)
-- `asset_class='asset'` → `category` must be one of `liquid | investment | fixed | receivable` → 422
-- `asset_class='liability'` → `category` must be `debt` → 422
-- `PATCH`: only `name`, `symbol`, `market` are mutable; if any `snapshot_items` row exists for this asset, `asset_class`, `category`, `sub_kind`, `currency_code`, `pricing_mode` are immutable → 422
+- `assetClass='asset'` → `category` must be one of `liquid | investment | fixed | receivable` → 422
+- `assetClass='liability'` → `category` must be `debt` → 422
+- `PATCH`: only `name`, `symbol`, `market` are mutable; if any `snapshotItems` row exists for this asset, `assetClass`, `category`, `subKind`, `currencyCode`, `pricingMode` are immutable → 422
 
 - [ ] Step 1: Write the failing tests
 
@@ -539,9 +539,9 @@ describe('POST /api/v1/assets', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: 'AAPL', asset_class: 'asset', category: 'investment',
-        sub_kind: 'stock', symbol: 'AAPL', market: 'NASDAQ',
-        currency_code: 'USD', pricing_mode: 'market',
+        name: 'AAPL', assetClass: 'asset', category: 'investment',
+        subKind: 'stock', symbol: 'AAPL', market: 'NASDAQ',
+        currencyCode: 'USD', pricingMode: 'market',
       }),
     })
     expect(res.status).toBe(201)
@@ -550,13 +550,13 @@ describe('POST /api/v1/assets', () => {
     expect(body.name).toBe('AAPL')
   })
 
-  it('returns 422 for invalid asset_class/category combo', async () => {
+  it('returns 422 for invalid assetClass/category combo', async () => {
     const res = await app.request('/api/v1/assets', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name: 'Bad', asset_class: 'liability', category: 'investment',
-        sub_kind: 'stock', currency_code: 'TWD', pricing_mode: 'fixed',
+        name: 'Bad', assetClass: 'liability', category: 'investment',
+        subKind: 'stock', currencyCode: 'TWD', pricingMode: 'fixed',
       }),
     })
     expect(res.status).toBe(422)
@@ -575,8 +575,8 @@ describe('PATCH /api/v1/assets/:id', () => {
   it('updates mutable fields name/symbol/market', async () => {
     const create = await app.request('/api/v1/assets', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'TSLA', asset_class: 'asset', category: 'investment',
-        sub_kind: 'stock', currency_code: 'USD', pricing_mode: 'market' }),
+      body: JSON.stringify({ name: 'TSLA', assetClass: 'asset', category: 'investment',
+        subKind: 'stock', currencyCode: 'USD', pricingMode: 'market' }),
     })
     const { id } = await create.json()
     const res = await app.request(`/api/v1/assets/${id}`, {
@@ -592,8 +592,8 @@ describe('DELETE /api/v1/assets/:id', () => {
   it('deletes an asset and returns 204', async () => {
     const create = await app.request('/api/v1/assets', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: 'DEL', asset_class: 'asset', category: 'liquid',
-        sub_kind: 'bank_account', currency_code: 'TWD', pricing_mode: 'fixed' }),
+      body: JSON.stringify({ name: 'DEL', assetClass: 'asset', category: 'liquid',
+        subKind: 'bank_account', currencyCode: 'TWD', pricingMode: 'fixed' }),
     })
     const { id } = await create.json()
     const res = await app.request(`/api/v1/assets/${id}`, { method: 'DELETE' })
@@ -612,13 +612,13 @@ import { z } from 'zod'
 
 export const AssetCreateSchema = z.object({
   name: z.string().min(1),
-  asset_class: z.enum(['asset', 'liability']),
+  assetClass: z.enum(['asset', 'liability']),
   category: z.enum(['liquid', 'investment', 'fixed', 'receivable', 'debt']),
-  sub_kind: z.string().min(1),
+  subKind: z.string().min(1),
   symbol: z.string().optional(),
   market: z.string().optional(),
-  currency_code: z.string().length(3),
-  pricing_mode: z.enum(['market', 'fixed', 'manual']),
+  currencyCode: z.string().length(3),
+  pricingMode: z.enum(['market', 'fixed', 'manual']),
 })
 
 export const AssetUpdateSchema = z.object({
@@ -681,14 +681,14 @@ export class AssetsService {
   async findById(id: string) { return this.repo.findById(id) }
 
   async createAsset(data: AssetCreateInput) {
-    if (data.asset_class === 'asset' && !ASSET_CATEGORIES.includes(data.category as any))
-      throw new HTTPException(422, { message: 'Invalid category for asset_class=asset' })
-    if (data.asset_class === 'liability' && !LIABILITY_CATEGORIES.includes(data.category as any))
+    if (data.assetClass === 'asset' && !ASSET_CATEGORIES.includes(data.category as any))
+      throw new HTTPException(422, { message: 'Invalid category for assetClass=asset' })
+    if (data.assetClass === 'liability' && !LIABILITY_CATEGORIES.includes(data.category as any))
       throw new HTTPException(422, { message: 'category must be debt for liability' })
     return this.repo.create({
-      name: data.name, assetClass: data.asset_class, category: data.category,
-      subKind: data.sub_kind, symbol: data.symbol ?? null, market: data.market ?? null,
-      currencyCode: data.currency_code, pricingMode: data.pricing_mode,
+      name: data.name, assetClass: data.assetClass, category: data.category,
+      subKind: data.subKind, symbol: data.symbol ?? null, market: data.market ?? null,
+      currencyCode: data.currencyCode, pricingMode: data.pricingMode,
     })
   }
 
@@ -728,19 +728,10 @@ const repo = new AssetsRepository(db)
 const snapshotRepo = new SnapshotItemsRepository(db)
 const service = new AssetsService(repo, snapshotRepo)
 
-// Helper: Drizzle returns camelCase — serialize to snake_case for API responses
-const toSnake = (a: Asset) => ({
-  id: a.id, name: a.name, asset_class: a.assetClass, category: a.category,
-  sub_kind: a.subKind, symbol: a.symbol, market: a.market,
-  currency_code: a.currencyCode, pricing_mode: a.pricingMode,
-  created_at: a.createdAt, updated_at: a.updatedAt,
-})
-
-assetsController.get('/', async (c) => c.json((await service.findAll()).map(toSnake)))
+assetsController.get('/', async (c) => c.json(await service.findAll()))
 
 assetsController.post('/', zValidator('json', AssetCreateSchema), async (c) => {
-  const asset = await service.createAsset(c.req.valid('json'))
-  return c.json(asset, 201)
+  return c.json(await service.createAsset(c.req.valid('json')), 201)
 })
 
 assetsController.patch('/:id', zValidator('json', AssetUpdateSchema), async (c) => {
@@ -773,7 +764,7 @@ export default assetsController
 - Test: `api/tests/accounts.test.ts`
 
 ### Business Rules (Service layer)
-- `DELETE /accounts/:id` → 409 if any `holdings` row exists for this `account_id`
+- `DELETE /accounts/:id` → 409 if any `holdings` row exists for this `accountId`
 
 - [ ] Step 1: Write the failing tests
 
@@ -791,7 +782,7 @@ describe('POST /api/v1/accounts', () => {
   it('creates an account and returns 201', async () => {
     const res = await app.request('/api/v1/accounts', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: '富途證券', institution: 'Futu', account_type: 'broker', note: null }),
+      body: JSON.stringify({ name: '富途證券', institution: 'Futu', accountType: 'broker', note: null }),
     })
     expect(res.status).toBe(201)
     const body = await res.json()
@@ -833,7 +824,7 @@ import { z } from 'zod'
 export const AccountCreateSchema = z.object({
   name: z.string().min(1),
   institution: z.string().optional(),
-  account_type: z.enum(['bank', 'broker', 'crypto_exchange', 'e_wallet', 'cash', 'other']),
+  accountType: z.enum(['bank', 'broker', 'crypto_exchange', 'e_wallet', 'cash', 'other']),
   note: z.string().optional(),
 })
 
@@ -887,7 +878,7 @@ export class AccountsService {
   createAccount(data: AccountCreateInput) {
     return this.repo.create({
       name: data.name, institution: data.institution ?? null,
-      accountType: data.account_type, note: data.note ?? null,
+      accountType: data.accountType, note: data.note ?? null,
     })
   }
 
@@ -896,7 +887,7 @@ export class AccountsService {
     if (!existing) throw new HTTPException(404, { message: 'Account not found' })
     return this.repo.update(id, {
       name: data.name, institution: data.institution,
-      accountType: data.account_type, note: data.note,
+      accountType: data.accountType, note: data.note,
     })
   }
 
@@ -954,8 +945,8 @@ export default accountsController
 ### Business Rules (Service layer)
 - `PUT /holdings/:assetId/:accountId` — upsert quantity; both asset and account must exist → 404
 - `quantity` must be >= 0 (enforced by Zod schema)
-- `GET /holdings` — join with assets + accounts + latest `snapshot_items.value_in_base` (nullable)
-- Optional query param `?account_id=` to filter
+- `GET /holdings` — join with assets + accounts + latest `snapshotItems.valueInBase` (nullable)
+- Optional query param `?accountId=` to filter
 
 - [ ] Step 1: Write the failing tests
 
@@ -1018,9 +1009,9 @@ describe('GET /api/v1/holdings', () => {
     const res = await app.request('/api/v1/holdings')
     expect(res.status).toBe(200)
     const list = await res.json()
-    expect(list[0].asset_name).toBe('BTC')
-    expect(list[0].account_name).toBe('Binance')
-    expect(list[0].latest_value_in_base).toBeNull()
+    expect(list[0].assetName).toBe('BTC')
+    expect(list[0].accountName).toBe('Binance')
+    expect(list[0].latestValueInBase).toBeNull()
   })
 })
 
@@ -1076,9 +1067,9 @@ export class HoldingsRepository {
         accountType: accounts.accountType,
         updatedAt: holdings.updatedAt,
         latestValueInBase: sql<string | null>`(
-          SELECT value_in_base FROM snapshot_items si
-          WHERE si.asset_id = ${holdings.assetId} AND si.account_id = ${holdings.accountId}
-          ORDER BY si.snapshot_date DESC LIMIT 1
+          SELECT si."valueInBase" FROM "snapshotItems" si
+          WHERE si."assetId" = ${holdings.assetId} AND si."accountId" = ${holdings.accountId}
+          ORDER BY si."snapshotDate" DESC LIMIT 1
         )`,
       })
       .from(holdings)
@@ -1165,16 +1156,8 @@ const service = new HoldingsService(
 )
 
 holdingsController.get('/', async (c) => {
-  const accountId = c.req.query('account_id')
-  const list = await service.findAll(accountId)
-  return c.json(list.map(h => ({
-    asset_id: h.assetId, account_id: h.accountId, quantity: h.quantity,
-    asset_name: h.assetName, asset_class: h.assetClass, category: h.category,
-    sub_kind: h.subKind, currency_code: h.currencyCode, pricing_mode: h.pricingMode,
-    account_name: h.accountName, account_type: h.accountType,
-    latest_value_in_base: h.latestValueInBase ?? null,
-    updated_at: h.updatedAt,
-  })))
+  const accountId = c.req.query('accountId')
+  return c.json(await service.findAll(accountId))
 })
 
 holdingsController.put('/:assetId/:accountId', zValidator('json', HoldingUpsertSchema), async (c) => {
@@ -1207,9 +1190,9 @@ export default holdingsController
 - Test: `api/tests/transactions.test.ts`
 
 ### Business Rules (Service layer)
-- `POST /transactions`: only `txn_type='adjustment'` allows negative `quantity`; all others → 422
+- `POST /transactions`: only `txnType='adjustment'` allows negative `quantity`; all others → 422
 - `PATCH /transactions/:id`: only `note` field can be modified
-- `DELETE /transactions/:id`: only `txn_type='adjustment'` can be deleted → 422 for other types
+- `DELETE /transactions/:id`: only `txnType='adjustment'` can be deleted → 422 for other types
 
 - [ ] Step 1: Write the failing tests
 
@@ -1237,8 +1220,8 @@ describe('POST /api/v1/transactions', () => {
     const { asset, account } = await seedAssetAndAccount()
     const res = await app.request('/api/v1/transactions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asset_id: asset.id, account_id: account.id,
-        txn_type: 'buy', quantity: 1.0, txn_date: '2026-03-20', note: 'test buy' }),
+      body: JSON.stringify({ assetId: asset.id, accountId: account.id,
+        txnType: 'buy', quantity: 1.0, txnDate: '2026-03-20', note: 'test buy' }),
     })
     expect(res.status).toBe(201)
     expect((await res.json()).txnType).toBe('buy')
@@ -1248,8 +1231,8 @@ describe('POST /api/v1/transactions', () => {
     const { asset, account } = await seedAssetAndAccount()
     const res = await app.request('/api/v1/transactions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asset_id: asset.id, account_id: account.id,
-        txn_type: 'buy', quantity: -1.0, txn_date: '2026-03-20' }),
+      body: JSON.stringify({ assetId: asset.id, accountId: account.id,
+        txnType: 'buy', quantity: -1.0, txnDate: '2026-03-20' }),
     })
     expect(res.status).toBe(422)
   })
@@ -1258,8 +1241,8 @@ describe('POST /api/v1/transactions', () => {
     const { asset, account } = await seedAssetAndAccount()
     const res = await app.request('/api/v1/transactions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asset_id: asset.id, account_id: account.id,
-        txn_type: 'adjustment', quantity: -0.5, txn_date: '2026-03-20' }),
+      body: JSON.stringify({ assetId: asset.id, accountId: account.id,
+        txnType: 'adjustment', quantity: -0.5, txnDate: '2026-03-20' }),
     })
     expect(res.status).toBe(201)
   })
@@ -1270,8 +1253,8 @@ describe('PATCH /api/v1/transactions/:id', () => {
     const { asset, account } = await seedAssetAndAccount()
     const create = await app.request('/api/v1/transactions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asset_id: asset.id, account_id: account.id,
-        txn_type: 'adjustment', quantity: 1, txn_date: '2026-03-20' }),
+      body: JSON.stringify({ assetId: asset.id, accountId: account.id,
+        txnType: 'adjustment', quantity: 1, txnDate: '2026-03-20' }),
     })
     const { id } = await create.json()
     const res = await app.request(`/api/v1/transactions/${id}`, {
@@ -1288,8 +1271,8 @@ describe('DELETE /api/v1/transactions/:id', () => {
     const { asset, account } = await seedAssetAndAccount()
     const create = await app.request('/api/v1/transactions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asset_id: asset.id, account_id: account.id,
-        txn_type: 'adjustment', quantity: 1, txn_date: '2026-03-20' }),
+      body: JSON.stringify({ assetId: asset.id, accountId: account.id,
+        txnType: 'adjustment', quantity: 1, txnDate: '2026-03-20' }),
     })
     const { id } = await create.json()
     const res = await app.request(`/api/v1/transactions/${id}`, { method: 'DELETE' })
@@ -1300,8 +1283,8 @@ describe('DELETE /api/v1/transactions/:id', () => {
     const { asset, account } = await seedAssetAndAccount()
     const create = await app.request('/api/v1/transactions', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asset_id: asset.id, account_id: account.id,
-        txn_type: 'buy', quantity: 1, txn_date: '2026-03-20' }),
+      body: JSON.stringify({ assetId: asset.id, accountId: account.id,
+        txnType: 'buy', quantity: 1, txnDate: '2026-03-20' }),
     })
     const { id } = await create.json()
     const res = await app.request(`/api/v1/transactions/${id}`, { method: 'DELETE' })
@@ -1319,11 +1302,11 @@ describe('DELETE /api/v1/transactions/:id', () => {
 import { z } from 'zod'
 
 export const TransactionCreateSchema = z.object({
-  asset_id: z.string().uuid(),
-  account_id: z.string().uuid(),
-  txn_type: z.enum(['buy', 'sell', 'transfer_in', 'transfer_out', 'adjustment']),
+  assetId: z.string().uuid(),
+  accountId: z.string().uuid(),
+  txnType: z.enum(['buy', 'sell', 'transfer_in', 'transfer_out', 'adjustment']),
   quantity: z.number(),
-  txn_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  txnDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   note: z.string().optional(),
 })
 
@@ -1389,12 +1372,12 @@ export class TransactionsService {
   }
 
   async create(data: TransactionCreateInput) {
-    if (POSITIVE_ONLY_TYPES.includes(data.txn_type) && data.quantity < 0)
-      throw new HTTPException(422, { message: `quantity must be positive for txn_type=${data.txn_type}` })
+    if (POSITIVE_ONLY_TYPES.includes(data.txnType) && data.quantity < 0)
+      throw new HTTPException(422, { message: `quantity must be positive for txnType=${data.txnType}` })
     return this.repo.create({
-      assetId: data.asset_id, accountId: data.account_id,
-      txnType: data.txn_type, quantity: String(data.quantity),
-      txnDate: data.txn_date, note: data.note ?? null,
+      assetId: data.assetId, accountId: data.accountId,
+      txnType: data.txnType, quantity: String(data.quantity),
+      txnDate: data.txnDate, note: data.note ?? null,
     })
   }
 
@@ -1427,8 +1410,8 @@ const transactionsController = new Hono()
 const service = new TransactionsService(new TransactionsRepository(db))
 
 transactionsController.get('/', async (c) => {
-  const { asset_id, account_id, from, to } = c.req.query()
-  return c.json(await service.findAll({ assetId: asset_id, accountId: account_id, from, to }))
+  const { assetId, accountId, from, to } = c.req.query()
+  return c.json(await service.findAll({ assetId, accountId, from, to }))
 })
 
 transactionsController.post('/', zValidator('json', TransactionCreateSchema), async (c) => {
@@ -1462,8 +1445,8 @@ export default transactionsController
 - Test: `api/tests/prices.test.ts`
 
 ### Business Rules (Service layer)
-- `POST /prices/manual`: only for assets where `pricing_mode='manual'` → 422 otherwise
-- Upsert on `(asset_id, price_date)` conflict
+- `POST /prices/manual`: only for assets where `pricingMode='manual'` → 422 otherwise
+- Upsert on `(assetId, priceDate)` conflict
 
 - [ ] Step 1: Write the failing tests
 
@@ -1486,7 +1469,7 @@ describe('POST /api/v1/prices/manual', () => {
 
     const res = await app.request('/api/v1/prices/manual', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asset_id: asset.id, price_date: '2026-03-22', price: 7900000 }),
+      body: JSON.stringify({ assetId: asset.id, priceDate: '2026-03-22', price: 7900000 }),
     })
     expect(res.status).toBe(201)
     const body = await res.json()
@@ -1502,7 +1485,7 @@ describe('POST /api/v1/prices/manual', () => {
 
     const res = await app.request('/api/v1/prices/manual', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asset_id: asset.id, price_date: '2026-03-22', price: 210 }),
+      body: JSON.stringify({ assetId: asset.id, priceDate: '2026-03-22', price: 210 }),
     })
     expect(res.status).toBe(422)
   })
@@ -1516,9 +1499,9 @@ describe('GET /api/v1/prices', () => {
     }).returning()
     await app.request('/api/v1/prices/manual', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ asset_id: asset.id, price_date: '2026-03-22', price: 10.5 }),
+      body: JSON.stringify({ assetId: asset.id, priceDate: '2026-03-22', price: 10.5 }),
     })
-    const res = await app.request(`/api/v1/prices?asset_id=${asset.id}`)
+    const res = await app.request(`/api/v1/prices?assetId=${asset.id}`)
     expect(res.status).toBe(200)
     expect(await res.json()).toHaveLength(1)
   })
@@ -1533,8 +1516,8 @@ describe('GET /api/v1/prices', () => {
 ```ts
 import { z } from 'zod'
 export const PriceManualCreateSchema = z.object({
-  asset_id: z.string().uuid(),
-  price_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  assetId: z.string().uuid(),
+  priceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   price: z.number().min(0),
 })
 export type PriceManualCreateInput = z.infer<typeof PriceManualCreateSchema>
@@ -1584,11 +1567,11 @@ export class PricesService {
   }
 
   async createManual(data: PriceManualCreateInput) {
-    const asset = await this.assetsRepo.findById(data.asset_id)
+    const asset = await this.assetsRepo.findById(data.assetId)
     if (!asset) throw new HTTPException(404, { message: 'Asset not found' })
     if (asset.pricingMode !== 'manual')
-      throw new HTTPException(422, { message: 'Manual price entry only for pricing_mode=manual assets' })
-    return this.repo.upsert(data.asset_id, data.price_date, String(data.price), 'manual')
+      throw new HTTPException(422, { message: 'Manual price entry only for pricingMode=manual assets' })
+    return this.repo.upsert(data.assetId, data.priceDate, String(data.price), 'manual')
   }
 }
 ```
@@ -1607,8 +1590,8 @@ const pricesController = new Hono()
 const service = new PricesService(new PricesRepository(db), new AssetsRepository(db))
 
 pricesController.get('/', async (c) => {
-  const { asset_id, from, to } = c.req.query()
-  return c.json(await service.findAll({ assetId: asset_id, from, to }))
+  const { assetId, from, to } = c.req.query()
+  return c.json(await service.findAll({ assetId, from, to }))
 })
 
 pricesController.post('/manual', zValidator('json', PriceManualCreateSchema), async (c) => {
@@ -1619,7 +1602,7 @@ export default pricesController
 ```
 
 - [ ] Step 4: Run: `cd api && npx vitest run tests/prices.test.ts` — Expected: PASS
-- [ ] Step 5: Commit `git commit -m "feat: prices module with manual-only pricing_mode guard"`
+- [ ] Step 5: Commit `git commit -m "feat: prices module with manual-only pricingMode guard"`
 
 ---
 
@@ -1633,8 +1616,8 @@ export default pricesController
 - Test: `api/tests/fx-rates.test.ts`
 
 ### Business Rules (Service layer)
-- `POST /fx-rates/manual`: upsert on `(from_currency, to_currency, rate_date)` conflict; `rate` must be > 0
-- `GET /fx-rates`: filter by `from`, `to`, `from_date`, `to_date` query params
+- `POST /fx-rates/manual`: upsert on `(fromCurrency, toCurrency, rateDate)` conflict; `rate` must be > 0
+- `GET /fx-rates`: filter by `from`, `to`, `fromDate`, `toDate` query params
 
 - [ ] Step 1: Write the failing tests
 
@@ -1651,8 +1634,8 @@ describe('POST /api/v1/fx-rates/manual', () => {
   it('creates an FX rate and returns 201', async () => {
     const res = await app.request('/api/v1/fx-rates/manual', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from_currency: 'USD', to_currency: 'TWD',
-        rate_date: '2026-03-22', rate: 32.67 }),
+      body: JSON.stringify({ fromCurrency: 'USD', toCurrency: 'TWD',
+        rateDate: '2026-03-22', rate: 32.67 }),
     })
     expect(res.status).toBe(201)
     const body = await res.json()
@@ -1661,7 +1644,7 @@ describe('POST /api/v1/fx-rates/manual', () => {
   })
 
   it('upserts on conflict (same currency pair + date)', async () => {
-    const payload = { from_currency: 'USD', to_currency: 'TWD', rate_date: '2026-03-22', rate: 32.00 }
+    const payload = { fromCurrency: 'USD', toCurrency: 'TWD', rateDate: '2026-03-22', rate: 32.00 }
     await app.request('/api/v1/fx-rates/manual', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -1677,8 +1660,8 @@ describe('POST /api/v1/fx-rates/manual', () => {
   it('returns 422 if rate is zero or negative', async () => {
     const res = await app.request('/api/v1/fx-rates/manual', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from_currency: 'USD', to_currency: 'TWD',
-        rate_date: '2026-03-22', rate: 0 }),
+      body: JSON.stringify({ fromCurrency: 'USD', toCurrency: 'TWD',
+        rateDate: '2026-03-22', rate: 0 }),
     })
     expect(res.status).toBe(422)
   })
@@ -1688,8 +1671,8 @@ describe('GET /api/v1/fx-rates', () => {
   it('returns fx rate history filtered by from/to', async () => {
     await app.request('/api/v1/fx-rates/manual', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from_currency: 'JPY', to_currency: 'TWD',
-        rate_date: '2026-03-22', rate: 0.21 }),
+      body: JSON.stringify({ fromCurrency: 'JPY', toCurrency: 'TWD',
+        rateDate: '2026-03-22', rate: 0.21 }),
     })
     const res = await app.request('/api/v1/fx-rates?from=JPY&to=TWD')
     expect(res.status).toBe(200)
@@ -1706,9 +1689,9 @@ describe('GET /api/v1/fx-rates', () => {
 ```ts
 import { z } from 'zod'
 export const FxRateManualCreateSchema = z.object({
-  from_currency: z.string().min(3).max(10),
-  to_currency: z.string().min(3).max(10),
-  rate_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  fromCurrency: z.string().min(3).max(10),
+  toCurrency: z.string().min(3).max(10),
+  rateDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   rate: z.number().positive(),
 })
 export type FxRateManualCreateInput = z.infer<typeof FxRateManualCreateSchema>
@@ -1758,7 +1741,7 @@ export class FxRatesService {
 
   createManual(data: FxRateManualCreateInput) {
     return this.repo.upsert(
-      data.from_currency, data.to_currency, data.rate_date, String(data.rate), 'manual'
+      data.fromCurrency, data.toCurrency, data.rateDate, String(data.rate), 'manual'
     )
   }
 }
@@ -1779,8 +1762,8 @@ const fxRatesController = new Hono()
 const service = new FxRatesService(new FxRatesRepository(db))
 
 fxRatesController.get('/', async (c) => {
-  const { from, to, from_date, to_date } = c.req.query()
-  return c.json(await service.findAll({ from, to, fromDate: from_date, toDate: to_date }))
+  const { from, to, fromDate, toDate } = c.req.query()
+  return c.json(await service.findAll({ from, to, fromDate, toDate }))
 })
 
 fxRatesController.post('/manual', zValidator('json', FxRateManualCreateSchema), async (c) => {
