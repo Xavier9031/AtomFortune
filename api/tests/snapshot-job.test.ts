@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { fetchMarketPrices } from '../src/jobs/pricing.service'
+import { fetchFxRates } from '../src/jobs/fx.service'
 
 vi.mock('yahoo-finance2', () => ({
   default: {
@@ -54,5 +55,44 @@ describe('fetchMarketPrices', () => {
     ] as any)
     const result = await fetchMarketPrices([ASSET_AAPL])
     expect(result.size).toBe(0)
+  })
+})
+
+describe('fetchFxRates', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn())
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('returns USD/JPY/USDT/TWD rates with correct sources', async () => {
+    const mockFetch = vi.mocked(fetch)
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ rates: { USD: 0.030581, JPY: 4.6296 } }),
+    } as Response)
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ tether: { twd: 32.68 } }),
+    } as Response)
+
+    const rates = await fetchFxRates()
+
+    const usd = rates.find(r => r.fromCurrency === 'USD')
+    const jpy = rates.find(r => r.fromCurrency === 'JPY')
+    const usdt = rates.find(r => r.fromCurrency === 'USDT')
+    const twd = rates.find(r => r.fromCurrency === 'TWD')
+
+    expect(usd?.rate).toBeCloseTo(1 / 0.030581, 4)
+    expect(usd?.source).toBe('exchangerate-api')
+    expect(jpy?.rate).toBeCloseTo(1 / 4.6296, 4)
+    expect(usdt?.rate).toBeCloseTo(32.68)
+    expect(usdt?.source).toBe('coingecko')
+    expect(twd?.rate).toBe(1.0)
+    expect(twd?.source).toBe('system')
+  })
+
+  it('throws if exchangerate-api response is not ok', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 500 } as Response)
+    await expect(fetchFxRates()).rejects.toThrow('exchangerate-api')
   })
 })
