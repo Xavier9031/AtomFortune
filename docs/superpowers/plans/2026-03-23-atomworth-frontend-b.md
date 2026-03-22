@@ -4,11 +4,13 @@
 
 **Goal:** Implement Holdings, Assets, Accounts, Snapshots, and Settings pages.
 
-**Architecture:** Next.js 15 App Router. Client Components with SWR for data. Side Panel pattern for Holdings add/edit (right-side drawer). Shared layout from Part A.
+**Architecture:** Next.js 15 App Router. Client Components with SWR for data. Side Panel pattern for Holdings add/edit (right-side drawer). Shared layout from Part A. All API responses use snake_case field names.
 
 **Tech Stack:** Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Recharts, SWR, lucide-react
 
 **Prerequisite:** Frontend Part A must be complete.
+
+> **Important — API Base URL:** All SWR keys and `fetch()` calls in this plan that use bare paths like `'/api/v1/assets'` must use the `BASE` constant imported from `@/lib/api`. `BASE` is exported from Part A's `lib/api.ts` and equals `process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v1'`. Replace every `'/api/v1/...'` with `` `${BASE}/...` ``. Example: `useSWR<Asset[]>(\`${BASE}/assets\`, fetcher)`.
 
 ---
 
@@ -181,7 +183,7 @@ The panel uses a controlled `open` prop and slides from the right via Tailwind `
 'use client'
 import { useState } from 'react'
 import useSWR from 'swr'
-import { fetcher } from '@/lib/fetcher'
+import { fetcher } from '@/lib/api'
 
 type Mode = 'add' | 'edit'
 interface Props {

@@ -4,7 +4,7 @@
 
 **Goal:** Scaffold the Next.js 15 frontend and implement the Dashboard page with Treemap, trend chart, and holdings accordion.
 
-**Architecture:** Next.js 15 App Router. Client Components for interactive UI. SWR for data fetching (calls FastAPI at NEXT_PUBLIC_API_BASE_URL). CSS variables for theming. Recharts for charts.
+**Architecture:** Next.js 15 App Router. Client Components for interactive UI. SWR for data fetching (calls Hono API at NEXT_PUBLIC_API_BASE_URL). CSS variables for theming. Recharts for charts. All API responses use snake_case field names.
 
 **Tech Stack:** Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Recharts, SWR, lucide-react
 
@@ -291,7 +291,7 @@ export interface NetWorthHistory { display_currency: Currency; data: NetWorthPoi
 import useSWR from 'swr'
 import type { Currency, DashboardSummary, AllocationData, NetWorthHistory } from './types'
 
-const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v1'
+export const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v1'
 export const fetcher = (url: string) => fetch(url).then(r => { if (!r.ok) throw new Error(r.statusText); return r.json() })
 
 export const useDashboardSummary = (currency: Currency) =>
