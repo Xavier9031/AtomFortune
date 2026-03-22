@@ -4,7 +4,7 @@
 
 **Goal:** Scaffold the Next.js 15 frontend and implement the Dashboard page with Treemap, trend chart, and holdings accordion.
 
-**Architecture:** Next.js 15 App Router. Client Components for interactive UI. SWR for data fetching (calls Hono API at NEXT_PUBLIC_API_BASE_URL). CSS variables for theming. Recharts for charts. All API responses use snake_case field names.
+**Architecture:** Next.js 15 App Router. Client Components for interactive UI. SWR for data fetching (calls Hono API at NEXT_PUBLIC_API_BASE_URL). CSS variables for theming. Recharts for charts. All API responses use camelCase field names.
 
 **Tech Stack:** Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, Recharts, SWR, lucide-react
 
