@@ -7,6 +7,9 @@ import transactionsController from './modules/transactions/transactions.controll
 import pricesController from './modules/prices/prices.controller'
 import fxRatesController from './modules/fx-rates/fx-rates.controller'
 import { config } from './config'
+import cron from 'node-cron'
+import { db } from './db/client'
+import { dailySnapshotJob } from './jobs/snapshot.job'
 
 const app = new Hono()
 
@@ -19,6 +22,14 @@ app.route('/api/v1/transactions', transactionsController)
 app.route('/api/v1/prices', pricesController)
 app.route('/api/v1/fx-rates', fxRatesController)
 
+// Manual trigger endpoint for dev/debug
+app.post('/snapshots/trigger', async (c) => {
+  const dateParam = c.req.query('date')
+  const snapshotDate = dateParam ? new Date(dateParam) : new Date()
+  await dailySnapshotJob(db, snapshotDate)
+  return c.json({ triggered: true, date: snapshotDate.toISOString().slice(0, 10) })
+})
+
 app.onError((err, c) => {
   const status = (err as any).status ?? 500
   return c.json({ error: err.message }, status)
@@ -28,6 +39,12 @@ app.notFound((c) => c.json({ error: 'Not found' }, 404))
 
 if (process.env.NODE_ENV !== 'test') {
   serve({ fetch: app.fetch, port: config.port })
+
+  // Register daily snapshot cron only outside test environment
+  cron.schedule(config.snapshotSchedule, () => {
+    dailySnapshotJob(db).catch(err => console.error('Snapshot job failed:', err))
+  })
 }
 
+export { app }
 export default app
