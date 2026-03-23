@@ -26,6 +26,9 @@ export interface AllocationData { snapshotDate: string; displayCurrency: Currenc
 export interface NetWorthPoint { date: string; netWorth: number }
 export interface NetWorthHistory { displayCurrency: Currency; data: NetWorthPoint[] }
 
+export type CategoryPoint = { date: string } & Record<string, number>
+export interface CategoryHistory { displayCurrency: Currency; data: CategoryPoint[] }
+
 export interface LiveDashboard {
   displayCurrency: Currency
   netWorth: number

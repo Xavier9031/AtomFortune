@@ -146,6 +146,30 @@ export async function getLiveData(displayCurrency: DisplayCurrency) {
   }
 }
 
+export async function getCategoryHistoryData(range: '30d' | '1y' | 'all', displayCurrency: DisplayCurrency) {
+  const rows = await repo.getCategoryHistory(db, range)
+  const latestDate = rows.length ? rows[rows.length - 1].snapshotDate : null
+  const fxRate = latestDate ? await repo.getFxRateForDisplay(db, displayCurrency, latestDate) : 1.0
+
+  const byDate = new Map<string, Map<string, number>>()
+  for (const row of rows) {
+    if (!byDate.has(row.snapshotDate)) byDate.set(row.snapshotDate, new Map())
+    const catMap = byDate.get(row.snapshotDate)!
+    const sign = row.assetClass === 'liability' ? -1 : 1
+    catMap.set(row.category, (catMap.get(row.category) ?? 0) + sign * Number(row.value))
+  }
+
+  const data = [...byDate.entries()].map(([date, cats]) => {
+    const point: Record<string, number | string> = { date }
+    for (const [cat, val] of cats) {
+      point[cat] = Math.round(val / fxRate * 100) / 100
+    }
+    return point
+  })
+
+  return { displayCurrency, data }
+}
+
 export async function getNetWorthHistoryData(range: '30d' | '1y' | 'all', displayCurrency: DisplayCurrency) {
   const rows = await repo.getNetWorthHistory(db, range)
   const latestDate = rows.length ? rows[rows.length - 1].snapshotDate : null

@@ -41,6 +41,18 @@ dashboardRouter.get('/live',
   }
 )
 
+dashboardRouter.get('/category-history',
+  zValidator('query', z.object({
+    range: z.enum(['30d', '1y', 'all']).default('30d'),
+    displayCurrency: displayCurrencySchema,
+  })),
+  async (c) => {
+    const { range, displayCurrency } = c.req.valid('query')
+    const result = await service.getCategoryHistoryData(range, displayCurrency)
+    return c.json(result)
+  }
+)
+
 dashboardRouter.get('/net-worth-history',
   zValidator('query', z.object({
     range: z.enum(['30d', '1y', 'all']).default('30d'),

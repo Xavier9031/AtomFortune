@@ -256,7 +256,14 @@
     "allocationOverview": "全覽",
     "byAccount": "按帳戶",
     "byAsset": "按資產",
-    "noHoldingData": "無持倉資料"
+    "noHoldingData": "無持倉資料",
+    "modeNetWorth": "淨值",
+    "modeCategory": "類別趨勢",
+    "range30d": "30天",
+    "range1y": "1年",
+    "rangeAll": "全部",
+    "viewDetail": "詳細",
+    "moreItems": "項"
   },
   "settings": {
     "title": "設定",

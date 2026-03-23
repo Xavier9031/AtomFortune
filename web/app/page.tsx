@@ -1,42 +1,16 @@
 'use client'
-import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { useCurrency } from '@/context/CurrencyContext'
-import { useLiveDashboard, useNetWorthHistory, BASE } from '@/lib/api'
+import { useLiveDashboard } from '@/lib/api'
 import NetWorthHeader from '@/components/dashboard/NetWorthHeader'
 import AllocationBreakdown from '@/components/dashboard/AllocationBreakdown'
 import NetWorthChart from '@/components/dashboard/NetWorthChart'
 import type { DashboardSummary } from '@/lib/types'
 
-function TriggerSnapshotButton() {
-  const t = useTranslations('dashboard')
-  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
-  async function trigger() {
-    setStatus('loading')
-    try {
-      await fetch(`${BASE.replace('/api/v1', '')}/snapshots/trigger`, { method: 'POST' })
-      setStatus('done')
-      setTimeout(() => window.location.reload(), 1000)
-    } catch {
-      setStatus('error')
-    }
-  }
-  return (
-    <button onClick={trigger} disabled={status === 'loading' || status === 'done'}
-      className="px-6 py-2 bg-[var(--color-accent)] text-white rounded-lg disabled:opacity-60">
-      {status === 'idle' && t('triggerSnapshot')}
-      {status === 'loading' && t('triggeringSnapshot')}
-      {status === 'done' && t('snapshotDone')}
-      {status === 'error' && t('snapshotFailed')}
-    </button>
-  )
-}
-
 export default function DashboardPage() {
   const t = useTranslations('dashboard')
   const { currency } = useCurrency()
   const { data: live, isLoading: liveLoading } = useLiveDashboard(currency)
-  const { data: history } = useNetWorthHistory(currency)
 
   if (liveLoading) {
     return (
@@ -105,13 +79,7 @@ export default function DashboardPage() {
         </div>
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)]">
           <h2 className="text-sm font-semibold mb-3">{t('history')}</h2>
-          {history && history.data.length > 0
-            ? <NetWorthChart data={history} />
-            : <div className="flex items-center justify-center h-40 text-sm text-[var(--color-muted)] flex-col gap-2">
-                <p>{t('noHistory')}</p>
-                <TriggerSnapshotButton />
-              </div>
-          }
+          <NetWorthChart currency={currency} />
         </div>
       </div>
     </div>

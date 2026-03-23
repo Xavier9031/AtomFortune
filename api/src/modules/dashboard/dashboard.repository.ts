@@ -98,6 +98,29 @@ export async function getLiveHoldings(db: DrizzleDB) {
   .innerJoin(assets, eq(holdings.assetId, assets.id))
 }
 
+export async function getCategoryHistory(db: DrizzleDB, range: '30d' | '1y' | 'all') {
+  const cutoffs: Record<string, string | null> = {
+    '30d': new Date(Date.now() - 30 * 86400_000).toISOString().slice(0, 10),
+    '1y':  new Date(Date.now() - 365 * 86400_000).toISOString().slice(0, 10),
+    'all': null,
+  }
+  const cutoff = cutoffs[range]
+
+  const base = db
+    .select({
+      snapshotDate: snapshotItems.snapshotDate,
+      category: assets.category,
+      assetClass: assets.assetClass,
+      value: sql<string>`SUM(${snapshotItems.valueInBase})`.as('value'),
+    })
+    .from(snapshotItems)
+    .innerJoin(assets, eq(snapshotItems.assetId, assets.id))
+    .groupBy(snapshotItems.snapshotDate, assets.category, assets.assetClass)
+    .orderBy(snapshotItems.snapshotDate)
+
+  return cutoff ? base.where(gte(snapshotItems.snapshotDate, cutoff)) : base
+}
+
 export async function getNetWorthHistory(db: DrizzleDB, range: '30d' | '1y' | 'all') {
   const cutoffs: Record<string, string | null> = {
     '30d': new Date(Date.now() - 30 * 86400_000).toISOString().slice(0, 10),

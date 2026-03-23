@@ -256,7 +256,14 @@
     "allocationOverview": "Overview",
     "byAccount": "By Account",
     "byAsset": "By Asset",
-    "noHoldingData": "No holdings data"
+    "noHoldingData": "No holdings data",
+    "modeNetWorth": "Net Worth",
+    "modeCategory": "By Category",
+    "range30d": "30D",
+    "range1y": "1Y",
+    "rangeAll": "All",
+    "viewDetail": "Details",
+    "moreItems": "more"
   },
   "settings": {
     "title": "Settings",

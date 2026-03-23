@@ -42,6 +42,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
   const locale = useLocale()
   const { data: holdings } = useSWR<Holding[]>(`${BASE}/holdings`, fetcher)
   const [selectedCat, setSelectedCat] = useState<Category | null>(null)
+  const [expandedCat, setExpandedCat] = useState<string | null>(null)
   const [groupBy, setGroupBy] = useState<GroupBy>('account')
 
   const netWorth = totalAssets - totalLiabilities
@@ -97,26 +98,56 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
           </div>
 
           {/* Category legend */}
-          <div className="flex-1 space-y-2 min-w-0">
+          <div className="flex-1 space-y-1.5 min-w-0">
             {donutData.map(c => {
               const pct = gross > 0 ? (c.value / gross) * 100 : 0
+              const isExpanded = expandedCat === c.category
+              const catItems = categories.find(cat => cat.category === c.category)?.items ?? []
               return (
-                <button key={c.category} onClick={() => setSelectedCat(c.category as Category)}
-                  className="w-full text-left group">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="w-2.5 h-2.5 rounded-sm shrink-0 mt-px"
-                      style={{ background: c.color }} />
-                    <span className="text-xs flex-1 truncate text-[var(--color-muted)]
-                      group-hover:text-[var(--color-text)] transition-colors">
-                      {tAsset(`categories.${c.category}`)}
-                    </span>
-                    <span className="text-xs font-medium tabular-nums">{pct.toFixed(1)}%</span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-[var(--color-bg)] overflow-hidden ml-4">
-                    <div className="h-full rounded-full transition-all duration-300"
-                      style={{ width: `${Math.min(pct, 100)}%`, background: c.color }} />
-                  </div>
-                </button>
+                <div key={c.category}>
+                  <button onClick={() => setExpandedCat(isExpanded ? null : c.category)}
+                    className="w-full text-left group">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-2.5 h-2.5 rounded-sm shrink-0 mt-px"
+                        style={{ background: c.color }} />
+                      <span className="text-xs flex-1 truncate text-[var(--color-muted)]
+                        group-hover:text-[var(--color-text)] transition-colors">
+                        {tAsset(`categories.${c.category}`)}
+                      </span>
+                      <span className="text-xs font-medium tabular-nums">{pct.toFixed(1)}%</span>
+                      <span className={`text-[var(--color-muted)] text-xs transition-transform duration-200
+                        ${isExpanded ? 'rotate-90' : ''}`}>›</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-[var(--color-bg)] overflow-hidden ml-4">
+                      <div className="h-full rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(pct, 100)}%`, background: c.color }} />
+                    </div>
+                  </button>
+
+                  {isExpanded && catItems.length > 0 && (
+                    <div className="ml-4 mt-1 space-y-0.5 pb-1">
+                      {catItems.slice(0, 5).map(item => (
+                        <div key={item.assetId} className="flex justify-between items-center text-xs py-0.5">
+                          <span className="text-[var(--color-muted)] truncate pr-2">{item.name}</span>
+                          <span className="tabular-nums shrink-0 text-[var(--color-text)]">
+                            {fmtShort(item.value, displayCurrency, locale)}
+                          </span>
+                        </div>
+                      ))}
+                      {catItems.length > 5 && (
+                        <p className="text-xs text-[var(--color-muted)]">
+                          +{catItems.length - 5} {t('moreItems')}
+                        </p>
+                      )}
+                      <button
+                        onClick={() => setSelectedCat(c.category as Category)}
+                        className="text-xs mt-1"
+                        style={{ color: c.color }}>
+                        {t('viewDetail')} →
+                      </button>
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>
