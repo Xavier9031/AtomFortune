@@ -1,4 +1,5 @@
 import { config } from '../config'
+import { SUPPORTED_CURRENCIES } from '../currencies'
 
 export interface FxRateRecord {
   fromCurrency: string
@@ -16,8 +17,9 @@ export async function fetchFxRates(): Promise<FxRateRecord[]> {
   if (!exRes.ok) throw new Error(`exchangerate-api error: ${exRes.status}`)
   const exData = await exRes.json()
 
+  const saveSet = new Set<string>(SUPPORTED_CURRENCIES)
   for (const [currency, invRate] of Object.entries(exData.conversion_rates) as [string, number][]) {
-    if (currency === 'USD' || currency === 'JPY') {
+    if (saveSet.has(currency) && currency !== 'TWD') {
       results.push({
         fromCurrency: currency,
         toCurrency: 'TWD',
