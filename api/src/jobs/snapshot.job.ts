@@ -9,7 +9,7 @@ function formatDate(d: Date): string {
 }
 
 export async function getMarketAssets(db: DrizzleDB) {
-  return db.select({ id: assets.id, symbol: assets.symbol, pricingMode: assets.pricingMode, subKind: assets.subKind })
+  return db.select({ id: assets.id, name: assets.name, symbol: assets.symbol, pricingMode: assets.pricingMode, subKind: assets.subKind })
     .from(assets).where(eq(assets.pricingMode, 'market'))
 }
 
@@ -89,16 +89,38 @@ export async function refreshFxRates(db: DrizzleDB) {
   return rates
 }
 
-export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date()) {
+export type SnapshotJobResult = {
+  date: string
+  prices: Array<{ assetId: string; name: string; symbol: string; price: number | null; status: 'ok' | 'failed' }>
+  fxStatus: 'ok' | 'failed'
+  snapshotItemsWritten: number
+}
+
+export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date()): Promise<SnapshotJobResult> {
   const today = formatDate(snapshotDate)
 
   const marketAssets = await getMarketAssets(db)
   const pricesMap = await fetchMarketPrices(marketAssets)
   await upsertPrices(db, pricesMap, today)
 
-  const rates = await fetchFxRates()
-  await upsertFxRates(db, rates, today)
+  const priceResults = marketAssets.map(a => ({
+    assetId: a.id,
+    name: a.name,
+    symbol: a.symbol ?? '',
+    price: pricesMap.get(a.id) ?? null,
+    status: (pricesMap.has(a.id) ? 'ok' : 'failed') as 'ok' | 'failed',
+  }))
 
+  let fxStatus: 'ok' | 'failed' = 'failed'
+  try {
+    const rates = await fetchFxRates()
+    await upsertFxRates(db, rates, today)
+    fxStatus = 'ok'
+  } catch (err) {
+    console.warn('FX rate refresh failed:', err)
+  }
+
+  let snapshotItemsWritten = 0
   await db.transaction(async (tx) => {
     await tx.delete(snapshotItems).where(eq(snapshotItems.snapshotDate, today))
 
@@ -118,8 +140,11 @@ export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date())
         quantity: h.quantity, price: String(price), fxRate: String(fxRate),
         valueInBase: String(valueInBase),
       })
+      snapshotItemsWritten++
     }
 
     if (missingAssets.length) console.warn('Missing assets:', missingAssets)
   })
+
+  return { date: today, prices: priceResults, fxStatus, snapshotItemsWritten }
 }

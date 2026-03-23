@@ -49,8 +49,8 @@ snapshotsRouter.post('/rebuild/:date',
 snapshotsRouter.post('/trigger', async (c) => {
   const dateParam = c.req.query('date')
   const snapshotDate = dateParam ? new Date(dateParam) : new Date()
-  await dailySnapshotJob(db, snapshotDate)
-  return c.json({ triggered: true, date: snapshotDate.toISOString().slice(0, 10) })
+  const result = await dailySnapshotJob(db, snapshotDate)
+  return c.json(result)
 })
 
 snapshotsRouter.post('/rebuild-range',
