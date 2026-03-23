@@ -39,13 +39,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
 
   const holdings = (allHoldings ?? []).filter(h => h.assetId === initial.id)
   const totalQty = holdings.reduce((s, h) => s + Number(h.quantity), 0)
-  // For fixed-price TWD assets (liquid), quantity IS the TWD value; use as fallback when no snapshot yet
-  function effectiveValue(h: Holding): number {
-    if (h.latestValueInBase != null) return h.latestValueInBase
-    if (h.pricingMode === 'fixed' && h.currencyCode === 'TWD') return Number(h.quantity)
-    return 0
-  }
-  const totalValue = holdings.reduce((s, h) => s + effectiveValue(h), 0)
+  const totalValue = holdings.reduce((s, h) => s + (Number(h.latestValueInBase) || 0), 0)
   const chartData = (snapshots ?? []).map(d => ({ date: d.snapshotDate, value: Number(d.valueInBase) }))
   const sortedTxns = [...(txns ?? [])].sort((a, b) => b.txnDate.localeCompare(a.txnDate))
   const unit = initial.unit ?? initial.symbol ?? initial.currencyCode
@@ -183,8 +177,10 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
         ) : (
           <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
             {holdings.map((h, i) => {
-              const val = effectiveValue(h)
-              const pct = totalValue > 0 ? (val / totalValue) * 100 : 0
+              // Within a single asset, all holdings share the same unit price,
+              // so quantity proportion == value proportion
+              const qty = Number(h.quantity)
+              const pct = totalQty > 0 ? (qty / totalQty) * 100 : 0
               return (
                 <div key={`${h.assetId}-${h.accountId}`}
                   className={`px-4 py-3 ${i < holdings.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
@@ -197,12 +193,10 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
                     </span>
                     <div className="text-right tabular-nums">
                       <span className="font-medium">
-                        {Number(h.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
+                        {qty.toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
                       </span>
                       <span className="text-xs text-[var(--color-muted)] ml-1">{getHoldingUnit(h)}</span>
-                      <span className="text-xs text-[var(--color-muted)] ml-2">
-                        {totalValue > 0 ? `${pct.toFixed(1)}%` : '—'}
-                      </span>
+                      <span className="text-xs text-[var(--color-muted)] ml-2">{pct.toFixed(1)}%</span>
                     </div>
                   </div>
                   <div className="h-1.5 bg-[var(--color-border)] rounded-full overflow-hidden">
