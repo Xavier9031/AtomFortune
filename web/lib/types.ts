@@ -60,7 +60,7 @@ export interface Holding {
 export interface Ticker {
   symbol: string
   name: string
-  type: 'stock' | 'etf'
+  type: 'stock' | 'etf' | 'crypto'
   exchange: string | null
   country: string | null
 }

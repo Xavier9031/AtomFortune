@@ -19,6 +19,7 @@ export class TickersService {
     if (!q) return []
     if (country === 'US') return this.searchYahoo(q)
     if (country === 'TW') return this.searchTWSE(q)
+    if (country === 'Crypto') return this.searchCrypto(q)
     // Both: run in parallel
     const [tw, us] = await Promise.all([this.searchTWSE(q), this.searchYahoo(q)])
     return [...tw, ...us].slice(0, 20)
@@ -64,6 +65,29 @@ export class TickersService {
           type: r.quoteType === 'ETF' ? 'etf' : 'stock',
           exchange: (r.exchDisp || r.exchange) as string,
           country: 'US',
+        }))
+    } catch {
+      return []
+    }
+  }
+
+  private async searchCrypto(q: string) {
+    try {
+      const url = `https://api.coingecko.com/api/v3/search?query=${encodeURIComponent(q)}`
+      const res = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      })
+      if (!res.ok) return []
+      const data = await res.json() as { coins?: { id: string; name: string; symbol: string; market_cap_rank: number | null }[] }
+      return (data.coins ?? [])
+        .slice(0, 20)
+        .map(c => ({
+          symbol: c.symbol.toUpperCase(),
+          name: c.name,
+          type: 'crypto' as const,
+          exchange: 'Crypto',
+          country: null,
         }))
     } catch {
       return []

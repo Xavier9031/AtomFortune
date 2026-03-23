@@ -6,12 +6,13 @@ import type { Ticker } from '@/lib/types'
 interface Props {
   onSelect: (t: Ticker) => void
   onBack: () => void
+  defaultMarket?: Market
 }
 
-type Market = 'TW' | 'US'
+type Market = 'TW' | 'US' | 'Crypto'
 
-export function TickerSearch({ onSelect, onBack }: Props) {
-  const [market, setMarket] = useState<Market>('TW')
+export function TickerSearch({ onSelect, onBack, defaultMarket = 'TW' }: Props) {
+  const [market, setMarket] = useState<Market>(defaultMarket)
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Ticker[]>([])
   const [loading, setLoading] = useState(false)
@@ -37,13 +38,13 @@ export function TickerSearch({ onSelect, onBack }: Props) {
     <div className="p-4 space-y-4">
       {/* Market toggle */}
       <div className="flex gap-1 p-0.5 bg-[var(--color-bg)] rounded-lg w-fit">
-        {(['TW', 'US'] as Market[]).map(m => (
+        {(['TW', 'US', 'Crypto'] as Market[]).map(m => (
           <button key={m} onClick={() => { setMarket(m); setQuery(''); setResults([]) }}
             className={`px-4 py-1.5 text-sm rounded-md transition-colors
               ${market === m
                 ? 'bg-[var(--color-surface)] shadow-sm font-semibold'
                 : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
-            {m === 'TW' ? '台股' : '美股'}
+            {m === 'TW' ? '台股' : m === 'US' ? '美股' : '加密貨幣'}
           </button>
         ))}
       </div>
@@ -54,7 +55,7 @@ export function TickerSearch({ onSelect, onBack }: Props) {
           autoFocus
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder={market === 'TW' ? '搜尋代號或名稱（例：2330、台積電）' : 'Search symbol or name (e.g. AAPL, Apple)'}
+          placeholder={market === 'TW' ? '搜尋代號或名稱（例：2330、台積電）' : market === 'US' ? 'Search symbol or name (e.g. AAPL, Apple)' : 'Search coin name (e.g. Bitcoin, ETH)'}
           className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)]
             bg-[var(--color-bg)] text-sm outline-none focus:border-[var(--color-accent)]"
         />
@@ -80,8 +81,10 @@ export function TickerSearch({ onSelect, onBack }: Props) {
               <span className={`shrink-0 text-xs px-2 py-0.5 rounded-full font-medium
                 ${t.type === 'etf'
                   ? 'bg-indigo-100 text-indigo-700'
+                  : t.type === 'crypto'
+                  ? 'bg-orange-100 text-orange-700'
                   : 'bg-green-100 text-green-700'}`}>
-                {t.type === 'etf' ? 'ETF' : '股票'}
+                {t.type === 'etf' ? 'ETF' : t.type === 'crypto' ? '加密貨幣' : '股票'}
               </span>
             </button>
           ))}

@@ -21,12 +21,12 @@ const ASSET_GROUPS: AssetGroup[] = [
     { subKind: 'bank_account', label: '銀行存款', icon: '🏦', assetClass: 'asset', category: 'liquid' },
     { subKind: 'physical_cash', label: '現金', icon: '💵', assetClass: 'asset', category: 'liquid' },
     { subKind: 'e_wallet', label: '電子錢包', icon: '📲', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'stablecoin', label: '穩定幣', icon: '💲', assetClass: 'asset', category: 'liquid' },
   ]},
   { label: '投資', colorClass: 'bg-indigo-500', items: [
     { subKind: 'stock', label: '股票/ETF', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
     { subKind: 'fund', label: '基金', icon: '💰', assetClass: 'asset', category: 'investment' },
-    { subKind: 'crypto', label: '加密貨幣', icon: '₿', assetClass: 'asset', category: 'investment' },
+    { subKind: 'crypto', label: '加密貨幣', icon: '₿', assetClass: 'asset', category: 'investment', useTicker: true },
+    { subKind: 'stablecoin', label: '穩定幣', icon: '💲', assetClass: 'asset', category: 'investment' },
     { subKind: 'precious_metal', label: '實體貴金屬', icon: '🥇', assetClass: 'asset', category: 'investment' },
   ]},
   { label: '固定資產', colorClass: 'bg-violet-500', items: [
@@ -99,7 +99,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
       ...p,
       name: t.name,
       symbol: t.symbol,
-      currencyCode: t.country === 'US' ? 'USD' : 'TWD',
+      currencyCode: t.type === 'crypto' || t.country === 'US' ? 'USD' : 'TWD',
     }))
     setView('form')
   }
@@ -153,7 +153,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
 
   const title = asset ? '編輯資產'
     : view === 'kindPicker' ? '選擇資產類型'
-    : view === 'tickerSearch' ? '搜尋股票/ETF'
+    : view === 'tickerSearch' ? (pendingKind?.subKind === 'crypto' ? '搜尋加密貨幣' : '搜尋股票/ETF')
     : selectedTicker ? selectedTicker.name
     : (pendingKind?.label ?? '新增資產')
 
@@ -202,7 +202,11 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
 
         {/* ─── Ticker search ─── */}
         {view === 'tickerSearch' && (
-          <TickerSearch onSelect={handleTickerSelect} onBack={goBack} />
+          <TickerSearch
+            onSelect={handleTickerSelect}
+            onBack={goBack}
+            defaultMarket={pendingKind?.subKind === 'crypto' ? 'Crypto' : 'TW'}
+          />
         )}
 
         {/* ─── Form ─── */}
@@ -215,8 +219,10 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                 <div>
                   <div className="text-xs text-[var(--color-muted)]">{selectedTicker.symbol} · {selectedTicker.exchange}</div>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium
-                    ${selectedTicker.type === 'etf' ? 'bg-indigo-100 text-indigo-700' : 'bg-green-100 text-green-700'}`}>
-                    {selectedTicker.type === 'etf' ? 'ETF' : '股票'}
+                    ${selectedTicker.type === 'etf' ? 'bg-indigo-100 text-indigo-700'
+                      : selectedTicker.type === 'crypto' ? 'bg-orange-100 text-orange-700'
+                      : 'bg-green-100 text-green-700'}`}>
+                    {selectedTicker.type === 'etf' ? 'ETF' : selectedTicker.type === 'crypto' ? '加密貨幣' : '股票'}
                   </span>
                 </div>
               </div>
