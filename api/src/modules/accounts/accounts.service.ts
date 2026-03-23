@@ -54,14 +54,16 @@ export class AccountsService {
     const subKind = LIQUID_SUBKINDS[account.accountType]
     if (!subKind) throw new HTTPException(400, { message: 'Account type does not support direct balance' })
 
-    let asset = await this.assetRepo.findByAccountAndSubKind(accountId, subKind)
+    let asset = await this.assetRepo.findByAccountAndSubKind(accountId, subKind, currencyCode)
     if (!asset) {
+      const assetName = currencyCode === 'TWD' ? account.name : `${account.name}（${currencyCode}）`
       asset = await this.assetRepo.create({
-        name: account.name,
+        name: assetName,
         assetClass: 'asset',
         category: 'liquid',
         subKind,
         currencyCode,
+        unit: currencyCode,
         pricingMode: 'fixed',
       })
     }

@@ -24,7 +24,7 @@ export class AssetsRepository {
     return this.db.delete(assets).where(eq(assets.id, id)).returning().then(r => r[0] ?? null)
   }
 
-  findByAccountAndSubKind(accountId: string, subKind: string) {
+  findByAccountAndSubKind(accountId: string, subKind: string, currencyCode?: string) {
     return this.db.select({
       id: assets.id, name: assets.name, assetClass: assets.assetClass,
       category: assets.category, subKind: assets.subKind, symbol: assets.symbol,
@@ -34,7 +34,10 @@ export class AssetsRepository {
     })
       .from(assets)
       .innerJoin(holdings, and(eq(holdings.assetId, assets.id), eq(holdings.accountId, accountId)))
-      .where(eq(assets.subKind, subKind))
+      .where(and(
+        eq(assets.subKind, subKind),
+        ...(currencyCode ? [eq(assets.currencyCode, currencyCode)] : []),
+      ))
       .then(r => r[0] ?? null)
   }
 }
