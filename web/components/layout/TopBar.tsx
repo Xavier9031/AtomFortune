@@ -25,7 +25,7 @@ export default function TopBar() {
 
   return (
     <header className="h-14 flex items-center justify-between px-6 border-b border-border bg-surface">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" className="h-7 w-auto" aria-label="AtomWorth">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160" className="h-7 w-auto" aria-label="Atom Fortune">
         <g transform="translate(174,80)" fill="none" stroke="#2A8B8B" strokeWidth="2.2">
           <ellipse rx="38" ry="18" transform="rotate(0)"/>
           <ellipse rx="38" ry="18" transform="rotate(60)"/>
@@ -40,7 +40,7 @@ export default function TopBar() {
           <polyline points="3,-11 7,-9 5,-5" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </g>
         <text x="14" y="110" fontFamily="Georgia,'Times New Roman',serif" fontWeight="700" fontSize="92" fill="currentColor" letterSpacing="-2">At</text>
-        <text x="210" y="110" fontFamily="Georgia,'Times New Roman',serif" fontWeight="700" fontSize="92" fill="currentColor" letterSpacing="-2">mWorth</text>
+        <text x="210" y="110" fontFamily="Georgia,'Times New Roman',serif" fontWeight="700" fontSize="92" fill="currentColor" letterSpacing="-2">m Fortune</text>
       </svg>
       <div className="flex items-center gap-3">
         <select

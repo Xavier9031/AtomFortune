@@ -1,5 +1,5 @@
 {
-  "name": "atomworth-api",
+  "name": "atom-fortune-api",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
