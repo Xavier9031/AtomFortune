@@ -124,6 +124,19 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
     const catData = categories.find(c => c.category === cat)
     const catHoldings = (holdings ?? []).filter(h => h.category === cat)
 
+    // Distribute live AllocationItem values proportionally by quantity across holdings
+    const assetTotalQty = new Map<string, number>()
+    for (const h of catHoldings) {
+      assetTotalQty.set(h.assetId, (assetTotalQty.get(h.assetId) ?? 0) + Number(h.quantity))
+    }
+    const liveValues = new Map<string, number>() // key: assetId+accountId
+    for (const h of catHoldings) {
+      const item = catData?.items.find(i => i.assetId === h.assetId)
+      const totalQty = assetTotalQty.get(h.assetId) ?? 1
+      const ratio = totalQty > 0 ? Number(h.quantity) / totalQty : 0
+      liveValues.set(h.assetId + h.accountId, item ? item.value * ratio : (h.latestValueInBase ?? 0))
+    }
+
     return (
       <div className="space-y-3">
         <Breadcrumb path={path} setPath={setPath} catLabel={CAT_LABELS[cat]}
@@ -142,8 +155,8 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
         </div>
 
         {groupBy === 'account'
-          ? <ByAccount holdings={catHoldings} displayCurrency={displayCurrency} />
-          : <ByAsset holdings={catHoldings} displayCurrency={displayCurrency} />}
+          ? <ByAccount holdings={catHoldings} liveValues={liveValues} displayCurrency={displayCurrency} />
+          : <ByAsset holdings={catHoldings} liveValues={liveValues} displayCurrency={displayCurrency} />}
       </div>
     )
   }
@@ -173,7 +186,7 @@ function Breadcrumb({ path, setPath, catLabel, total }: {
   )
 }
 
-function ByAccount({ holdings, displayCurrency }: { holdings: Holding[]; displayCurrency: string }) {
+function ByAccount({ holdings, liveValues, displayCurrency }: { holdings: Holding[]; liveValues: Map<string, number>; displayCurrency: string }) {
   const groups = new Map<string, { name: string; institution: string | null; total: number; rows: Holding[] }>()
   for (const h of holdings) {
     if (!groups.has(h.accountId)) groups.set(h.accountId, {
@@ -181,7 +194,7 @@ function ByAccount({ holdings, displayCurrency }: { holdings: Holding[]; display
     })
     const g = groups.get(h.accountId)!
     g.rows.push(h)
-    g.total += h.latestValueInBase ?? 0
+    g.total += liveValues.get(h.assetId + h.accountId) ?? 0
   }
   if (groups.size === 0) return <Empty />
 
@@ -197,7 +210,9 @@ function ByAccount({ holdings, displayCurrency }: { holdings: Holding[]; display
             <span className="text-sm font-semibold">{fmt(g.total, displayCurrency)}</span>
           </div>
           {g.rows.map((h, i) => (
-            <HoldingRow key={h.assetId + h.accountId} h={h} displayCurrency={displayCurrency}
+            <HoldingRow key={h.assetId + h.accountId} h={h}
+              value={liveValues.get(h.assetId + h.accountId) ?? 0}
+              displayCurrency={displayCurrency}
               showLabel={h.assetName}
               isLast={i === g.rows.length - 1} />
           ))}
@@ -207,11 +222,11 @@ function ByAccount({ holdings, displayCurrency }: { holdings: Holding[]; display
   )
 }
 
-function ByAsset({ holdings, displayCurrency }: { holdings: Holding[]; displayCurrency: string }) {
+function ByAsset({ holdings, liveValues, displayCurrency }: { holdings: Holding[]; liveValues: Map<string, number>; displayCurrency: string }) {
   if (holdings.length === 0) return <Empty />
   return (
     <div className="space-y-2">
-      {[...holdings].sort((a, b) => (b.latestValueInBase ?? 0) - (a.latestValueInBase ?? 0)).map(h => (
+      {[...holdings].sort((a, b) => (liveValues.get(b.assetId + b.accountId) ?? 0) - (liveValues.get(a.assetId + a.accountId) ?? 0)).map(h => (
         <div key={h.assetId + h.accountId}
           className="rounded-xl border border-[var(--color-border)] p-4 flex justify-between items-center">
           <div>
@@ -220,29 +235,29 @@ function ByAsset({ holdings, displayCurrency }: { holdings: Holding[]; displayCu
               {h.accountName}{h.institution ? ` · ${h.institution}` : ''}
             </div>
           </div>
-          <ValueBlock h={h} displayCurrency={displayCurrency} />
+          <ValueBlock h={h} value={liveValues.get(h.assetId + h.accountId) ?? 0} displayCurrency={displayCurrency} />
         </div>
       ))}
     </div>
   )
 }
 
-function HoldingRow({ h, displayCurrency, showLabel, isLast }: {
-  h: Holding; displayCurrency: string; showLabel: string; isLast: boolean
+function HoldingRow({ h, value, displayCurrency, showLabel, isLast }: {
+  h: Holding; value: number; displayCurrency: string; showLabel: string; isLast: boolean
 }) {
   return (
     <div className={`px-4 py-2.5 flex justify-between items-center text-sm
       ${!isLast ? 'border-b border-[var(--color-border)]' : ''}`}>
       <span className="text-[var(--color-muted)]">{showLabel}</span>
-      <ValueBlock h={h} displayCurrency={displayCurrency} />
+      <ValueBlock h={h} value={value} displayCurrency={displayCurrency} />
     </div>
   )
 }
 
-function ValueBlock({ h, displayCurrency }: { h: Holding; displayCurrency: string }) {
+function ValueBlock({ h, value, displayCurrency }: { h: Holding; value: number; displayCurrency: string }) {
   return (
     <div className="text-right">
-      <div className="text-sm font-medium">{fmt(h.latestValueInBase ?? 0, displayCurrency)}</div>
+      <div className="text-sm font-medium">{fmt(value, displayCurrency)}</div>
       {h.currencyCode !== displayCurrency && (
         <div className="text-xs text-[var(--color-muted)]">
           {new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 2 }).format(h.quantity)} {h.currencyCode}
