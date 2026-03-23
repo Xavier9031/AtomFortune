@@ -10,6 +10,12 @@ const LIQUID_SUBKINDS: Partial<Record<string, string>> = {
   e_wallet: 'e_wallet',
 }
 
+const LIQUID_SUBKIND_LABELS: Record<string, string> = {
+  bank_account: '活存',
+  physical_cash: '現金',
+  e_wallet: '電子錢包',
+}
+
 export class AccountsService {
   constructor(
     private accountRepo: AccountsRepository,
@@ -54,11 +60,11 @@ export class AccountsService {
     const subKind = LIQUID_SUBKINDS[account.accountType]
     if (!subKind) throw new HTTPException(400, { message: 'Account type does not support direct balance' })
 
-    let asset = await this.assetRepo.findByAccountAndSubKind(accountId, subKind, currencyCode)
+    let asset = await this.assetRepo.findBySubKindAndCurrency(subKind, currencyCode)
     if (!asset) {
-      const assetName = `${account.name}（${currencyCode}）`
+      const label = LIQUID_SUBKIND_LABELS[subKind] ?? '活存'
       asset = await this.assetRepo.create({
-        name: assetName,
+        name: `${label}（${currencyCode}）`,
         assetClass: 'asset',
         category: 'liquid',
         subKind,

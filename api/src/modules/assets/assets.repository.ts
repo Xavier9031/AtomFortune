@@ -24,6 +24,13 @@ export class AssetsRepository {
     return this.db.delete(assets).where(eq(assets.id, id)).returning().then(r => r[0] ?? null)
   }
 
+  findBySubKindAndCurrency(subKind: string, currencyCode: string) {
+    return this.db.select().from(assets)
+      .where(and(eq(assets.subKind, subKind), eq(assets.currencyCode, currencyCode)))
+      .limit(1)
+      .then(r => r[0] ?? null)
+  }
+
   findByAccountAndSubKind(accountId: string, subKind: string, currencyCode?: string) {
     return this.db.select({
       id: assets.id, name: assets.name, assetClass: assets.assetClass,
