@@ -61,6 +61,11 @@ const ASSET_GROUPS: AssetGroup[] = [
   ]},
 ]
 
+const ACCT_TYPE_LABELS: Record<string, string> = {
+  bank: '銀行', broker: '券商', crypto_exchange: '加密貨幣交易所',
+  e_wallet: '電子錢包', cash: '現金', other: '其他',
+}
+
 const DEFAULT_PRICING: Record<string, PricingMode> = {
   bank_account: 'fixed', physical_cash: 'fixed', stablecoin: 'fixed',
   e_wallet: 'fixed', receivable: 'fixed', credit_card: 'fixed',
@@ -282,10 +287,16 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
         {mode === 'edit' && holding && currentView === 'main' && (
           <div className="p-4 space-y-4">
             <div className="rounded-xl bg-[var(--color-bg)] p-4">
-              <p className="font-semibold">{isLiquidHolding ? holding.accountName : holding.assetName}</p>
-              <p className="text-sm text-[var(--color-muted)] mt-0.5">
-                {isLiquidHolding ? holding.accountType : holding.accountName}
-              </p>
+              <p className="font-semibold">{holding.assetName}</p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-sm text-[var(--color-muted)]">{holding.accountName}</span>
+                {holding.institution && (
+                  <span className="text-sm text-[var(--color-muted)]">· {holding.institution}</span>
+                )}
+                <span className="text-xs px-1.5 py-0.5 rounded bg-[var(--color-border)] text-[var(--color-muted)]">
+                  {ACCT_TYPE_LABELS[holding.accountType] ?? holding.accountType}
+                </span>
+              </div>
               {holding.latestValueInBase != null && (
                 <p className="text-sm text-[var(--color-muted)] mt-1">
                   估值：{Number(holding.latestValueInBase).toLocaleString()}
@@ -299,18 +310,10 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                 </span>
                 <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)}
                   className="flex-1 text-right bg-transparent text-lg font-semibold outline-none" />
-                {!isLiquidHolding && (holding.symbol || holding.unit) && (
-                  <span className="ml-2 px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
-                    rounded-full text-xs font-bold shrink-0">
-                    {holding.symbol ?? holding.unit}
-                  </span>
-                )}
-                {isLiquidHolding && (
-                  <input value={liquidCurrency}
-                    onChange={e => setLiquidCurrency(e.target.value.toUpperCase())}
-                    className="ml-2 w-14 text-right bg-[var(--color-bg)] border border-[var(--color-border)]
-                      rounded px-2 py-1 text-xs font-bold outline-none" />
-                )}
+                <span className="ml-2 px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
+                  rounded-full text-xs font-bold shrink-0">
+                  {holding.unit ?? holding.symbol ?? holding.currencyCode}
+                </span>
               </div>
               <div className="flex items-center px-4 py-3.5">
                 <span className="text-sm text-[var(--color-muted)] w-16">備註</span>
