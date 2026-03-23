@@ -56,7 +56,7 @@ export class AccountsService {
 
     let asset = await this.assetRepo.findByAccountAndSubKind(accountId, subKind, currencyCode)
     if (!asset) {
-      const assetName = currencyCode === 'TWD' ? account.name : `${account.name}（${currencyCode}）`
+      const assetName = `${account.name}（${currencyCode}）`
       asset = await this.assetRepo.create({
         name: assetName,
         assetClass: 'asset',
