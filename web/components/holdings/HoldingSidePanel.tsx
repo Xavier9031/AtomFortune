@@ -14,22 +14,7 @@ interface Props { mode: Mode; open: boolean; onClose: () => void; holding?: Hold
 const LIQUID_ACCOUNT_TYPES: AccountType[] = ['bank', 'cash', 'e_wallet']
 const LIQUID_SUBKINDS: SubKind[] = ['bank_account', 'physical_cash', 'e_wallet']
 
-interface AccTypeItem { type: AccountType; label: string; icon: string }
-interface AccGroup { label: string; colorClass: string; items: AccTypeItem[] }
-const ACC_GROUPS: AccGroup[] = [
-  { label: '流動資金', colorClass: 'bg-green-500', items: [
-    { type: 'cash', label: '現金', icon: '💵' },
-    { type: 'e_wallet', label: '電子錢包', icon: '📲' },
-    { type: 'bank', label: '銀行帳戶', icon: '🏦' },
-  ]},
-  { label: '投資', colorClass: 'bg-indigo-500', items: [
-    { type: 'broker', label: '券商', icon: '📈' },
-    { type: 'crypto_exchange', label: '加密貨幣交易所', icon: '₿' },
-  ]},
-  { label: '其他', colorClass: 'bg-slate-400', items: [
-    { type: 'other', label: '其他', icon: '📁' },
-  ]},
-]
+import { ACC_GROUPS, type AccTypeItem } from '@/lib/accountTypes'
 
 interface AssetKindItem { subKind: SubKind; label: string; icon: string; assetClass: AssetClass; category: Category; useTicker?: boolean }
 interface AssetGroup { label: string; colorClass: string; items: AssetKindItem[] }
