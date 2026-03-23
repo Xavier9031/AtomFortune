@@ -48,9 +48,22 @@ app.onError((err, c) => {
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
 
+async function migrateWithRetry(migrationsFolder: string, retries = 10, delayMs = 3000) {
+  for (let i = 1; i <= retries; i++) {
+    try {
+      await migrate(db, { migrationsFolder })
+      return
+    } catch (err) {
+      if (i === retries) throw err
+      console.log(`DB not ready, retrying in ${delayMs / 1000}s... (${i}/${retries})`)
+      await new Promise(r => setTimeout(r, delayMs))
+    }
+  }
+}
+
 if (process.env.NODE_ENV !== 'test') {
   const migrationsFolder = path.join(__dirname, '..', 'drizzle')
-  migrate(db, { migrationsFolder })
+  migrateWithRetry(migrationsFolder)
     .then(async () => {
       console.log('DB migrations applied')
       try {
@@ -63,7 +76,7 @@ if (process.env.NODE_ENV !== 'test') {
         console.warn('TW ticker seed failed:', err)
       )
     })
-    .catch(err => console.error('Migration failed:', err))
+    .catch(err => console.error('Migration failed after retries:', err))
 
   serve({ fetch: app.fetch, port: config.port })
 

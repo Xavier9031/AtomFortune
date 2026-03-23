@@ -1,4 +1,4 @@
-# AtomWorth MVP Design Spec
+# Atom Fortune MVP Design Spec
 
 > "Every atom counts. Own your net worth, bit by bit."
 
@@ -9,7 +9,7 @@
 
 ## Context
 
-AtomWorth 是一個個人資產淨值追蹤系統，對標 Percento 的開源替代方案。
+Atom Fortune 是一個個人資產淨值追蹤系統，對標 Percento 的開源替代方案。
 核心動機：財務數據不應存在別人的雲端，使用者應完全掌控數據主權。
 
 系統不是記帳軟體，不是交易系統，不做複式記帳。

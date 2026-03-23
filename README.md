@@ -1,4 +1,4 @@
-# AtomWorth
+# Atom Fortune
 
 隱私優先的個人淨值追蹤工具。所有資料存放在你自己的 PostgreSQL，不依賴任何雲端帳號。
 
@@ -31,7 +31,7 @@
 ## 專案結構
 
 ```
-AtomWorth/
+Atom Fortune/
 ├── api/                    # Hono 後端
 │   ├── src/
 │   │   ├── modules/        # assets / accounts / holdings / transactions
@@ -101,10 +101,10 @@ http://localhost:3000
 
 ```bash
 docker run -d \
-  --name atomworth-db \
-  -e POSTGRES_DB=atomworth \
-  -e POSTGRES_USER=atomworth \
-  -e POSTGRES_PASSWORD=atomworth \
+  --name atomfortune-db \
+  -e POSTGRES_DB=atomfortune \
+  -e POSTGRES_USER=atomfortune \
+  -e POSTGRES_PASSWORD=atomfortune \
   -p 5432:5432 \
   postgres:16
 ```
@@ -116,11 +116,11 @@ cd api
 npm install
 
 # 執行遷移
-DATABASE_URL=postgres://atomworth:atomworth@localhost:5432/atomworth \
+DATABASE_URL=postgres://atomfortune:atomfortune@localhost:5432/atomfortune \
   npm run db:migrate
 
 # 開發模式（hot reload）
-DATABASE_URL=postgres://atomworth:atomworth@localhost:5432/atomworth \
+DATABASE_URL=postgres://atomfortune:atomfortune@localhost:5432/atomfortune \
 BASE_CURRENCY=TWD \
 SNAPSHOT_SCHEDULE="0 22 * * *" \
 EXCHANGERATE_API_KEY=your_key_here \
@@ -149,11 +149,11 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1 \
 
 ```bash
 # 建立測試資料庫（只需一次）
-docker exec atomworth-db psql -U atomworth -c "CREATE DATABASE test_atomworth;"
+docker exec atomfortune-db psql -U atomfortune -c "CREATE DATABASE test_atomworth;"
 
 # 執行遷移到測試庫
 cd api
-TEST_DATABASE_URL=postgres://atomworth:atomworth@localhost:5432/test_atomworth \
+TEST_DATABASE_URL=postgres://atomfortune:atomfortune@localhost:5432/test_atomfortune \
   npm run db:migrate
 
 # 執行測試

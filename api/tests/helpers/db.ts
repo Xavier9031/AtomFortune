@@ -4,7 +4,7 @@ import { sql } from 'drizzle-orm'
 import * as schema from '../../src/db/schema'
 
 const TEST_DB_URL = process.env.TEST_DATABASE_URL
-  ?? 'postgres://atomworth:atomworth@localhost:5432/test_atomworth'
+  ?? 'postgres://atomfortune:atomfortune@localhost:5432/test_atomfortune'
 
 const client = postgres(TEST_DB_URL)
 export const testDb = drizzle(client, { schema })

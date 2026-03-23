@@ -1,4 +1,4 @@
-# AtomWorth — Frontend Part A: Setup & Dashboard
+# Atom Fortune — Frontend Part A: Setup & Dashboard
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -73,7 +73,7 @@ test('dashboard page renders loading state', () => {
 - [ ] **Step 3: Scaffold the project**
 
 ```bash
-# From AtomWorth root
+# From Atom Fortune root
 npx create-next-app@latest web \
   --typescript --tailwind --app --no-src-dir \
   --import-alias "@/*" --no-eslint
@@ -416,7 +416,7 @@ export default function TopBar() {
 
   return (
     <header className="h-14 flex items-center justify-between px-6 border-b border-border bg-surface">
-      <span className="font-semibold text-accent">AtomWorth</span>
+      <span className="font-semibold text-accent">Atom Fortune</span>
       <div className="flex items-center gap-3">
         <select aria-label="currency" className="bg-bg border border-border rounded px-2 py-1 text-sm"
           value={currency} onChange={e => setCurrency(e.target.value as Currency)}>

@@ -1,8 +1,8 @@
-# AtomWorth — Backend Foundation Implementation Plan (TypeScript)
+# Atom Fortune — Backend Foundation Implementation Plan (TypeScript)
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Scaffold the AtomWorth Hono API with PostgreSQL (Drizzle ORM) and all CRUD endpoints following Controller-Service-Repository pattern.
+**Goal:** Scaffold the Atom Fortune Hono API with PostgreSQL (Drizzle ORM) and all CRUD endpoints following Controller-Service-Repository pattern.
 
 **Architecture:** Hono (TypeScript) + Drizzle ORM + PostgreSQL 16. Every module has controller/service/repository. Zod validates all inputs. Tests use Vitest + @hono/testing against a real PostgreSQL test database.
 
@@ -17,7 +17,7 @@
 ## Project Structure
 
 ```
-AtomWorth/
+Atom Fortune/
 ├── shared/
 │   └── types.ts               # Shared TypeScript types (Asset, Account, Holding, etc.)
 ├── api/
@@ -116,9 +116,9 @@ services:
   db:
     image: postgres:16
     environment:
-      POSTGRES_DB: atomworth
-      POSTGRES_USER: atomworth
-      POSTGRES_PASSWORD: atomworth
+      POSTGRES_DB: atomfortune
+      POSTGRES_USER: atomfortune
+      POSTGRES_PASSWORD: atomfortune
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
@@ -126,7 +126,7 @@ services:
   api:
     build: ./api
     environment:
-      DATABASE_URL: postgres://atomworth:atomworth@db:5432/atomworth
+      DATABASE_URL: postgres://atomfortune:atomfortune@localhost:5432/atomfortune
       BASE_CURRENCY: TWD
       SNAPSHOT_SCHEDULE: "0 22 * * *"
       EXCHANGERATE_API_KEY: ${EXCHANGERATE_API_KEY}
@@ -163,7 +163,7 @@ services:
 **`api/package.json`** (key deps):
 ```json
 {
-  "name": "atomworth-api",
+  "name": "atom-fortune-api",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
@@ -486,7 +486,7 @@ import { drizzle } from 'drizzle-orm/postgres-js'
 import * as schema from '../../src/db/schema'
 
 const TEST_DB_URL = process.env.TEST_DATABASE_URL
-  ?? 'postgres://atomworth:atomworth@localhost:5432/test_atomworth'
+  ?? 'postgres://atomfortune:atomfortune@localhost:5432/atomfortune
 
 const client = postgres(TEST_DB_URL)
 export const testDb = drizzle(client, { schema })
@@ -1795,7 +1795,7 @@ export default fxRatesController
 
 ## Key Implementation Notes
 
-**Dependency injection pattern:** Each controller instantiates its own `Repository` and `Service` using the shared `db` client. For tests, the `testDb` client (pointing to `test_atomworth`) is injected by replacing `process.env.DATABASE_URL` with `TEST_DATABASE_URL` before importing the app.
+**Dependency injection pattern:** Each controller instantiates its own `Repository` and `Service` using the shared `db` client. For tests, the `testDb` client (pointing to `test_atomfortune`) is injected by replacing `process.env.DATABASE_URL` with `TEST_DATABASE_URL` before importing the app.
 
 **Error propagation:** Services throw `HTTPException` from `hono/http-exception`. The global `app.onError` handler in `index.ts` catches these and returns `{ error: message }` with the correct status code. Zod validation errors from `zValidator` also return 422 automatically.
 
@@ -1803,8 +1803,8 @@ export default fxRatesController
 
 **Immutable fields on PATCH /assets:** `AssetUpdateSchema` only accepts `name`, `symbol`, `market` — Zod strips or rejects any other fields. The service additionally checks for snapshot existence before allowing the update, but since the schema already prevents passing immutable fields, the 422 guard in the service is a belt-and-suspenders defense.
 
-**`test_atomworth` database:** Must be created manually before running tests:
+**`test_atomfortune` database:** Must be created manually before running tests:
 ```bash
-psql -U atomworth -c "CREATE DATABASE test_atomworth;"
-cd api && TEST_DATABASE_URL=postgres://atomworth:atomworth@localhost:5432/test_atomworth npm run db:migrate
+psql -U atomworth -c "CREATE DATABASE test_atomfortune;"
+cd api && TEST_DATABASE_URL=postgres://atomfortune:atomfortune@localhost:5432/atomfortune
 ```
