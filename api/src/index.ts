@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import assetsController from './modules/assets/assets.controller'
@@ -10,12 +11,14 @@ import fxRatesController from './modules/fx-rates/fx-rates.controller'
 import { config } from './config'
 import cron from 'node-cron'
 import { db } from './db/client'
-import { dailySnapshotJob } from './jobs/snapshot.job'
+import { dailySnapshotJob, refreshFxRates } from './jobs/snapshot.job'
 import { snapshotsRouter } from './modules/snapshots/snapshots.controller'
 import { dashboardRouter } from './modules/dashboard/dashboard.controller'
 import path from 'path'
 
 const app = new Hono()
+
+app.use('*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] }))
 
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
@@ -46,7 +49,15 @@ app.notFound((c) => c.json({ error: 'Not found' }, 404))
 if (process.env.NODE_ENV !== 'test') {
   const migrationsFolder = path.join(__dirname, '..', 'drizzle')
   migrate(db, { migrationsFolder })
-    .then(() => console.log('DB migrations applied'))
+    .then(async () => {
+      console.log('DB migrations applied')
+      try {
+        await refreshFxRates(db)
+        console.log('FX rates refreshed')
+      } catch (err) {
+        console.warn('FX rate refresh failed (continuing without rates):', err)
+      }
+    })
     .catch(err => console.error('Migration failed:', err))
 
   serve({ fetch: app.fetch, port: config.port })

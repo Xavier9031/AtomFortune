@@ -13,6 +13,12 @@ const service = new AssetsService(repo, snapshotRepo)
 
 assetsController.get('/', async (c) => c.json(await service.findAll()))
 
+assetsController.get('/:id', async (c) => {
+  const asset = await service.findById(c.req.param('id'))
+  if (!asset) return c.json({ error: 'Not found' }, 404)
+  return c.json(asset)
+})
+
 assetsController.post('/', zValidator('json', AssetCreateSchema), async (c) => {
   return c.json(await service.createAsset(c.req.valid('json')), 201)
 })

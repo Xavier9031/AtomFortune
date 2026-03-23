@@ -30,6 +30,16 @@ dashboardRouter.get('/allocation',
   }
 )
 
+dashboardRouter.get('/live',
+  zValidator('query', z.object({ displayCurrency: displayCurrencySchema })),
+  async (c) => {
+    const { displayCurrency } = c.req.valid('query')
+    const result = await service.getLiveData(displayCurrency)
+    if (!result) return c.json({ error: 'No holdings data' }, 404)
+    return c.json(result)
+  }
+)
+
 dashboardRouter.get('/net-worth-history',
   zValidator('query', z.object({
     range: z.enum(['30d', '1y', 'all']).default('30d'),

@@ -1,5 +1,5 @@
 import { and, desc, eq, lt, max, sql, gte } from 'drizzle-orm'
-import { assets, fxRates, snapshotItems } from '../../db/schema'
+import { assets, fxRates, snapshotItems, holdings } from '../../db/schema'
 import type { DrizzleDB } from '../../db/client'
 
 export async function getLatestSnapshotDate(db: DrizzleDB): Promise<string | null> {
@@ -72,6 +72,28 @@ export async function getAllocationForDate(db: DrizzleDB, date: string) {
     .where(eq(snapshotItems.snapshotDate, date))
     .groupBy(assets.category, snapshotItems.assetId, assets.name)
     .orderBy(desc(sql`SUM(${snapshotItems.valueInBase})`))
+}
+
+export async function getLiveHoldings(db: DrizzleDB) {
+  return db.select({
+    assetId: assets.id,
+    name: assets.name,
+    assetClass: assets.assetClass,
+    category: assets.category,
+    currencyCode: assets.currencyCode,
+    quantity: holdings.quantity,
+    price: sql<string>`COALESCE(
+      (SELECT p.price FROM prices p WHERE p."assetId" = ${assets.id}
+       ORDER BY p."priceDate" DESC LIMIT 1), '1')`,
+    fxToBase: sql<string>`CASE WHEN ${assets.currencyCode} = 'TWD' THEN '1'
+      ELSE COALESCE(
+        (SELECT fx.rate FROM "fxRates" fx
+         WHERE fx."fromCurrency" = ${assets.currencyCode} AND fx."toCurrency" = 'TWD'
+         ORDER BY fx."rateDate" DESC LIMIT 1), '1')
+      END`,
+  })
+  .from(holdings)
+  .innerJoin(assets, eq(holdings.assetId, assets.id))
 }
 
 export async function getNetWorthHistory(db: DrizzleDB, range: '30d' | '1y' | 'all') {

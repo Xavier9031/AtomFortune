@@ -16,7 +16,7 @@ export async function fetchFxRates(): Promise<FxRateRecord[]> {
   if (!exRes.ok) throw new Error(`exchangerate-api error: ${exRes.status}`)
   const exData = await exRes.json()
 
-  for (const [currency, invRate] of Object.entries(exData.rates) as [string, number][]) {
+  for (const [currency, invRate] of Object.entries(exData.conversion_rates) as [string, number][]) {
     if (currency === 'USD' || currency === 'JPY') {
       results.push({
         fromCurrency: currency,

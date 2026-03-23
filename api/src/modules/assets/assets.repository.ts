@@ -1,6 +1,6 @@
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { DrizzleDB } from '../../db/client'
-import { assets } from '../../db/schema'
+import { assets, holdings } from '../../db/schema'
 
 export class AssetsRepository {
   constructor(private db: DrizzleDB) {}
@@ -22,5 +22,18 @@ export class AssetsRepository {
 
   delete(id: string) {
     return this.db.delete(assets).where(eq(assets.id, id)).returning().then(r => r[0] ?? null)
+  }
+
+  findByAccountAndSubKind(accountId: string, subKind: string) {
+    return this.db.select({
+      id: assets.id, name: assets.name, assetClass: assets.assetClass,
+      category: assets.category, subKind: assets.subKind, symbol: assets.symbol,
+      market: assets.market, currencyCode: assets.currencyCode, pricingMode: assets.pricingMode,
+      createdAt: assets.createdAt, updatedAt: assets.updatedAt,
+    })
+      .from(assets)
+      .innerJoin(holdings, and(eq(holdings.assetId, assets.id), eq(holdings.accountId, accountId)))
+      .where(eq(assets.subKind, subKind))
+      .then(r => r[0] ?? null)
   }
 }

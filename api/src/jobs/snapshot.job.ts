@@ -75,6 +75,13 @@ async function upsertFxRates(db: DrizzleDB, rates: Awaited<ReturnType<typeof fet
   }
 }
 
+export async function refreshFxRates(db: DrizzleDB) {
+  const today = new Date().toISOString().slice(0, 10)
+  const rates = await fetchFxRates()
+  await upsertFxRates(db, rates, today)
+  return rates
+}
+
 export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date()) {
   const today = formatDate(snapshotDate)
 

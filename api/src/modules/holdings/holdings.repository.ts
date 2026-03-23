@@ -19,6 +19,7 @@ export class HoldingsRepository {
         pricingMode: assets.pricingMode,
         accountName: accounts.name,
         accountType: accounts.accountType,
+        institution: accounts.institution,
         updatedAt: holdings.updatedAt,
         latestValueInBase: sql<string | null>`(
           SELECT si."valueInBase" FROM "snapshotItems" si
