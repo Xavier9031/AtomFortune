@@ -213,6 +213,7 @@ function ByAccount({ holdings, liveValues, displayCurrency }: { holdings: Holdin
           {g.rows.map((h, i) => (
             <HoldingRow key={h.assetId + h.accountId} h={h}
               value={liveValues.get(h.assetId + h.accountId) ?? 0}
+              accountTotal={g.total}
               displayCurrency={displayCurrency}
               showLabel={h.assetName}
               isLast={i === g.rows.length - 1} />
@@ -264,14 +265,22 @@ function ByAsset({ holdings, liveValues, displayCurrency }: { holdings: Holding[
   )
 }
 
-function HoldingRow({ h, value, displayCurrency, showLabel, isLast }: {
-  h: Holding; value: number; displayCurrency: string; showLabel: string; isLast: boolean
+function HoldingRow({ h, value, accountTotal, displayCurrency, showLabel, isLast }: {
+  h: Holding; value: number; accountTotal: number; displayCurrency: string; showLabel: string; isLast: boolean
 }) {
+  const pct = accountTotal > 0 ? (value / accountTotal) * 100 : 0
   return (
-    <div className={`px-4 py-2.5 flex justify-between items-center text-sm
-      ${!isLast ? 'border-b border-[var(--color-border)]' : ''}`}>
-      <span className="text-[var(--color-muted)]">{showLabel}</span>
-      <ValueBlock h={h} value={value} displayCurrency={displayCurrency} />
+    <div className={`px-4 py-2.5 text-sm ${!isLast ? 'border-b border-[var(--color-border)]' : ''}`}>
+      <div className="flex justify-between items-center">
+        <span className="text-[var(--color-muted)]">{showLabel}</span>
+        <ValueBlock h={h} value={value} displayCurrency={displayCurrency} />
+      </div>
+      <div className="mt-1.5 flex items-center gap-2">
+        <div className="flex-1 h-1 rounded-full bg-[var(--color-bg)] overflow-hidden">
+          <div className="h-full rounded-full bg-green-400 transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
+        </div>
+        <span className="text-xs text-[var(--color-muted)] w-10 text-right">{pct.toFixed(1)}%</span>
+      </div>
     </div>
   )
 }
