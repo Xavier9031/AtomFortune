@@ -3,7 +3,7 @@ import type { Holding } from '@/lib/types'
 
 const SUB_KIND_LABELS: Record<string, string> = {
   bank_account: '銀行存款', physical_cash: '現金', e_wallet: '電子錢包', stablecoin: '穩定幣',
-  stock: '股票', etf: 'ETF', fund: '基金', crypto: '加密貨幣', precious_metal: '貴金屬',
+  stock: '股票', etf: 'ETF', fund: '基金', crypto: '加密貨幣', precious_metal: '實體貴金屬',
   real_estate: '不動產', vehicle: '車輛', receivable: '應收款',
   credit_card: '信用卡', mortgage: '房貸', personal_loan: '個人貸款', other: '其他',
 }
