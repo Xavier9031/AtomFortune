@@ -225,18 +225,39 @@ function ByAccount({ holdings, liveValues, displayCurrency }: { holdings: Holdin
 
 function ByAsset({ holdings, liveValues, displayCurrency }: { holdings: Holding[]; liveValues: Map<string, number>; displayCurrency: string }) {
   if (holdings.length === 0) return <Empty />
+
+  // Group by assetId, summing values across accounts
+  const groups = new Map<string, {
+    representative: Holding; total: number; totalQty: number; accounts: string[]
+  }>()
+  for (const h of holdings) {
+    const val = liveValues.get(h.assetId + h.accountId) ?? 0
+    if (!groups.has(h.assetId)) {
+      groups.set(h.assetId, { representative: h, total: 0, totalQty: 0, accounts: [] })
+    }
+    const g = groups.get(h.assetId)!
+    g.total += val
+    g.totalQty += Number(h.quantity)
+    g.accounts.push(h.accountName)
+  }
+
   return (
     <div className="space-y-2">
-      {[...holdings].sort((a, b) => (liveValues.get(b.assetId + b.accountId) ?? 0) - (liveValues.get(a.assetId + a.accountId) ?? 0)).map(h => (
-        <div key={h.assetId + h.accountId}
+      {[...groups.values()].sort((a, b) => b.total - a.total).map(({ representative: h, total, totalQty, accounts }) => (
+        <div key={h.assetId}
           className="rounded-xl border border-[var(--color-border)] p-4 flex justify-between items-center">
           <div>
             <div className="font-medium text-sm">{h.assetName}</div>
-            <div className="text-xs text-[var(--color-muted)] mt-0.5">
-              {h.accountName}{h.institution ? ` · ${h.institution}` : ''}
-            </div>
+            <div className="text-xs text-[var(--color-muted)] mt-0.5">{accounts.join(' · ')}</div>
           </div>
-          <ValueBlock h={h} value={liveValues.get(h.assetId + h.accountId) ?? 0} displayCurrency={displayCurrency} />
+          <div className="text-right">
+            <div className="text-sm font-medium">{fmt(total, displayCurrency)}</div>
+            {h.currencyCode !== displayCurrency && (
+              <div className="text-xs text-[var(--color-muted)]">
+                {new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 6 }).format(totalQty)} {getHoldingUnit(h)}
+              </div>
+            )}
+          </div>
         </div>
       ))}
     </div>
