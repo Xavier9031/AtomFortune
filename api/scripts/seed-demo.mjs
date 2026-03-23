@@ -36,6 +36,7 @@ const ASS = {
   eth:     '22222222-0000-4000-0000-000000000009', // 以太幣
   realty:  '22222222-0000-4000-0000-000000000010', // 台北市公寓
   mortgage:'22222222-0000-4000-0000-000000000011', // 房屋貸款
+  gold:    '22222222-0000-4000-0000-000000000012', // 黃金
 }
 
 // ─── Seeded price generation ──────────────────────────────────────────────────
@@ -83,6 +84,7 @@ const PRICES_TSMC = genSeries(695,  850,  N, 0.015, 1002)  // TWD stock
 const PRICES_NVDA = genSeries(65,   116,  N, 0.022, 1003)  // USD — AI boom
 const PRICES_BTC  = genSeries(55000,88000,N, 0.028, 1004)  // USD — crypto bull
 const PRICES_ETH  = genSeries(1800, 2800, N, 0.025, 1005)  // USD
+const PRICES_GOLD = genSeries(2700, 3100, N, 0.006, 1006)  // TWD/gram — gold (low vol)
 
 const USD_TWD = 32.1
 const JPY_TWD = 0.212
@@ -101,6 +103,7 @@ const HOLD_QTY = {
   [ASS.eth]:         5.0,
   [ASS.realty]:  15800000,
   [ASS.mortgage]: 6500000,
+  [ASS.gold]:        100,   // 100 grams
 }
 
 function txId(n) {
@@ -144,7 +147,8 @@ async function main() {
     (${ASS.btc},      '比特幣',      'asset',     'investment', 'crypto',        'BTC',    'USD', 'market', null),
     (${ASS.eth},      '以太幣',      'asset',     'investment', 'crypto',        'ETH',    'USD', 'market', null),
     (${ASS.realty},   '台北市公寓',  'asset',     'fixed',      'real_estate',   null,     'TWD', 'fixed',  'unit'),
-    (${ASS.mortgage}, '房屋貸款',    'liability', 'debt',       'mortgage',      null,     'TWD', 'fixed',  null)`
+    (${ASS.mortgage}, '房屋貸款',    'liability', 'debt',       'mortgage',      null,     'TWD', 'fixed',  null),
+    (${ASS.gold},     '黃金',        'asset',     'investment', 'precious_metal',null,     'TWD', 'manual', 'gram')`
 
   // ── Holdings ───────────────────────────────────────────────────────────────
   console.log('💼 Inserting holdings…')
@@ -159,7 +163,8 @@ async function main() {
     (${ASS.btc},      ${ACC.crypto}, ${HOLD_QTY[ASS.btc]}),
     (${ASS.eth},      ${ACC.crypto}, ${HOLD_QTY[ASS.eth]}),
     (${ASS.realty},   ${ACC.misc},   ${HOLD_QTY[ASS.realty]}),
-    (${ASS.mortgage}, ${ACC.misc},   ${HOLD_QTY[ASS.mortgage]})`
+    (${ASS.mortgage}, ${ACC.misc},   ${HOLD_QTY[ASS.mortgage]}),
+    (${ASS.gold},     ${ACC.misc},   ${HOLD_QTY[ASS.gold]})`
 
   // ── Transactions ───────────────────────────────────────────────────────────
   console.log('🧾 Inserting transactions…')
@@ -193,6 +198,7 @@ async function main() {
     [ASS.nvda,  PRICES_NVDA, 'seed'],
     [ASS.btc,   PRICES_BTC,  'seed'],
     [ASS.eth,   PRICES_ETH,  'seed'],
+    [ASS.gold,  PRICES_GOLD, 'seed'],
   ]
   for (const [assetId, series, source] of priceData) {
     for (let i = 0; i < DATES.length; i++) {
@@ -227,8 +233,9 @@ async function main() {
     { assetId: ASS.nvda,     accountId: ACC.broker, qty: HOLD_QTY[ASS.nvda],     priceFn: i => PRICES_NVDA[i], fx: USD_TWD },
     { assetId: ASS.btc,      accountId: ACC.crypto, qty: HOLD_QTY[ASS.btc],      priceFn: i => PRICES_BTC[i],  fx: USD_TWD },
     { assetId: ASS.eth,      accountId: ACC.crypto, qty: HOLD_QTY[ASS.eth],      priceFn: i => PRICES_ETH[i],  fx: USD_TWD },
-    { assetId: ASS.realty,   accountId: ACC.misc,   qty: HOLD_QTY[ASS.realty],   priceFn: () => 1,         fx: 1 },
-    { assetId: ASS.mortgage, accountId: ACC.misc,   qty: HOLD_QTY[ASS.mortgage], priceFn: () => 1,         fx: 1 },
+    { assetId: ASS.realty,   accountId: ACC.misc,   qty: HOLD_QTY[ASS.realty],   priceFn: () => 1,             fx: 1 },
+    { assetId: ASS.mortgage, accountId: ACC.misc,   qty: HOLD_QTY[ASS.mortgage], priceFn: () => 1,             fx: 1 },
+    { assetId: ASS.gold,     accountId: ACC.misc,   qty: HOLD_QTY[ASS.gold],     priceFn: i => PRICES_GOLD[i], fx: 1 },
   ]
 
   // Batch inserts in chunks of 50 dates to avoid overwhelming the connection
