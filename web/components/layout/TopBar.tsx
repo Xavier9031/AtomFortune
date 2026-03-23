@@ -1,8 +1,91 @@
 'use client'
-import { useCurrency } from '@/context/CurrencyContext'
+import { useState, useEffect, useRef, useTransition } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import { Moon, Sun } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useCurrency } from '@/context/CurrencyContext'
+import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
+import { setLocale } from '@/app/actions/setLocale'
+import { SUPPORTED_LOCALES } from '@/lib/locales'
 import type { Currency } from '@/lib/types'
+
+const LOCALE_LABEL: Record<string, string> = { 'zh-TW': '中文', 'en': 'EN' }
+
+function LocaleSwitcher() {
+  const t = useTranslations('settings')
+  const locale = useLocale()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (
+        dropRef.current && !dropRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) setOpen(false)
+    }
+    if (open) document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [open])
+
+  function handleOpen() {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
+    }
+    setOpen(p => !p)
+  }
+
+  function handleSelect(l: string) {
+    setOpen(false)
+    startTransition(async () => {
+      await setLocale(l)
+      router.refresh()
+    })
+  }
+
+  return (
+    <div className="shrink-0">
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        disabled={isPending}
+        className="h-7 px-2.5 flex items-center gap-1 rounded-lg text-xs font-medium
+          bg-[var(--color-bg)] border border-[var(--color-border)]
+          hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors
+          disabled:opacity-50">
+        {LOCALE_LABEL[locale] ?? locale}
+        <span className="text-[0.6rem] opacity-50">▾</span>
+      </button>
+
+      {open && (
+        <div
+          ref={dropRef}
+          style={{ top: pos.top, right: pos.right }}
+          className="fixed bg-[var(--color-surface)] border border-[var(--color-border)]
+            rounded-xl shadow-xl z-[200] overflow-hidden min-w-[8rem]">
+          {SUPPORTED_LOCALES.map(l => (
+            <button
+              key={l}
+              onClick={() => handleSelect(l)}
+              className={`w-full flex items-center justify-between px-3 py-2.5 text-xs
+                hover:bg-[var(--color-bg)] transition-colors
+                ${l === locale ? 'font-bold text-[var(--color-accent)]' : ''}`}>
+              <span className="font-medium">{LOCALE_LABEL[l] ?? l}</span>
+              <span className="text-[var(--color-muted)] ml-3">
+                {t(`languages.${l}` as Parameters<typeof t>[0])}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function TopBar() {
   const { currency, setCurrency } = useCurrency()
@@ -16,7 +99,7 @@ export default function TopBar() {
     }
   }, [])
 
-  const toggleTheme = () => {
+  function toggleTheme() {
     const next = !dark
     setDark(next)
     document.documentElement.dataset.theme = next ? 'dark' : 'light'
@@ -42,17 +125,17 @@ export default function TopBar() {
         <text x="14" y="110" fontFamily="Georgia,'Times New Roman',serif" fontWeight="700" fontSize="92" fill="currentColor" letterSpacing="-2">At</text>
         <text x="210" y="110" fontFamily="Georgia,'Times New Roman',serif" fontWeight="700" fontSize="92" fill="currentColor" letterSpacing="-2">m Fortune</text>
       </svg>
-      <div className="flex items-center gap-3">
-        <select
-          aria-label="currency"
-          className="bg-bg border border-border rounded px-2 py-1 text-sm"
-          value={currency}
-          onChange={e => setCurrency(e.target.value as Currency)}
-        >
-          {(['TWD', 'USD', 'JPY'] as Currency[]).map(c => <option key={c}>{c}</option>)}
-        </select>
-        <button aria-label="theme toggle" onClick={toggleTheme} className="p-1 rounded hover:bg-bg">
-          {dark ? <Sun size={16} /> : <Moon size={16} />}
+
+      <div className="flex items-center gap-1.5">
+        <CurrencyPicker value={currency} onChange={v => setCurrency(v as Currency)} />
+        <LocaleSwitcher />
+        <button
+          aria-label="theme toggle"
+          onClick={toggleTheme}
+          className="h-7 w-7 flex items-center justify-center rounded-lg
+            bg-[var(--color-bg)] border border-[var(--color-border)]
+            hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors">
+          {dark ? <Sun size={14} /> : <Moon size={14} />}
         </button>
       </div>
     </header>

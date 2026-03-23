@@ -21,7 +21,8 @@
     "optional": "選填",
     "back": "返回",
     "add": "新增",
-    "search": "搜尋"
+    "search": "搜尋",
+    "notFound": "找不到"
   },
   "accounts": {
     "title": "帳戶管理",

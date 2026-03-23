@@ -21,7 +21,8 @@
     "optional": "Optional",
     "back": "Back",
     "add": "Add",
-    "search": "Search"
+    "search": "Search",
+    "notFound": "Not found"
   },
   "accounts": {
     "title": "Accounts",

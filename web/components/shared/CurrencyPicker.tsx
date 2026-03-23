@@ -1,24 +1,11 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 
-const CURRENCIES = [
-  { code: 'TWD', name: '新台幣' },
-  { code: 'USD', name: '美元' },
-  { code: 'JPY', name: '日圓' },
-  { code: 'EUR', name: '歐元' },
-  { code: 'GBP', name: '英鎊' },
-  { code: 'CNY', name: '人民幣' },
-  { code: 'HKD', name: '港幣' },
-  { code: 'SGD', name: '新加坡元' },
-  { code: 'AUD', name: '澳幣' },
-  { code: 'CAD', name: '加拿大元' },
-  { code: 'CHF', name: '瑞士法郎' },
-  { code: 'KRW', name: '韓元' },
-  { code: 'MYR', name: '馬來西亞令吉' },
-  { code: 'THB', name: '泰銖' },
-  { code: 'VND', name: '越南盾' },
-  { code: 'IDR', name: '印尼盾' },
-  { code: 'PHP', name: '菲律賓披索' },
+const CURRENCY_CODES = [
+  'TWD', 'USD', 'JPY', 'EUR', 'GBP', 'CNY', 'HKD',
+  'SGD', 'AUD', 'CAD', 'CHF', 'KRW', 'MYR', 'THB',
+  'VND', 'IDR', 'PHP',
 ]
 
 interface Props {
@@ -27,11 +14,15 @@ interface Props {
 }
 
 export function CurrencyPicker({ value, onChange }: Props) {
+  const t = useTranslations('common')
+  const locale = useLocale()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [pos, setPos] = useState({ top: 0, right: 0 })
   const btnRef = useRef<HTMLButtonElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
+
+  const displayNames = new Intl.DisplayNames([locale], { type: 'currency' })
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -50,15 +41,18 @@ export function CurrencyPicker({ value, onChange }: Props) {
   function handleToggle() {
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
-      setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+      setPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right })
     }
     setOpen(p => !p)
     setQuery('')
   }
 
-  const filtered = CURRENCIES.filter(c =>
-    c.code.includes(query.toUpperCase()) || c.name.includes(query)
-  )
+  const q = query.toUpperCase()
+  const filtered = CURRENCY_CODES.filter(code => {
+    if (code.includes(q)) return true
+    const name = displayNames.of(code) ?? ''
+    return name.toLowerCase().includes(query.toLowerCase())
+  })
 
   return (
     <div className="shrink-0">
@@ -66,10 +60,11 @@ export function CurrencyPicker({ value, onChange }: Props) {
         ref={btnRef}
         type="button"
         onClick={handleToggle}
-        className="px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
-          rounded-full text-xs font-bold flex items-center gap-1 hover:opacity-80 transition-opacity">
+        className="h-7 px-2.5 flex items-center gap-1 rounded-lg text-xs font-medium
+          bg-[var(--color-bg)] border border-[var(--color-border)]
+          hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors">
         {value}
-        <span className="text-[0.6rem] opacity-60">▾</span>
+        <span className="text-[0.6rem] opacity-50">▾</span>
       </button>
 
       {open && (
@@ -83,24 +78,26 @@ export function CurrencyPicker({ value, onChange }: Props) {
               autoFocus
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="搜尋（TWD、日圓…）"
+              placeholder={t('search') + '…'}
               className="w-full px-2 py-1.5 text-xs rounded-lg border border-[var(--color-border)]
                 bg-[var(--color-bg)] outline-none focus:border-[var(--color-accent)]"
             />
           </div>
           <div className="max-h-52 overflow-y-auto">
             {filtered.length === 0
-              ? <p className="text-xs text-[var(--color-muted)] text-center py-3">找不到</p>
-              : filtered.map(c => (
+              ? <p className="text-xs text-[var(--color-muted)] text-center py-3">{t('notFound')}</p>
+              : filtered.map(code => (
                 <button
-                  key={c.code}
+                  key={code}
                   type="button"
-                  onClick={() => { onChange(c.code); setOpen(false); setQuery('') }}
+                  onClick={() => { onChange(code); setOpen(false); setQuery('') }}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs
                     hover:bg-[var(--color-bg)] transition-colors
-                    ${c.code === value ? 'font-bold text-[var(--color-accent)]' : ''}`}>
-                  <span className="font-mono font-bold">{c.code}</span>
-                  <span className="text-[var(--color-muted)]">{c.name}</span>
+                    ${code === value ? 'font-bold text-[var(--color-accent)]' : ''}`}>
+                  <span className="font-mono font-bold">{code}</span>
+                  <span className="text-[var(--color-muted)] truncate ml-2 text-right">
+                    {displayNames.of(code)}
+                  </span>
                 </button>
               ))
             }
