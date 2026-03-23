@@ -11,8 +11,14 @@ const CAT_LABELS: Record<string, string> = {
   receivable: '應收款', debt: '負債',
 }
 
+function fmtNative(quantity: number, price: number, currencyCode: string) {
+  const value = quantity * price
+  const decimals = ['TWD', 'JPY', 'KRW'].includes(currencyCode) ? 0 : 2
+  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: decimals }).format(value) + ' ' + currencyCode
+}
+
 function fmtTWD(v: number) {
-  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 }).format(v) + ' TWD'
+  return '≈ ' + new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 }).format(v) + ' TWD'
 }
 
 interface Props {
@@ -69,7 +75,12 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
                     <div key={`${item.assetId}-${item.accountId}`}
                       className="flex justify-between text-sm py-1">
                       <span>{item.assetName} · {item.accountName}</span>
-                      <span className="font-mono">{fmtTWD(item.valueInBase)}</span>
+                      <div className="text-right">
+                        <div className="font-mono">{fmtNative(item.quantity, item.price, item.currencyCode)}</div>
+                        {item.currencyCode !== 'TWD' && (
+                          <div className="text-xs text-[var(--color-muted)]">{fmtTWD(item.valueInBase)}</div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
