@@ -4,6 +4,7 @@ import useSWR, { mutate as globalMutate } from 'swr'
 import { BASE, fetcher } from '@/lib/api'
 import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker, Transaction } from '@/lib/types'
 import { TickerSearch } from '@/components/assets/TickerSearch'
+import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
 
 type View = 'main' | 'acctPicker' | 'acctTypePicker' | 'acctForm' | 'assetPicker' | 'assetKindPicker' | 'assetTickerSearch' | 'assetForm'
 type Mode = 'add' | 'edit'
@@ -399,10 +400,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                     placeholder="0"
                     className="w-32 text-right bg-transparent text-2xl font-semibold outline-none" />
                   {isLiquidAccount ? (
-                    <input value={liquidCurrency}
-                      onChange={e => setLiquidCurrency(e.target.value.toUpperCase())}
-                      className="w-14 text-right bg-[var(--color-surface)] border border-[var(--color-border)]
-                        rounded px-2 py-1 text-xs font-bold outline-none shrink-0" />
+                    <CurrencyPicker value={liquidCurrency} onChange={setLiquidCurrency} />
                   ) : selectedAssetObj && (
                     <span className="px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
                       rounded-full text-xs font-bold shrink-0">
