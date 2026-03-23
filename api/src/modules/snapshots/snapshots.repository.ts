@@ -29,19 +29,19 @@ export async function getSnapshotHistory(db: DrizzleDB, range: RangeParam) {
 
 export async function getSnapshotItemsByAsset(db: DrizzleDB, assetId: string, range: RangeParam) {
   const cutoff = rangeToDate(range)
-  const base = db
+  const condition = cutoff
+    ? and(eq(snapshotItems.assetId, assetId), gte(snapshotItems.snapshotDate, cutoff))
+    : eq(snapshotItems.assetId, assetId)
+
+  return db
     .select({
       snapshotDate: snapshotItems.snapshotDate,
       valueInBase: sql<string>`SUM(${snapshotItems.valueInBase})`.as('valueInBase'),
     })
     .from(snapshotItems)
-    .where(eq(snapshotItems.assetId, assetId))
+    .where(condition)
     .groupBy(snapshotItems.snapshotDate)
     .orderBy(desc(snapshotItems.snapshotDate))
-
-  return cutoff
-    ? base.where(and(eq(snapshotItems.assetId, assetId), gte(snapshotItems.snapshotDate, cutoff)))
-    : base
 }
 
 export async function getSnapshotByDate(db: DrizzleDB, date: string) {

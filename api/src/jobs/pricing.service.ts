@@ -10,8 +10,8 @@ export async function fetchMarketPrices(assets: AssetInput[]): Promise<Map<strin
   const symbolToId = new Map(marketAssets.map(a => [a.symbol!, a.id]))
   const symbols = [...symbolToId.keys()]
 
-  const quotes = await yahooFinance.quote(symbols)
-  const quoteArray = Array.isArray(quotes) ? quotes : [quotes]
+  const quotes = await yahooFinance.quote(symbols) as any
+  const quoteArray: any[] = Array.isArray(quotes) ? quotes : [quotes]
 
   for (const q of quoteArray) {
     if (q.regularMarketPrice != null) {
