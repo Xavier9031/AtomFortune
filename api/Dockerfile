@@ -1,13 +1,18 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine AS deps
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 
-FROM base AS dev
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
 RUN npm ci
 COPY . .
+RUN npm run build
 
-FROM base AS prod
-COPY --from=base /app/node_modules ./node_modules
-COPY dist ./dist
+FROM node:20-alpine AS prod
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+EXPOSE 8000
 CMD ["node", "dist/index.js"]
