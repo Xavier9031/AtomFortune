@@ -6,7 +6,7 @@ import useSWR from 'swr'
 import { Settings } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { BASE, fetcher } from '@/lib/api'
-import { formatValue, getHoldingUnit } from '@/lib/utils'
+import { formatValue, getHoldingUnit, translateUnit } from '@/lib/utils'
 import { ManualPriceModal } from './ManualPriceModal'
 import type { Asset, Holding, Transaction } from '@/lib/types'
 
@@ -191,7 +191,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
                       <span className="font-medium">
                         {qty.toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
                       </span>
-                      <span className="text-xs text-[var(--color-muted)] ml-1">{getHoldingUnit(h)}</span>
+                      <span className="text-xs text-[var(--color-muted)] ml-1">{translateUnit(getHoldingUnit(h), t)}</span>
                       <span className="text-xs text-[var(--color-muted)] ml-2">{pct.toFixed(1)}%</span>
                     </div>
                   </div>

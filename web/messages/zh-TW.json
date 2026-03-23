@@ -107,7 +107,9 @@
     },
     "units": {
       "gram": "公克",
-      "ounce": "盎司"
+      "ounce": "盎司",
+      "shares": "股",
+      "unit": "個"
     },
     "columns": {
       "name": "名稱",

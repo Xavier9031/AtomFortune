@@ -5,7 +5,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import useSWR from 'swr'
 import { BASE, fetcher } from '@/lib/api'
 import type { AllocationCategory, Category, Holding } from '@/lib/types'
-import { getHoldingUnit } from '@/lib/utils'
+import { getHoldingUnit, translateUnit } from '@/lib/utils'
 
 const CAT_COLOR: Record<string, string> = {
   liquid:     '#078080',
@@ -332,6 +332,7 @@ function HoldingRow({ h, value, groupTotal, displayCurrency, locale, label, isLa
   h: Holding; value: number; groupTotal: number; displayCurrency: string
   locale: string; label: string; isLast: boolean
 }) {
+  const tRoot = useTranslations()
   const pct = groupTotal > 0 ? (value / groupTotal) * 100 : 0
   return (
     <div className={`px-4 py-2.5 text-sm ${!isLast ? 'border-b border-[var(--color-border)]' : ''}`}>
@@ -341,7 +342,7 @@ function HoldingRow({ h, value, groupTotal, displayCurrency, locale, label, isLa
           <div className="text-sm font-medium tabular-nums">{fmt(value, displayCurrency, locale)}</div>
           {h.currencyCode !== displayCurrency && (
             <div className="text-xs text-[var(--color-muted)]">
-              {`${new Intl.NumberFormat(locale, { maximumFractionDigits: 6 }).format(h.quantity)}\u00a0${getHoldingUnit(h)}`}
+              {`${new Intl.NumberFormat(locale, { maximumFractionDigits: 6 }).format(h.quantity)}\u00a0${translateUnit(getHoldingUnit(h), tRoot)}`}
             </div>
           )}
         </div>

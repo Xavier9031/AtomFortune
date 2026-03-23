@@ -134,17 +134,17 @@ async function main() {
   await sql`INSERT INTO "assets"
     (id, name, "assetClass", category, "subKind", symbol, "currencyCode", "pricingMode", unit)
   VALUES
-    (${ASS.twd},      '台幣活存',    'asset',     'liquid',     'bank_account',  null,     'TWD', 'fixed',  '元'),
-    (${ASS.usd},      '美元活存',    'asset',     'liquid',     'bank_account',  null,     'USD', 'fixed',  '元'),
-    (${ASS.jpy},      '日幣活存',    'asset',     'liquid',     'bank_account',  null,     'JPY', 'fixed',  '元'),
-    (${ASS.cash},     '現金',        'asset',     'liquid',     'physical_cash', null,     'TWD', 'fixed',  '元'),
-    (${ASS.e0050},    '元大台灣50',  'asset',     'investment', 'etf',           '0050.TW','TWD', 'market', '股'),
-    (${ASS.tsmc},     '台積電',      'asset',     'investment', 'stock',         '2330.TW','TWD', 'market', '股'),
-    (${ASS.nvda},     'NVIDIA',      'asset',     'investment', 'stock',         'NVDA',   'USD', 'market', '股'),
-    (${ASS.btc},      '比特幣',      'asset',     'investment', 'crypto',        'BTC',    'USD', 'market', '枚'),
-    (${ASS.eth},      '以太幣',      'asset',     'investment', 'crypto',        'ETH',    'USD', 'market', '枚'),
-    (${ASS.realty},   '台北市公寓',  'asset',     'fixed',      'real_estate',   null,     'TWD', 'fixed',  '戶'),
-    (${ASS.mortgage}, '房屋貸款',    'liability', 'debt',       'mortgage',      null,     'TWD', 'fixed',  '元')`
+    (${ASS.twd},      '台幣活存',    'asset',     'liquid',     'bank_account',  null,     'TWD', 'fixed',  null),
+    (${ASS.usd},      '美元活存',    'asset',     'liquid',     'bank_account',  null,     'USD', 'fixed',  null),
+    (${ASS.jpy},      '日幣活存',    'asset',     'liquid',     'bank_account',  null,     'JPY', 'fixed',  null),
+    (${ASS.cash},     '現金',        'asset',     'liquid',     'physical_cash', null,     'TWD', 'fixed',  null),
+    (${ASS.e0050},    '元大台灣50',  'asset',     'investment', 'etf',           '0050.TW','TWD', 'market', 'shares'),
+    (${ASS.tsmc},     '台積電',      'asset',     'investment', 'stock',         '2330.TW','TWD', 'market', 'shares'),
+    (${ASS.nvda},     'NVIDIA',      'asset',     'investment', 'stock',         'NVDA',   'USD', 'market', 'shares'),
+    (${ASS.btc},      '比特幣',      'asset',     'investment', 'crypto',        'BTC',    'USD', 'market', null),
+    (${ASS.eth},      '以太幣',      'asset',     'investment', 'crypto',        'ETH',    'USD', 'market', null),
+    (${ASS.realty},   '台北市公寓',  'asset',     'fixed',      'real_estate',   null,     'TWD', 'fixed',  'unit'),
+    (${ASS.mortgage}, '房屋貸款',    'liability', 'debt',       'mortgage',      null,     'TWD', 'fixed',  null)`
 
   // ── Holdings ───────────────────────────────────────────────────────────────
   console.log('💼 Inserting holdings…')

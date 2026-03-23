@@ -2,7 +2,7 @@
 import { useTranslations } from 'next-intl'
 import useSWR from 'swr'
 import type { Holding } from '@/lib/types'
-import { getHoldingUnit } from '@/lib/utils'
+import { getHoldingUnit, translateUnit } from '@/lib/utils'
 import { BASE, fetcher } from '@/lib/api'
 import { useCurrency } from '@/context/CurrencyContext'
 
@@ -83,7 +83,7 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
               <td className="px-4 py-3 whitespace-nowrap">
                 {parseFloat(String(h.quantity)).toLocaleString()}
                 <span className="ml-1 text-xs text-[var(--color-muted)]">
-                  {getHoldingUnit(h)}
+                  {translateUnit(getHoldingUnit(h), t)}
                 </span>
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">

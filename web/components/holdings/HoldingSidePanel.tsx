@@ -6,7 +6,7 @@ import { BASE, fetcher } from '@/lib/api'
 import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker, Transaction } from '@/lib/types'
 import { TickerSearch } from '@/components/assets/TickerSearch'
 import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
-import { getHoldingUnit } from '@/lib/utils'
+import { getHoldingUnit, translateUnit } from '@/lib/utils'
 
 type View = 'main' | 'acctPicker' | 'acctTypePicker' | 'acctForm' | 'assetPicker' | 'assetKindPicker' | 'assetTickerSearch' | 'assetForm'
 type Mode = 'add' | 'edit'
@@ -345,12 +345,12 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   className="flex-1 text-right bg-transparent text-lg font-semibold outline-none" />
                 <span className="ml-2 px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
                   rounded-full text-xs font-bold shrink-0">
-                  {getHoldingUnit(holding)}
+                  {translateUnit(getHoldingUnit(holding), t)}
                 </span>
               </div>
               {qtyMode === 'adjust' && quantity !== '' && !isNaN(parseFloat(quantity)) && parseFloat(quantity) > 0 && (
                 <div className="px-4 py-2 text-xs text-[var(--color-muted)] text-right border-b border-[var(--color-border)]">
-                  {t('holdings.result')}{String(Number(Number(holding.quantity) + (adjustSign === '-' ? -parseFloat(quantity) : parseFloat(quantity))))} {getHoldingUnit(holding)}
+                  {t('holdings.result')}{String(Number(Number(holding.quantity) + (adjustSign === '-' ? -parseFloat(quantity) : parseFloat(quantity))))} {translateUnit(getHoldingUnit(holding), t)}
                 </div>
               )}
               <div className="flex items-center px-4 py-3.5">

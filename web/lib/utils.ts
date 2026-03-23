@@ -17,8 +17,15 @@ export function formatValue(value: number, currency: string): string {
   }
 }
 
+export const UNIT_I18N_KEYS = new Set(['shares', 'gram', 'ounce', 'unit'])
+
 export function getHoldingUnit(h: { unit?: string | null; symbol?: string | null; currencyCode: string }): string {
   return h.unit ?? h.symbol ?? h.currencyCode
+}
+
+export function translateUnit(raw: string, t: (key: string) => string): string {
+  if (UNIT_I18N_KEYS.has(raw)) return t(`assets.units.${raw}`)
+  return raw
 }
 
 const CAT_COLORS: Record<string, string> = {

@@ -106,8 +106,10 @@
       "platinum": "Platinum"
     },
     "units": {
-      "gram": "Gram",
-      "ounce": "Ounce"
+      "gram": "gram",
+      "ounce": "oz",
+      "shares": "shares",
+      "unit": "unit"
     },
     "columns": {
       "name": "Name",
