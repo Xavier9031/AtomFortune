@@ -29,6 +29,7 @@ export class AssetsRepository {
       id: assets.id, name: assets.name, assetClass: assets.assetClass,
       category: assets.category, subKind: assets.subKind, symbol: assets.symbol,
       market: assets.market, currencyCode: assets.currencyCode, pricingMode: assets.pricingMode,
+      unit: assets.unit,
       createdAt: assets.createdAt, updatedAt: assets.updatedAt,
     })
       .from(assets)

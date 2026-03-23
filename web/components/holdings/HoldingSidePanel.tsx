@@ -5,6 +5,7 @@ import { BASE, fetcher } from '@/lib/api'
 import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker, Transaction } from '@/lib/types'
 import { TickerSearch } from '@/components/assets/TickerSearch'
 import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
+import { getHoldingUnit } from '@/lib/utils'
 
 type View = 'main' | 'acctPicker' | 'acctTypePicker' | 'acctForm' | 'assetPicker' | 'assetKindPicker' | 'assetTickerSearch' | 'assetForm'
 type Mode = 'add' | 'edit'
@@ -316,7 +317,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   className="flex-1 text-right bg-transparent text-lg font-semibold outline-none" />
                 <span className="ml-2 px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
                   rounded-full text-xs font-bold shrink-0">
-                  {holding.unit ?? holding.symbol ?? holding.currencyCode}
+                  {getHoldingUnit(holding)}
                 </span>
               </div>
               <div className="flex items-center px-4 py-3.5">

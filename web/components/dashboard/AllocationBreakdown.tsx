@@ -3,6 +3,7 @@ import { useState } from 'react'
 import useSWR from 'swr'
 import { BASE, fetcher } from '@/lib/api'
 import type { AllocationCategory, Category, Holding } from '@/lib/types'
+import { getHoldingUnit } from '@/lib/utils'
 
 const CAT_COLORS: Record<Category, string> = {
   liquid: '#22c55e', investment: '#6366f1', fixed: '#8b5cf6',
@@ -260,7 +261,7 @@ function ValueBlock({ h, value, displayCurrency }: { h: Holding; value: number; 
       <div className="text-sm font-medium">{fmt(value, displayCurrency)}</div>
       {h.currencyCode !== displayCurrency && (
         <div className="text-xs text-[var(--color-muted)]">
-          {new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 6 }).format(h.quantity)} {h.unit ?? h.symbol ?? h.currencyCode}
+          {new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 6 }).format(h.quantity)} {getHoldingUnit(h)}
         </div>
       )}
     </div>

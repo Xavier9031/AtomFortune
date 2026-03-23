@@ -1,5 +1,6 @@
 'use client'
 import type { Holding } from '@/lib/types'
+import { getHoldingUnit } from '@/lib/utils'
 
 const SUB_KIND_LABELS: Record<string, string> = {
   bank_account: '銀行存款', physical_cash: '現金', e_wallet: '電子錢包', stablecoin: '穩定幣',
@@ -60,7 +61,7 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
               <td className="px-4 py-3 whitespace-nowrap">
                 {parseFloat(String(h.quantity)).toLocaleString()}
                 <span className="ml-1 text-xs text-[var(--color-muted)]">
-                  {h.unit ?? h.symbol ?? h.currencyCode}
+                  {getHoldingUnit(h)}
                 </span>
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">

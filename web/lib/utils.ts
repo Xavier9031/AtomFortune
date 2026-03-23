@@ -1,14 +1,24 @@
 import type { Category } from './types'
 
-const CURRENCY_FORMATS: Record<string, Intl.NumberFormatOptions> = {
-  TWD: { style: 'currency', currency: 'TWD', maximumFractionDigits: 0 },
-  USD: { style: 'currency', currency: 'USD', minimumFractionDigits: 2 },
-  JPY: { style: 'currency', currency: 'JPY', maximumFractionDigits: 0 },
-}
+// Currencies where decimals are not meaningful
+const ZERO_DECIMAL_CURRENCIES = new Set(['TWD', 'JPY', 'KRW', 'VND', 'IDR'])
 
 export function formatValue(value: number, currency: string): string {
-  const opts = CURRENCY_FORMATS[currency] ?? CURRENCY_FORMATS['TWD']
-  return new Intl.NumberFormat('en-US', opts).format(value)
+  const maximumFractionDigits = ZERO_DECIMAL_CURRENCIES.has(currency) ? 0 : 2
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency', currency,
+      minimumFractionDigits: maximumFractionDigits,
+      maximumFractionDigits,
+    }).format(value)
+  } catch {
+    // Fallback for unknown/invalid currency codes
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(value) + ' ' + currency
+  }
+}
+
+export function getHoldingUnit(h: { unit?: string | null; symbol?: string | null; currencyCode: string }): string {
+  return h.unit ?? h.symbol ?? h.currencyCode
 }
 
 const CAT_COLORS: Record<string, string> = {

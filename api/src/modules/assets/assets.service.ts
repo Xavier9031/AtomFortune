@@ -24,6 +24,7 @@ export class AssetsService {
       name: data.name, assetClass: data.assetClass, category: data.category,
       subKind: data.subKind, symbol: data.symbol ?? null, market: data.market ?? null,
       currencyCode: data.currencyCode, pricingMode: data.pricingMode,
+      unit: data.unit ?? null,
     })
   }
 
@@ -32,6 +33,7 @@ export class AssetsService {
     if (!existing) throw new HTTPException(404, { message: 'Asset not found' })
     return this.repo.update(id, {
       name: data.name, symbol: data.symbol ?? undefined, market: data.market ?? undefined,
+      unit: data.unit ?? undefined,
     })
   }
 
