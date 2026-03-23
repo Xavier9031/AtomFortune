@@ -53,7 +53,7 @@ export interface Account {
 export interface Holding {
   assetId: string; accountId: string; quantity: number
   assetName: string; assetClass: AssetClass; category: Category
-  subKind: SubKind; currencyCode: string; pricingMode: PricingMode; unit?: string | null
+  subKind: SubKind; symbol?: string | null; currencyCode: string; pricingMode: PricingMode; unit?: string | null
   accountName: string; accountType: AccountType; institution?: string | null
   latestValueInBase: number | null; updatedAt: string
 }

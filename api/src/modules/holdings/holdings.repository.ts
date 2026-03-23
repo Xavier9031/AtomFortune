@@ -15,6 +15,7 @@ export class HoldingsRepository {
         assetClass: assets.assetClass,
         category: assets.category,
         subKind: assets.subKind,
+        symbol: assets.symbol,
         currencyCode: assets.currencyCode,
         pricingMode: assets.pricingMode,
         unit: assets.unit,

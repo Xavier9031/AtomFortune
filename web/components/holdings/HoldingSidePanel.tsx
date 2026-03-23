@@ -274,6 +274,12 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                 </span>
                 <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)}
                   className="flex-1 text-right bg-transparent text-lg font-semibold outline-none" />
+                {!isLiquidHolding && (holding.symbol || holding.unit) && (
+                  <span className="ml-2 px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
+                    rounded-full text-xs font-bold shrink-0">
+                    {holding.symbol ?? holding.unit}
+                  </span>
+                )}
                 {isLiquidHolding && (
                   <input value={liquidCurrency}
                     onChange={e => setLiquidCurrency(e.target.value.toUpperCase())}
@@ -376,9 +382,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   ) : selectedAssetObj && (
                     <span className="px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
                       rounded-full text-xs font-bold shrink-0">
-                      {selectedAssetObj.subKind === 'crypto' && selectedAssetObj.symbol
-                        ? selectedAssetObj.symbol
-                        : selectedAssetObj.unit ?? selectedAssetObj.currencyCode}
+                      {selectedAssetObj.symbol ?? selectedAssetObj.unit ?? selectedAssetObj.currencyCode}
                     </span>
                   )}
                 </div>
