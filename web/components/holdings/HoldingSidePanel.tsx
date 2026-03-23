@@ -94,6 +94,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   const [selectedAccount, setSelectedAccount] = useState('')
   const [selectedAsset, setSelectedAsset] = useState('')
   const [quantity, setQuantity] = useState('')
+  const [qtyMode, setQtyMode] = useState<'set' | 'adjust'>('set')
   const [liquidCurrency, setLiquidCurrency] = useState('TWD')
   const [note, setNote] = useState('')
 
@@ -127,7 +128,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   // Sync quantity + currency when opening in edit mode
   useEffect(() => {
     if (open && holding) {
-      setQuantity(holding.quantity?.toString() ?? '')
+      setQuantity(holding.quantity != null ? String(Number(holding.quantity)) : '')
       setLiquidCurrency(holding.currencyCode ?? 'TWD')
     }
   }, [open, holding])
@@ -185,7 +186,10 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   }
 
   async function handleSave() {
-    const bal = parseFloat(quantity)
+    const inputVal = parseFloat(quantity)
+    const bal = (mode === 'edit' && qtyMode === 'adjust')
+      ? Number(holding!.quantity) + inputVal
+      : inputVal
     if (mode === 'add' && isLiquidAccount) {
       await fetch(`${BASE}/accounts/${selectedAccount}/balance`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -250,6 +254,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     resetViews()
     setSelectedAccount(''); setSelectedAsset('')
     setQuantity(''); setNote(''); setLiquidCurrency('TWD')
+    setQtyMode('set')
     setSelectedTicker(null)
     setExpandNewAsset(false)
     onClose()
@@ -263,7 +268,9 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     ? isLiquidAccount
       ? !!(selectedAccount && quantity && !isNaN(parseFloat(quantity)))
       : !!(selectedAccount && selectedAsset && quantity && parseFloat(quantity) !== 0)
-    : !!(quantity && parseFloat(quantity) !== 0)
+    : qtyMode === 'adjust'
+      ? !!(quantity && !isNaN(parseFloat(quantity)) && parseFloat(quantity) !== 0)
+      : !!(quantity && parseFloat(quantity) !== 0)
 
   const viewTitle: Record<View, string> = {
     main: mode === 'add' ? '新增持倉' : '編輯持倉',
@@ -315,18 +322,37 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                 </p>
               )}
             </div>
+            {/* Mode toggle */}
+            <div className="flex p-1 bg-[var(--color-bg)] rounded-xl">
+              <button onClick={() => { setQtyMode('set'); setQuantity(String(Number(holding.quantity))) }}
+                className={`flex-1 py-1.5 text-xs rounded-lg font-medium transition-colors
+                  ${qtyMode === 'set' ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm' : 'text-[var(--color-muted)]'}`}>
+                設定數量
+              </button>
+              <button onClick={() => { setQtyMode('adjust'); setQuantity('') }}
+                className={`flex-1 py-1.5 text-xs rounded-lg font-medium transition-colors
+                  ${qtyMode === 'adjust' ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm' : 'text-[var(--color-muted)]'}`}>
+                增減數量
+              </button>
+            </div>
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
               <div className="flex items-center px-4 py-3.5 border-b border-[var(--color-border)]">
                 <span className="text-sm text-[var(--color-muted)] w-16">
-                  {isLiquidHolding ? '餘額' : '數量'}
+                  {qtyMode === 'adjust' ? '增減' : isLiquidHolding ? '餘額' : '數量'}
                 </span>
                 <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)}
-                  className="flex-1 text-right bg-transparent text-lg font-semibold outline-none" />
+                  placeholder={qtyMode === 'adjust' ? '正數增加，負數減少' : ''}
+                  className="flex-1 text-right bg-transparent text-lg font-semibold outline-none placeholder:text-sm placeholder:font-normal placeholder:text-[var(--color-muted)]" />
                 <span className="ml-2 px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
                   rounded-full text-xs font-bold shrink-0">
                   {getHoldingUnit(holding)}
                 </span>
               </div>
+              {qtyMode === 'adjust' && quantity !== '' && !isNaN(parseFloat(quantity)) && (
+                <div className="px-4 py-2 text-xs text-[var(--color-muted)] text-right border-b border-[var(--color-border)]">
+                  結果：{String(Number(Number(holding.quantity) + parseFloat(quantity)))} {getHoldingUnit(holding)}
+                </div>
+              )}
               <div className="flex items-center px-4 py-3.5">
                 <span className="text-sm text-[var(--color-muted)] w-16">備註</span>
                 <input value={note} onChange={e => setNote(e.target.value)} placeholder="選填"
