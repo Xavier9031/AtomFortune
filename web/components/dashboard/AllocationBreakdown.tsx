@@ -29,7 +29,7 @@ function fmtShort(v: number, cur: string, locale: string) {
     abs >= 1e9  ? [(v / 1e9).toFixed(1),  'B'] :
     abs >= 1e6  ? [(v / 1e6).toFixed(1),  'M'] :
     abs >= 1e3  ? [(v / 1e3).toFixed(0),  'K'] : null
-  if (suffix) return suffix[0] + suffix[1] + '\u00a0' + cur
+  if (suffix) return suffix[0] + '\u00a0' + suffix[1] + '\u00a0' + cur
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(v) + '\u00a0' + cur
 }
 
@@ -131,14 +131,20 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
                     <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-xl
                       border border-[var(--color-border)] bg-[var(--color-surface)]
                       shadow-lg p-3 space-y-1.5">
-                      {catItems.slice(0, 5).map(item => (
-                        <div key={item.assetId} className="flex justify-between items-center text-xs">
-                          <span className="text-[var(--color-muted)] truncate pr-2">{item.name}</span>
-                          <span className="tabular-nums shrink-0 font-medium">
-                            {fmtShort(item.value, displayCurrency, locale)}
-                          </span>
-                        </div>
-                      ))}
+                      {catItems.slice(0, 5).map(item => {
+                        const itemPct = c.value > 0 ? (item.value / c.value) * 100 : 0
+                        return (
+                          <div key={item.assetId} className="flex items-center text-xs gap-2">
+                            <span className="text-[var(--color-muted)] flex-1 truncate">{item.name}</span>
+                            <span className="text-[var(--color-muted)] tabular-nums shrink-0 w-10 text-right">
+                              {itemPct.toFixed(1)}%
+                            </span>
+                            <span className="tabular-nums shrink-0 font-medium">
+                              {fmt(item.value, displayCurrency, locale)}
+                            </span>
+                          </div>
+                        )
+                      })}
                       {catItems.length > 5 && (
                         <p className="text-xs text-[var(--color-muted)]">
                           +{catItems.length - 5} {t('moreItems')}
