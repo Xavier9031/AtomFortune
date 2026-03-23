@@ -30,6 +30,7 @@ const ASSET_GROUPS: AssetGroup[] = [
     { subKind: 'bank_account', label: '銀行存款', icon: '🏦', assetClass: 'asset', category: 'liquid' },
     { subKind: 'physical_cash', label: '現金', icon: '💵', assetClass: 'asset', category: 'liquid' },
     { subKind: 'e_wallet', label: '電子錢包', icon: '📲', assetClass: 'asset', category: 'liquid' },
+    { subKind: 'other', label: '其他流動資金', icon: '📦', assetClass: 'asset', category: 'liquid' },
   ]},
   { label: '投資', colorClass: 'bg-indigo-500', items: [
     { subKind: 'stock', label: '股票/ETF', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
@@ -41,6 +42,7 @@ const ASSET_GROUPS: AssetGroup[] = [
   { label: '固定資產', colorClass: 'bg-violet-500', items: [
     { subKind: 'real_estate', label: '不動產', icon: '🏠', assetClass: 'asset', category: 'fixed' },
     { subKind: 'vehicle', label: '車輛', icon: '🚗', assetClass: 'asset', category: 'fixed' },
+    { subKind: 'other', label: '其他固定資產', icon: '📦', assetClass: 'asset', category: 'fixed' },
   ]},
   { label: '應收款', colorClass: 'bg-sky-400', items: [
     { subKind: 'receivable', label: '應收款', icon: '📋', assetClass: 'asset', category: 'receivable' },
@@ -49,6 +51,7 @@ const ASSET_GROUPS: AssetGroup[] = [
     { subKind: 'credit_card', label: '信用卡', icon: '💳', assetClass: 'liability', category: 'debt' },
     { subKind: 'mortgage', label: '房貸', icon: '🏡', assetClass: 'liability', category: 'debt' },
     { subKind: 'personal_loan', label: '個人貸款', icon: '💸', assetClass: 'liability', category: 'debt' },
+    { subKind: 'other', label: '其他負債', icon: '📦', assetClass: 'liability', category: 'debt' },
   ]},
 ]
 
