@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate'
 import { db } from '../../db/client'
 import {
   assets, accounts, holdings, transactions,
@@ -6,6 +7,14 @@ import {
 } from '../../db/schema'
 
 export const backupRouter = new Hono()
+
+// Strip auto-managed timestamp columns so DB uses its own defaults on import
+// Returns `any` intentionally — the backup JSON is untyped at runtime
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function strip(row: Record<string, any>): any {
+  const { createdAt: _c, updatedAt: _u, ...rest } = row
+  return rest
+}
 
 // ── Export ─────────────────────────────────────────────────────────────────
 
@@ -37,20 +46,41 @@ backupRouter.get('/export', async (c) => {
     },
   }
 
+  const jsonBytes = strToU8(JSON.stringify(payload, null, 2))
   const date = new Date().toISOString().slice(0, 10)
-  c.header('Content-Disposition', `attachment; filename="atomfortune-backup-${date}.json"`)
-  c.header('Content-Type', 'application/json')
-  return c.body(JSON.stringify(payload, null, 2))
+  const filename = `atomfortune-backup-${date}.json`
+  const zipped = zipSync({ [filename]: jsonBytes })
+
+  c.header('Content-Disposition', `attachment; filename="${filename.replace('.json', '.zip')}"`)
+  c.header('Content-Type', 'application/zip')
+  return c.body(zipped.buffer as ArrayBuffer)
 })
 
 // ── Import ─────────────────────────────────────────────────────────────────
 
 backupRouter.post('/import', async (c) => {
   let body: any
-  try {
-    body = await c.req.json()
-  } catch {
-    return c.json({ error: 'Invalid JSON' }, 400)
+
+  const contentType = c.req.header('content-type') ?? ''
+
+  if (contentType.includes('multipart/form-data')) {
+    // ZIP upload
+    const formData = await c.req.formData()
+    const file = formData.get('file') as File | null
+    if (!file) return c.json({ error: 'Missing file field' }, 400)
+    const buf = await file.arrayBuffer()
+    try {
+      const unzipped = unzipSync(new Uint8Array(buf))
+      const jsonFile = Object.values(unzipped)[0]
+      body = JSON.parse(strFromU8(jsonFile))
+    } catch {
+      return c.json({ error: 'Failed to unzip or parse backup file' }, 400)
+    }
+  } else {
+    // Raw JSON (fallback)
+    try { body = await c.req.json() } catch {
+      return c.json({ error: 'Invalid JSON' }, 400)
+    }
   }
 
   if (body.version !== '1' || !body.data) {
@@ -61,87 +91,85 @@ backupRouter.post('/import', async (c) => {
   const counts = { assets: 0, accounts: 0, holdings: 0, transactions: 0, prices: 0, fxRates: 0, snapshotItems: 0 }
 
   await db.transaction(async (tx) => {
-    // assets
     if (Array.isArray(d.assets) && d.assets.length) {
       for (const row of d.assets) {
-        await tx.insert(assets).values(row)
+        const v = strip(row)
+        await tx.insert(assets).values(v)
           .onConflictDoUpdate({ target: assets.id, set: {
-            name: row.name, assetClass: row.assetClass, category: row.category,
-            subKind: row.subKind, symbol: row.symbol, market: row.market,
-            currencyCode: row.currencyCode, pricingMode: row.pricingMode,
-            unit: row.unit, updatedAt: row.updatedAt,
+            name: v.name, assetClass: v.assetClass, category: v.category,
+            subKind: v.subKind, symbol: v.symbol, market: v.market,
+            currencyCode: v.currencyCode, pricingMode: v.pricingMode, unit: v.unit,
           }})
       }
       counts.assets = d.assets.length
     }
 
-    // accounts
     if (Array.isArray(d.accounts) && d.accounts.length) {
       for (const row of d.accounts) {
-        await tx.insert(accounts).values(row)
+        const v = strip(row)
+        await tx.insert(accounts).values(v)
           .onConflictDoUpdate({ target: accounts.id, set: {
-            name: row.name, institution: row.institution,
-            accountType: row.accountType, note: row.note, updatedAt: row.updatedAt,
+            name: v.name, institution: v.institution,
+            accountType: v.accountType, note: v.note,
           }})
       }
       counts.accounts = d.accounts.length
     }
 
-    // holdings
     if (Array.isArray(d.holdings) && d.holdings.length) {
       for (const row of d.holdings) {
-        await tx.insert(holdings).values(row)
+        const v = strip(row)
+        await tx.insert(holdings).values(v)
           .onConflictDoUpdate({ target: [holdings.assetId, holdings.accountId], set: {
-            quantity: row.quantity, updatedAt: row.updatedAt,
+            quantity: v.quantity,
           }})
       }
       counts.holdings = d.holdings.length
     }
 
-    // transactions
     if (Array.isArray(d.transactions) && d.transactions.length) {
       for (const row of d.transactions) {
-        await tx.insert(transactions).values(row)
+        const v = strip(row)
+        await tx.insert(transactions).values(v)
           .onConflictDoUpdate({ target: transactions.id, set: {
-            txnType: row.txnType, quantity: row.quantity,
-            txnDate: row.txnDate, note: row.note, updatedAt: row.updatedAt,
+            txnType: v.txnType, quantity: v.quantity, txnDate: v.txnDate, note: v.note,
           }})
       }
       counts.transactions = d.transactions.length
     }
 
-    // prices
     if (Array.isArray(d.prices) && d.prices.length) {
       for (const row of d.prices) {
-        await tx.insert(prices).values(row)
+        const v = strip(row)
+        await tx.insert(prices).values(v)
           .onConflictDoUpdate({ target: [prices.assetId, prices.priceDate], set: {
-            price: row.price, source: row.source, updatedAt: row.updatedAt,
+            price: v.price, source: v.source,
           }})
       }
       counts.prices = d.prices.length
     }
 
-    // fxRates
     if (Array.isArray(d.fxRates) && d.fxRates.length) {
       for (const row of d.fxRates) {
-        await tx.insert(fxRates).values(row)
+        const v = strip(row)
+        await tx.insert(fxRates).values(v)
           .onConflictDoUpdate({
             target: [fxRates.fromCurrency, fxRates.toCurrency, fxRates.rateDate],
-            set: { rate: row.rate, source: row.source, updatedAt: row.updatedAt },
+            set: { rate: v.rate, source: v.source },
           })
       }
       counts.fxRates = d.fxRates.length
     }
 
-    // snapshotItems
     if (Array.isArray(d.snapshotItems) && d.snapshotItems.length) {
       for (const row of d.snapshotItems) {
-        await tx.insert(snapshotItems).values(row)
+        const v = strip(row)
+        await tx.insert(snapshotItems).values(v)
           .onConflictDoUpdate({
             target: [snapshotItems.snapshotDate, snapshotItems.assetId, snapshotItems.accountId],
             set: {
-              quantity: row.quantity, price: row.price,
-              fxRate: row.fxRate, valueInBase: row.valueInBase, updatedAt: row.updatedAt,
+              quantity: v.quantity, price: v.price,
+              fxRate: v.fxRate, valueInBase: v.valueInBase,
             },
           })
       }

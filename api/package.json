@@ -13,6 +13,7 @@
     "@hono/zod-validator": "^0.2.2",
     "@types/node-cron": "^3.0.11",
     "drizzle-orm": "^0.31.0",
+    "fflate": "^0.8.2",
     "hono": "^4.4.0",
     "node-cron": "^4.2.1",
     "postgres": "^3.4.3",

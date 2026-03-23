@@ -38,12 +38,9 @@ export default function SettingsPage() {
     setImporting(true)
     setImportMsg(null)
     try {
-      const text = await file.text()
-      const res = await fetch(`${BASE}/backup/import`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: text,
-      })
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch(`${BASE}/backup/import`, { method: 'POST', body: form })
       const json = await res.json()
       if (!res.ok) {
         setImportMsg({ ok: false, text: `${t('settings.importError')}: ${json.error}` })
@@ -118,7 +115,7 @@ export default function SettingsPage() {
             style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
             {importing ? t('settings.importing') : t('settings.importButton')}
           </button>
-          <input ref={fileRef} type="file" accept=".json" className="hidden"
+          <input ref={fileRef} type="file" accept=".zip" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) handleImport(f) }} />
         </div>
         {importMsg && (
