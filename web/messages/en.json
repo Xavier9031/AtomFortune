@@ -1,0 +1,145 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "holdings": "Holdings",
+    "assets": "Assets",
+    "accounts": "Accounts",
+    "snapshots": "Snapshots",
+    "settings": "Settings"
+  },
+  "common": {
+    "save": "Save",
+    "saving": "Saving…",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "close": "Close",
+    "confirm": "Confirm",
+    "loading": "Loading…",
+    "noData": "No data",
+    "optional": "Optional",
+    "back": "Back",
+    "add": "Add",
+    "search": "Search"
+  },
+  "account": {
+    "typePickerTitle": "Select Account Type",
+    "editTitle": "Edit Account",
+    "addTitle": "New Account",
+    "namePlaceholder": "e.g. My Savings",
+    "institutionLabel": "Institution",
+    "institutionPlaceholder": "Optional (e.g. Chase Bank)",
+    "noteLabel": "Note",
+    "notePlaceholder": "Optional",
+    "nameLabel": "Name",
+    "typeLabel": "Type",
+    "createButton": "Create Account",
+    "deleteButton": "Delete Account",
+    "deleteConfirm": "Delete this account?",
+    "deleteBlockedByHoldings": "Please remove all holdings before deleting the account",
+    "deleteFailed": "Delete failed",
+    "groups": {
+      "liquid": "Liquid",
+      "investment": "Investment",
+      "other": "Other"
+    },
+    "types": {
+      "bank": "Bank",
+      "broker": "Broker",
+      "crypto_exchange": "Crypto Exchange",
+      "e_wallet": "E-Wallet",
+      "cash": "Cash",
+      "other": "Other"
+    },
+    "typeLabels": {
+      "bank": "Bank Account",
+      "broker": "Broker",
+      "crypto_exchange": "Crypto Exchange",
+      "e_wallet": "E-Wallet",
+      "cash": "Cash",
+      "other": "Other"
+    }
+  },
+  "asset": {
+    "subKinds": {
+      "bank_account": "Bank Account",
+      "physical_cash": "Physical Cash",
+      "e_wallet": "E-Wallet",
+      "stablecoin": "Stablecoin",
+      "stock": "Stock",
+      "etf": "ETF",
+      "fund": "Fund",
+      "crypto": "Cryptocurrency",
+      "precious_metal": "Precious Metal",
+      "real_estate": "Real Estate",
+      "vehicle": "Vehicle",
+      "receivable": "Receivable",
+      "credit_card": "Credit Card",
+      "mortgage": "Mortgage",
+      "personal_loan": "Personal Loan",
+      "other": "Other"
+    },
+    "categories": {
+      "liquid": "Liquid",
+      "investment": "Investment",
+      "fixed": "Fixed Assets",
+      "receivable": "Receivable",
+      "debt": "Liabilities"
+    },
+    "pricingModes": {
+      "market": "Market Price",
+      "fixed": "Fixed",
+      "manual": "Manual"
+    },
+    "groups": {
+      "liquid": "Liquid",
+      "investment": "Investment",
+      "fixed": "Fixed Assets",
+      "debt": "Liabilities"
+    }
+  },
+  "holdings": {
+    "title": "Holdings",
+    "addButton": "+ Add Holding",
+    "empty": "No holdings yet. Click '+ Add Holding' to get started.",
+    "columns": {
+      "assetName": "Asset",
+      "account": "Account",
+      "institution": "Institution",
+      "type": "Type",
+      "quantity": "Quantity",
+      "value": "Value"
+    }
+  },
+  "dashboard": {
+    "netWorth": "Net Worth",
+    "realtime": "Live",
+    "asOf": "As of",
+    "assets": "Assets",
+    "liabilities": "Liabilities",
+    "allocation": "Allocation",
+    "history": "Net Worth History",
+    "noHistory": "No historical snapshots yet",
+    "triggerSnapshot": "Run Snapshot Now",
+    "vsSnapshot": "vs snapshot ({date})",
+    "noDataTitle": "No data yet",
+    "noDataDesc": "Complete the steps below and your net worth overview will appear automatically."
+  },
+  "settings": {
+    "title": "Settings",
+    "darkMode": "Dark Mode",
+    "language": "Language",
+    "snapshotSchedule": "Snapshot Schedule (read-only)",
+    "snapshotScheduleDesc": "Controlled by the SNAPSHOT_SCHEDULE env var. Restart the service to change.",
+    "languages": {
+      "zh-TW": "繁體中文",
+      "en": "English"
+    }
+  },
+  "snapshots": {
+    "title": "Snapshots",
+    "triggerButton": "Snapshot Now",
+    "triggering": "Running…"
+  }
+}
