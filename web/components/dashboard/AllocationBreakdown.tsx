@@ -260,7 +260,7 @@ function ValueBlock({ h, value, displayCurrency }: { h: Holding; value: number; 
       <div className="text-sm font-medium">{fmt(value, displayCurrency)}</div>
       {h.currencyCode !== displayCurrency && (
         <div className="text-xs text-[var(--color-muted)]">
-          {new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 6 }).format(h.quantity)} {h.unit ?? h.currencyCode}
+          {new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 6 }).format(h.quantity)} {h.unit ?? h.symbol ?? h.currencyCode}
         </div>
       )}
     </div>
