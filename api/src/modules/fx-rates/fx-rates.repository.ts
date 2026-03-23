@@ -6,12 +6,13 @@ export class FxRatesRepository {
   constructor(private db: DrizzleDB) {}
 
   findAll(filters: { from?: string; to?: string; fromDate?: string; toDate?: string }) {
-    let query = this.db.select().from(fxRates).$dynamic()
-    if (filters.from) query = query.where(eq(fxRates.fromCurrency, filters.from))
-    if (filters.to) query = query.where(eq(fxRates.toCurrency, filters.to))
-    if (filters.fromDate) query = query.where(gte(fxRates.rateDate, filters.fromDate))
-    if (filters.toDate) query = query.where(lte(fxRates.rateDate, filters.toDate))
-    return query
+    const conditions = [
+      filters.from ? eq(fxRates.fromCurrency, filters.from) : undefined,
+      filters.to ? eq(fxRates.toCurrency, filters.to) : undefined,
+      filters.fromDate ? gte(fxRates.rateDate, filters.fromDate) : undefined,
+      filters.toDate ? lte(fxRates.rateDate, filters.toDate) : undefined,
+    ].filter(Boolean) as Parameters<typeof and>
+    return this.db.select().from(fxRates).$dynamic().where(and(...conditions))
   }
 
   upsert(from: string, to: string, rateDate: string, rate: string, source: string) {
