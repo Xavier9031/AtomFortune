@@ -143,7 +143,7 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
               </div>
               <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
                 <span className="text-sm text-[var(--color-muted)]">機構</span>
-                <input value={form.institution}
+                <input value={form.institution} autoComplete="off"
                   onChange={e => setForm(p => ({ ...p, institution: e.target.value }))}
                   placeholder="選填（例：玉山銀行）"
                   className="text-right bg-transparent text-sm outline-none w-full" />
