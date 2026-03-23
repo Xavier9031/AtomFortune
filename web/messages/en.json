@@ -122,9 +122,20 @@
     "history": "Net Worth History",
     "noHistory": "No historical snapshots yet",
     "triggerSnapshot": "Run Snapshot Now",
+    "triggeringSnapshot": "Running…",
+    "snapshotDone": "Done! Refreshing…",
+    "snapshotFailed": "Failed, please try again",
     "vsSnapshot": "vs snapshot ({date})",
     "noDataTitle": "No data yet",
-    "noDataDesc": "Complete the steps below and your net worth overview will appear automatically."
+    "noDataDesc": "Complete the steps below and your net worth overview will appear automatically.",
+    "goToAccounts": "Go to Accounts",
+    "addAccountsDesc": "Add your accounts (bank, broker, wallet, etc.)",
+    "goToHoldings": "Go to Holdings",
+    "addHoldingsDesc": "Add holdings and set balances or quantities",
+    "allocationOverview": "Overview",
+    "byAccount": "By Account",
+    "byAsset": "By Asset",
+    "noHoldingData": "No holdings data"
   },
   "settings": {
     "title": "Settings",

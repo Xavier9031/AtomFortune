@@ -1,14 +1,16 @@
 'use client'
+import { useTranslations } from 'next-intl'
 import type { DashboardSummary } from '@/lib/types'
 import { formatValue } from '@/lib/utils'
 
 export default function NetWorthHeader({ summary }: { summary: DashboardSummary }) {
+  const t = useTranslations('dashboard')
   const positive = (summary.changePct ?? 0) >= 0
   const hasChange = summary.changePct !== null && summary.changeAmount !== null
   return (
     <div className="mb-6">
       <p className="text-sm text-muted mb-1">
-        Net Worth · {summary.snapshotDate === '即時' ? '即時' : `資料截至 ${summary.snapshotDate}`}
+        {t('netWorth')} · {summary.snapshotDate === '即時' ? t('realtime') : `${t('asOf')} ${summary.snapshotDate}`}
       </p>
       <div className="flex items-end gap-3">
         <span data-testid="net-worth-value" className="text-4xl font-bold">
@@ -24,12 +26,12 @@ export default function NetWorthHeader({ summary }: { summary: DashboardSummary 
         )}
       </div>
       <div className="flex gap-6 mt-2 text-sm text-muted">
-        <span>Assets: {formatValue(summary.totalAssets, summary.displayCurrency)}</span>
-        <span>Liabilities: <span className="text-coral">{formatValue(summary.totalLiabilities, summary.displayCurrency)}</span></span>
+        <span>{t('assets')}: {formatValue(summary.totalAssets, summary.displayCurrency)}</span>
+        <span>{t('liabilities')}: <span className="text-coral">{formatValue(summary.totalLiabilities, summary.displayCurrency)}</span></span>
       </div>
       {hasChange && (
         <p className="mt-1 text-xs text-[var(--color-muted)]">
-          較快照（{summary.prevSnapshotDate}）
+          {t('vsSnapshot', { date: summary.prevSnapshotDate ?? '' })}
           <span className={positive ? 'text-green-600' : 'text-red-500'}>
             {' '}{positive ? '+' : ''}{formatValue(summary.changeAmount!, summary.displayCurrency)}
           </span>
