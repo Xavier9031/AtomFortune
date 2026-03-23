@@ -1,5 +1,6 @@
 'use client'
 import { useState, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import useSWR from 'swr'
 import { BASE, fetcher } from '@/lib/api'
 import { AccountsTable } from '@/components/accounts/AccountsTable'
@@ -7,6 +8,7 @@ import { AccountSidePanel } from '@/components/accounts/AccountSidePanel'
 import type { Account, Holding } from '@/lib/types'
 
 export default function AccountsPage() {
+  const t = useTranslations('accounts')
   const { data: accounts, mutate } = useSWR<Account[]>(`${BASE}/accounts`, fetcher)
   const { data: holdings } = useSWR<Holding[]>(`${BASE}/holdings`, fetcher)
   const [panelOpen, setPanelOpen] = useState(false)
@@ -24,9 +26,9 @@ export default function AccountsPage() {
   return (
     <main className="p-6 max-w-5xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl font-bold">帳戶管理</h1>
+        <h1 className="text-xl font-bold">{t('title')}</h1>
         <button onClick={openAdd}
-          className="bg-[var(--color-accent)] text-white px-4 py-2 rounded">+ 新增帳戶</button>
+          className="bg-[var(--color-accent)] text-white px-4 py-2 rounded">{t('addButton')}</button>
       </div>
       <AccountsTable
         accounts={accounts ?? []}

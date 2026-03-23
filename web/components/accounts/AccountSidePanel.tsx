@@ -1,14 +1,16 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { BASE, fetcher } from '@/lib/api'
+import { useTranslations } from 'next-intl'
+import { BASE } from '@/lib/api'
 import type { Account, AccountType } from '@/lib/types'
-import { ACC_GROUPS, ACCOUNT_TYPE_LABELS, type AccTypeItem } from '@/lib/accountTypes'
+import { ACC_GROUPS, type AccTypeItem } from '@/lib/accountTypes'
 
 type View = 'typePicker' | 'form'
 
 interface Props { open: boolean; account?: Account; holdingsCount?: number; onClose: () => void }
 
 export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: Props) {
+  const t = useTranslations()
   const [view, setView] = useState<View>('typePicker')
   const [pendingType, setPendingType] = useState<AccTypeItem | null>(null)
   const [form, setForm] = useState({ name: '', institution: '', note: '' })
@@ -30,10 +32,10 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
 
   async function handleDelete() {
     if (!account) return
-    if (holdingsCount > 0) { alert('請先移除所有持倉才能刪除帳戶'); return }
-    if (!confirm('確認刪除帳戶？')) return
+    if (holdingsCount > 0) { alert(t('account.deleteBlockedByHoldings')); return }
+    if (!confirm(t('account.deleteConfirm'))) return
     const res = await fetch(`${BASE}/accounts/${account.id}`, { method: 'DELETE' })
-    if (!res.ok) alert('刪除失敗')
+    if (!res.ok) alert(t('account.deleteFailed'))
     else onClose()
   }
 
@@ -55,9 +57,10 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
   }
 
   const pendingIcon = ACC_GROUPS.flatMap(g => g.items).find(i => i.type === pendingType?.type)?.icon
-  const title = account ? '編輯帳戶'
-    : view === 'typePicker' ? '選擇帳戶類型'
-    : (pendingType?.label ?? '新增帳戶')
+  const title = account
+    ? t('account.editTitle')
+    : view === 'typePicker' ? t('account.typePickerTitle')
+    : (pendingType ? t(`account.typeLabels.${pendingType.type}` as Parameters<typeof t>[0]) : t('account.addTitle'))
 
   return (
     <div className={`fixed inset-y-0 right-0 w-[440px] bg-[var(--color-surface)] shadow-2xl
@@ -78,17 +81,17 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
         {view === 'typePicker' && (
           <div>
             {ACC_GROUPS.map(group => (
-              <div key={group.label}>
+              <div key={group.groupKey}>
                 <div className={`px-4 py-3 ${group.colorClass} text-white font-semibold text-sm`}>
-                  {group.label}
+                  {t(`account.groups.${group.groupKey}` as Parameters<typeof t>[0])}
                 </div>
                 {group.items.map(item => (
                   <button key={item.type}
-                    onClick={() => { setPendingType(item); setForm(p => ({ ...p, name: item.label })); setView('form') }}
+                    onClick={() => { setPendingType(item); setForm(p => ({ ...p, name: t(`account.typeLabels.${item.type}` as Parameters<typeof t>[0]) })); setView('form') }}
                     className="w-full flex items-center gap-4 px-4 py-4 bg-[var(--color-surface)]
                       hover:bg-[var(--color-bg)] border-b border-[var(--color-border)] transition-colors">
                     <span className="text-xl w-8 text-center">{item.icon}</span>
-                    <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                    <span className="text-sm font-medium flex-1 text-left">{t(`account.typeLabels.${item.type}` as Parameters<typeof t>[0])}</span>
                     <span className="text-[var(--color-muted)]">›</span>
                   </button>
                 ))}
@@ -102,46 +105,46 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
             {pendingType && !account && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
                 <span className="text-2xl">{pendingIcon}</span>
-                <span className="font-medium text-sm">{pendingType.label}</span>
+                <span className="font-medium text-sm">{t(`account.typeLabels.${pendingType.type}` as Parameters<typeof t>[0])}</span>
               </div>
             )}
             {account && (
               <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
-                <span className="text-sm text-[var(--color-muted)]">類型</span>
-                <span className="ml-auto text-sm font-medium">{ACCOUNT_TYPE_LABELS[account.accountType]}</span>
+                <span className="text-sm text-[var(--color-muted)]">{t('account.typeLabel')}</span>
+                <span className="ml-auto text-sm font-medium">{t(`account.types.${account.accountType}` as Parameters<typeof t>[0])}</span>
               </div>
             )}
 
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
               <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                <span className="text-sm text-[var(--color-muted)]">名稱</span>
+                <span className="text-sm text-[var(--color-muted)]">{t('account.nameLabel')}</span>
                 <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                  autoFocus placeholder="例：台幣活存"
+                  autoFocus placeholder={t('account.namePlaceholder')}
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
               <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                <span className="text-sm text-[var(--color-muted)]">機構</span>
+                <span className="text-sm text-[var(--color-muted)]">{t('account.institutionLabel')}</span>
                 <input value={form.institution} autoComplete="off"
                   onChange={e => setForm(p => ({ ...p, institution: e.target.value }))}
-                  placeholder="選填（例：玉山銀行）"
+                  placeholder={t('account.institutionPlaceholder')}
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
               <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
-                <span className="text-sm text-[var(--color-muted)]">備註</span>
+                <span className="text-sm text-[var(--color-muted)]">{t('account.noteLabel')}</span>
                 <input value={form.note} onChange={e => setForm(p => ({ ...p, note: e.target.value }))}
-                  placeholder="選填"
+                  placeholder={t('account.notePlaceholder')}
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
             </div>
 
             <button onClick={handleSave} disabled={!form.name.trim() || saving}
               className="w-full py-3.5 bg-[var(--color-accent)] text-white rounded-xl font-medium disabled:opacity-40">
-              {saving ? '儲存中…' : account ? '儲存' : '建立帳戶'}
+              {saving ? t('common.saving') : account ? t('common.save') : t('account.createButton')}
             </button>
             {account && (
               <button onClick={handleDelete}
                 className="w-full py-3 border border-red-400 text-red-500 rounded-xl text-sm">
-                刪除帳戶
+                {t('account.deleteButton')}
               </button>
             )}
           </div>

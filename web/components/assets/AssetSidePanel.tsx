@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { BASE } from '@/lib/api'
 import type { Asset, AssetClass, Category, PricingMode, SubKind, Ticker } from '@/lib/types'
 import { TickerSearch } from './TickerSearch'
@@ -11,47 +12,52 @@ type View = 'kindPicker' | 'tickerSearch' | 'form'
 
 interface AssetKindItem {
   subKind: SubKind
-  label: string
+  labelKey: string
   icon: string
   assetClass: AssetClass
   category: Category
-  useTicker?: boolean  // true → goes to tickerSearch view
+  useTicker?: boolean
 }
-interface AssetGroup { label: string; colorClass: string; items: AssetKindItem[] }
+interface AssetGroup { labelKey: string; colorClass: string; items: AssetKindItem[] }
 
 const PRECIOUS_METALS = [
-  { name: '黃金', symbol: 'XAUUSD=X' },
-  { name: '白銀', symbol: 'XAGUSD=X' },
-  { name: '鉑金', symbol: 'XPTUSD=X' },
+  { nameKey: 'assets.preciousMetals.gold' as const, symbol: 'XAUUSD=X' },
+  { nameKey: 'assets.preciousMetals.silver' as const, symbol: 'XAGUSD=X' },
+  { nameKey: 'assets.preciousMetals.platinum' as const, symbol: 'XPTUSD=X' },
+]
+
+const UNIT_OPTIONS = [
+  { value: '公克', tKey: 'assets.units.gram' as const },
+  { value: '盎司', tKey: 'assets.units.ounce' as const },
 ]
 
 const ASSET_GROUPS: AssetGroup[] = [
-  { label: '流動資金', colorClass: 'bg-green-500', items: [
-    { subKind: 'bank_account', label: '銀行存款', icon: '🏦', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'physical_cash', label: '現金', icon: '💵', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'e_wallet', label: '電子錢包', icon: '📲', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'other', label: '其他流動資金', icon: '📦', assetClass: 'asset', category: 'liquid' },
+  { labelKey: 'asset.groups.liquid', colorClass: 'bg-green-500', items: [
+    { subKind: 'bank_account', labelKey: 'asset.subKinds.bank_account', icon: '🏦', assetClass: 'asset', category: 'liquid' },
+    { subKind: 'physical_cash', labelKey: 'asset.subKinds.physical_cash', icon: '💵', assetClass: 'asset', category: 'liquid' },
+    { subKind: 'e_wallet', labelKey: 'asset.subKinds.e_wallet', icon: '📲', assetClass: 'asset', category: 'liquid' },
+    { subKind: 'other', labelKey: 'asset.itemLabels.liquid_other', icon: '📦', assetClass: 'asset', category: 'liquid' },
   ]},
-  { label: '投資', colorClass: 'bg-indigo-500', items: [
-    { subKind: 'stock', label: '股票/ETF', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'crypto', label: '加密貨幣', icon: '₿', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'fund', label: '基金', icon: '💰', assetClass: 'asset', category: 'investment' },
-    { subKind: 'precious_metal', label: '實體貴金屬', icon: '🥇', assetClass: 'asset', category: 'investment' },
-    { subKind: 'other', label: '其他投資', icon: '📦', assetClass: 'asset', category: 'investment' },
+  { labelKey: 'asset.groups.investment', colorClass: 'bg-indigo-500', items: [
+    { subKind: 'stock', labelKey: 'asset.itemLabels.stock_etf', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
+    { subKind: 'crypto', labelKey: 'asset.subKinds.crypto', icon: '₿', assetClass: 'asset', category: 'investment', useTicker: true },
+    { subKind: 'fund', labelKey: 'asset.subKinds.fund', icon: '💰', assetClass: 'asset', category: 'investment' },
+    { subKind: 'precious_metal', labelKey: 'asset.subKinds.precious_metal', icon: '🥇', assetClass: 'asset', category: 'investment' },
+    { subKind: 'other', labelKey: 'asset.itemLabels.investment_other', icon: '📦', assetClass: 'asset', category: 'investment' },
   ]},
-  { label: '固定資產', colorClass: 'bg-violet-500', items: [
-    { subKind: 'real_estate', label: '不動產', icon: '🏠', assetClass: 'asset', category: 'fixed' },
-    { subKind: 'vehicle', label: '車輛', icon: '🚗', assetClass: 'asset', category: 'fixed' },
-    { subKind: 'other', label: '其他固定資產', icon: '📦', assetClass: 'asset', category: 'fixed' },
+  { labelKey: 'asset.groups.fixed', colorClass: 'bg-violet-500', items: [
+    { subKind: 'real_estate', labelKey: 'asset.subKinds.real_estate', icon: '🏠', assetClass: 'asset', category: 'fixed' },
+    { subKind: 'vehicle', labelKey: 'asset.subKinds.vehicle', icon: '🚗', assetClass: 'asset', category: 'fixed' },
+    { subKind: 'other', labelKey: 'asset.itemLabels.fixed_other', icon: '📦', assetClass: 'asset', category: 'fixed' },
   ]},
-  { label: '應收款', colorClass: 'bg-sky-400', items: [
-    { subKind: 'receivable', label: '應收款', icon: '📋', assetClass: 'asset', category: 'receivable' },
+  { labelKey: 'asset.groups.receivable', colorClass: 'bg-sky-400', items: [
+    { subKind: 'receivable', labelKey: 'asset.subKinds.receivable', icon: '📋', assetClass: 'asset', category: 'receivable' },
   ]},
-  { label: '負債', colorClass: 'bg-slate-400', items: [
-    { subKind: 'credit_card', label: '信用卡', icon: '💳', assetClass: 'liability', category: 'debt' },
-    { subKind: 'mortgage', label: '房貸', icon: '🏡', assetClass: 'liability', category: 'debt' },
-    { subKind: 'personal_loan', label: '個人貸款', icon: '💸', assetClass: 'liability', category: 'debt' },
-    { subKind: 'other', label: '其他負債', icon: '📦', assetClass: 'liability', category: 'debt' },
+  { labelKey: 'asset.groups.debt', colorClass: 'bg-slate-400', items: [
+    { subKind: 'credit_card', labelKey: 'asset.subKinds.credit_card', icon: '💳', assetClass: 'liability', category: 'debt' },
+    { subKind: 'mortgage', labelKey: 'asset.subKinds.mortgage', icon: '🏡', assetClass: 'liability', category: 'debt' },
+    { subKind: 'personal_loan', labelKey: 'asset.subKinds.personal_loan', icon: '💸', assetClass: 'liability', category: 'debt' },
+    { subKind: 'other', labelKey: 'asset.itemLabels.debt_other', icon: '📦', assetClass: 'liability', category: 'debt' },
   ]},
 ]
 
@@ -62,17 +68,10 @@ const DEFAULT_PRICING: Record<string, PricingMode> = {
   fund: 'manual', precious_metal: 'market', real_estate: 'manual', vehicle: 'manual',
 }
 
-const SUB_KIND_LABELS: Record<string, string> = {
-  bank_account: '銀行存款', physical_cash: '現金', e_wallet: '電子錢包', stablecoin: '穩定幣',
-  stock: '股票', etf: 'ETF', fund: '基金', crypto: '加密貨幣', precious_metal: '實體貴金屬',
-  real_estate: '不動產', vehicle: '車輛', receivable: '應收款',
-  credit_card: '信用卡', mortgage: '房貸', personal_loan: '個人貸款', other: '其他',
-}
-const PRICING_LABELS: Record<string, string> = { market: '市價', fixed: '固定', manual: '手動' }
-
 interface Props { open: boolean; asset?: Asset; onClose: () => void }
 
 export function AssetSidePanel({ open, asset, onClose }: Props) {
+  const t = useTranslations()
   const [view, setView] = useState<View>('kindPicker')
   const [pendingKind, setPendingKind] = useState<AssetKindItem | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null)
@@ -103,7 +102,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
       const isLiquid = LIQUID_SUBKINDS.includes(item.subKind)
       setForm(p => ({
         ...p,
-        name: item.label,
+        name: t(item.labelKey as Parameters<typeof t>[0]),
         currencyCode: 'TWD',
         unit: isLiquid ? 'TWD' : (item.subKind === 'precious_metal' ? '公克' : ''),
       }))
@@ -111,15 +110,15 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
     }
   }
 
-  function handleTickerSelect(t: Ticker) {
-    setSelectedTicker(t)
-    setPendingKind(prev => prev ? { ...prev, subKind: t.type as SubKind } : prev)
+  function handleTickerSelect(ticker: Ticker) {
+    setSelectedTicker(ticker)
+    setPendingKind(prev => prev ? { ...prev, subKind: ticker.type as SubKind } : prev)
     setForm(p => ({
       ...p,
-      name: t.name,
-      symbol: t.symbol,
-      currencyCode: t.type === 'crypto' || t.country === 'US' ? 'USD' : 'TWD',
-      unit: t.type === 'crypto' ? t.symbol.toUpperCase() : '股',
+      name: ticker.name,
+      symbol: ticker.symbol,
+      currencyCode: ticker.type === 'crypto' || ticker.country === 'US' ? 'USD' : 'TWD',
+      unit: ticker.type === 'crypto' ? ticker.symbol.toUpperCase() : '股',
     }))
     setView('form')
   }
@@ -164,9 +163,9 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
   }
 
   async function handleDelete() {
-    if (!asset || !confirm('確認刪除此資產？若有持倉或快照將無法刪除。')) return
+    if (!asset || !confirm(t('assets.deleteConfirm'))) return
     const res = await fetch(`${BASE}/assets/${asset.id}`, { method: 'DELETE' })
-    if (!res.ok) alert('刪除失敗：請先移除所有持倉與快照')
+    if (!res.ok) alert(t('assets.deleteFailed'))
     else onClose()
   }
 
@@ -175,11 +174,11 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
     ? asset.pricingMode === 'market'
     : pendingKind ? DEFAULT_PRICING[pendingKind.subKind] === 'market' : false
 
-  const title = asset ? '編輯資產'
-    : view === 'kindPicker' ? '選擇資產類型'
-    : view === 'tickerSearch' ? (pendingKind?.subKind === 'crypto' ? '搜尋加密貨幣' : '搜尋股票/ETF')
+  const title = asset ? t('assets.editTitle')
+    : view === 'kindPicker' ? t('assets.kindPickerTitle')
+    : view === 'tickerSearch' ? (pendingKind?.subKind === 'crypto' ? t('assets.tickerSearch.crypto') : t('assets.tickerSearch.stockEtf'))
     : selectedTicker ? selectedTicker.name
-    : (pendingKind?.label ?? '新增資產')
+    : (pendingKind ? t(pendingKind.labelKey as Parameters<typeof t>[0]) : t('assets.newAssetTitle'))
 
   return (
     <div className={`fixed inset-y-0 right-0 w-[440px] bg-[var(--color-surface)] shadow-2xl
@@ -201,10 +200,10 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
         {view === 'kindPicker' && (
           <div>
             {ASSET_GROUPS.map(group => (
-              <div key={group.label}>
+              <div key={group.labelKey}>
                 <div className="px-4 py-2 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
                   <span className="text-xs font-semibold tracking-wider text-[var(--color-muted)] uppercase">
-                    {group.label}
+                    {t(group.labelKey as Parameters<typeof t>[0])}
                   </span>
                 </div>
                 {group.items.map((item, idx) => (
@@ -212,9 +211,11 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                     className="w-full flex items-center gap-4 px-4 py-4 bg-[var(--color-surface)]
                       hover:bg-[var(--color-bg)] border-b border-[var(--color-border)] transition-colors">
                     <span className="text-xl w-8 text-center">{item.icon}</span>
-                    <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                    <span className="text-sm font-medium flex-1 text-left">
+                      {t(item.labelKey as Parameters<typeof t>[0])}
+                    </span>
                     {item.useTicker && (
-                      <span className="text-xs text-[var(--color-muted)] mr-1">搜尋</span>
+                      <span className="text-xs text-[var(--color-muted)] mr-1">{t('assets.search')}</span>
                     )}
                     <span className="text-[var(--color-muted)]">›</span>
                   </button>
@@ -246,7 +247,9 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                     ${selectedTicker.type === 'etf' ? 'bg-indigo-100 text-indigo-700'
                       : selectedTicker.type === 'crypto' ? 'bg-orange-100 text-orange-700'
                       : 'bg-green-100 text-green-700'}`}>
-                    {selectedTicker.type === 'etf' ? 'ETF' : selectedTicker.type === 'crypto' ? '加密貨幣' : '股票'}
+                    {selectedTicker.type === 'etf' ? 'ETF'
+                      : selectedTicker.type === 'crypto' ? t('assets.tickerTypes.crypto')
+                      : t('assets.tickerTypes.stock')}
                   </span>
                 </div>
               </div>
@@ -255,26 +258,28 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
             {pendingKind && !asset && !selectedTicker && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
                 <span className="text-2xl">{pendingKind.icon}</span>
-                <span className="font-medium text-sm">{pendingKind.label}</span>
+                <span className="font-medium text-sm">
+                  {t(pendingKind.labelKey as Parameters<typeof t>[0])}
+                </span>
               </div>
             )}
 
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
               {/* Name */}
               <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                <span className="text-sm text-[var(--color-muted)]">名稱</span>
+                <span className="text-sm text-[var(--color-muted)]">{t('assets.form.nameLabel')}</span>
                 <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                  autoFocus={!selectedTicker} placeholder="例：台積電"
+                  autoFocus={!selectedTicker} placeholder={t('assets.form.namePlaceholder')}
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
               {/* Symbol — editable for market assets; read-only for ticker/precious metal */}
               {isMarket && pendingKind?.subKind !== 'precious_metal' && (
                 <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                  <span className="text-sm text-[var(--color-muted)]">代號</span>
+                  <span className="text-sm text-[var(--color-muted)]">{t('assets.form.symbolLabel')}</span>
                   {selectedTicker
                     ? <span className="text-right text-sm text-[var(--color-muted)]">{form.symbol}</span>
                     : <input value={form.symbol} onChange={e => setForm(p => ({ ...p, symbol: e.target.value }))}
-                        placeholder="例：2330.TW"
+                        placeholder={t('assets.detail.symbolPlaceholder')}
                         className="text-right bg-transparent text-sm outline-none w-full" />
                   }
                 </div>
@@ -282,7 +287,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
               {/* Liquid: currency picker (currency = unit) */}
               {!asset && pendingKind && LIQUID_SUBKINDS.includes(pendingKind.subKind) && (
                 <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
-                  <span className="text-sm text-[var(--color-muted)]">幣別</span>
+                  <span className="text-sm text-[var(--color-muted)]">{t('assets.form.currencyLabel')}</span>
                   <div className="flex justify-end">
                     <CurrencyPicker value={form.currencyCode}
                       onChange={code => setForm(p => ({ ...p, currencyCode: code, unit: code }))} />
@@ -293,33 +298,33 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
               {!asset && pendingKind?.subKind === 'precious_metal' && (
                 <>
                   <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                    <span className="text-sm text-[var(--color-muted)]">金屬</span>
+                    <span className="text-sm text-[var(--color-muted)]">{t('assets.form.metalLabel')}</span>
                     <div className="flex justify-end gap-2">
                       {PRECIOUS_METALS.map(m => (
                         <button key={m.symbol} type="button"
                           onClick={() => {
                             setSelectedMetal(m)
-                            setForm(p => ({ ...p, name: m.name, symbol: m.symbol, currencyCode: 'USD' }))
+                            setForm(p => ({ ...p, name: t(m.nameKey), symbol: m.symbol, currencyCode: 'USD' }))
                           }}
                           className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
                             ${selectedMetal?.symbol === m.symbol
                               ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
                               : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
-                          {m.name}
+                          {t(m.nameKey)}
                         </button>
                       ))}
                     </div>
                   </div>
                   <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
-                    <span className="text-sm text-[var(--color-muted)]">單位</span>
+                    <span className="text-sm text-[var(--color-muted)]">{t('assets.form.unitLabel')}</span>
                     <div className="flex justify-end gap-2">
-                      {['公克', '盎司'].map(u => (
-                        <button key={u} type="button" onClick={() => setForm(p => ({ ...p, unit: u }))}
+                      {UNIT_OPTIONS.map(u => (
+                        <button key={u.value} type="button" onClick={() => setForm(p => ({ ...p, unit: u.value }))}
                           className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
-                            ${form.unit === u
+                            ${form.unit === u.value
                               ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
                               : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
-                          {u}
+                          {t(u.tKey)}
                         </button>
                       ))}
                     </div>
@@ -330,10 +335,10 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
               {asset && (
                 <>
                   {[
-                    { label: '類型', value: SUB_KIND_LABELS[asset.subKind] ?? asset.subKind },
-                    { label: '報價', value: PRICING_LABELS[asset.pricingMode] ?? asset.pricingMode },
-                    ...(LIQUID_SUBKINDS.includes(asset.subKind as any)
-                      ? [{ label: '幣別', value: asset.currencyCode }]
+                    { label: t('assets.detail.typeLabel'), value: t(`asset.subKinds.${asset.subKind}` as Parameters<typeof t>[0], { defaultValue: asset.subKind }) },
+                    { label: t('assets.detail.pricingLabel'), value: t(`asset.pricingModes.${asset.pricingMode}` as Parameters<typeof t>[0], { defaultValue: asset.pricingMode }) },
+                    ...(LIQUID_SUBKINDS.includes(asset.subKind as SubKind)
+                      ? [{ label: t('assets.form.currencyLabel'), value: asset.currencyCode }]
                       : []),
                   ].map(({ label, value }) => (
                     <div key={label} className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-t border-[var(--color-border)]">
@@ -343,15 +348,15 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                   ))}
                   {asset.subKind === 'precious_metal' && (
                     <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-t border-[var(--color-border)]">
-                      <span className="text-sm text-[var(--color-muted)]">單位</span>
+                      <span className="text-sm text-[var(--color-muted)]">{t('assets.form.unitLabel')}</span>
                       <div className="flex justify-end gap-2">
-                        {['公克', '盎司'].map(u => (
-                          <button key={u} onClick={() => setForm(p => ({ ...p, unit: u }))}
+                        {UNIT_OPTIONS.map(u => (
+                          <button key={u.value} onClick={() => setForm(p => ({ ...p, unit: u.value }))}
                             className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
-                              ${form.unit === u
+                              ${form.unit === u.value
                                 ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
                                 : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
-                            {u}
+                            {t(u.tKey)}
                           </button>
                         ))}
                       </div>
@@ -363,12 +368,12 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
 
             <button onClick={handleSave} disabled={!form.name.trim() || saving}
               className="w-full py-3.5 bg-[var(--color-accent)] text-white rounded-xl font-medium disabled:opacity-40">
-              {saving ? '儲存中…' : asset ? '儲存' : '建立資產'}
+              {saving ? t('common.saving') : asset ? t('common.save') : t('assets.createButton')}
             </button>
             {asset && (
               <button onClick={handleDelete}
                 className="w-full py-3 border border-red-400 text-red-500 rounded-xl text-sm">
-                刪除資產
+                {t('assets.deleteButton')}
               </button>
             )}
           </div>

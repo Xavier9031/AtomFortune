@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import useSWR from 'swr'
 import { Settings } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
@@ -12,16 +13,8 @@ import type { Asset, Holding, Transaction } from '@/lib/types'
 type ChartRange = '30d' | '1y' | 'all'
 interface SnapshotPoint { snapshotDate: string; valueInBase: number }
 
-const SUB_KIND_LABELS: Record<string, string> = {
-  bank_account: '銀行存款', physical_cash: '現金', e_wallet: '電子錢包',
-  stablecoin: '穩定幣', stock: '股票', etf: 'ETF', fund: '基金',
-  crypto: '加密貨幣', precious_metal: '實體貴金屬', real_estate: '不動產',
-  vehicle: '車輛', receivable: '應收款', credit_card: '信用卡',
-  mortgage: '房貸', personal_loan: '個人貸款', other: '其他',
-}
-const PRICING_LABELS: Record<string, string> = { market: '市價', fixed: '固定', manual: '手動' }
-
 export function AssetDetailView({ asset: initial }: { asset: Asset }) {
+  const t = useTranslations()
   const router = useRouter()
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -62,6 +55,12 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
     setSymbol(initial.symbol ?? '')
   }
 
+  const rangeLabels: Record<ChartRange, string> = {
+    '30d': t('assets.detail.range30d'),
+    '1y': t('assets.detail.range1y'),
+    'all': t('assets.detail.rangeAll'),
+  }
+
   return (
     <div className="space-y-5">
 
@@ -69,7 +68,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
       <section className="rounded-xl border border-[var(--color-border)] p-5 relative">
         <button
           onClick={() => settingsOpen ? closeSettings() : setSettingsOpen(true)}
-          title="資產設定"
+          title={t('assets.detail.settingsTitle')}
           className={`absolute top-4 right-4 p-1.5 rounded-lg transition-colors
             ${settingsOpen
               ? 'bg-[var(--color-accent)] text-white'
@@ -85,11 +84,11 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
             </span>
           )}
           <span className="text-xs text-[var(--color-muted)]">
-            {SUB_KIND_LABELS[initial.subKind] ?? initial.subKind}
+            {t(`asset.subKinds.${initial.subKind}` as Parameters<typeof t>[0], { defaultValue: initial.subKind })}
           </span>
           <span className="text-xs text-[var(--color-border)]">·</span>
           <span className="text-xs text-[var(--color-muted)]">
-            {PRICING_LABELS[initial.pricingMode] ?? initial.pricingMode}
+            {t(`asset.pricingModes.${initial.pricingMode}` as Parameters<typeof t>[0], { defaultValue: initial.pricingMode })}
           </span>
         </div>
 
@@ -99,7 +98,6 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
           <span className="text-base font-normal text-[var(--color-muted)] ml-2">{unit}</span>
         </div>
 
-        {/* Estimated TWD value */}
         {totalValue > 0 && (
           <p className="text-sm text-[var(--color-muted)] mt-1.5">
             ≈ {formatValue(totalValue, 'TWD')}
@@ -111,7 +109,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
       {settingsOpen && (
         <section className="rounded-xl border border-[var(--color-border)] overflow-hidden">
           <div className="grid grid-cols-[6rem_1fr] items-center px-4 py-3 border-b border-[var(--color-border)]">
-            <span className="text-sm text-[var(--color-muted)]">名稱</span>
+            <span className="text-sm text-[var(--color-muted)]">{t('assets.detail.nameLabel')}</span>
             {editing
               ? <input value={name} onChange={e => setName(e.target.value)} autoFocus
                   className="text-right bg-transparent text-sm outline-none border-b border-[var(--color-accent)] w-full" />
@@ -119,18 +117,18 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
           </div>
           {(initial.pricingMode === 'market' || initial.symbol) && (
             <div className="grid grid-cols-[6rem_1fr] items-center px-4 py-3 border-b border-[var(--color-border)]">
-              <span className="text-sm text-[var(--color-muted)]">代號</span>
+              <span className="text-sm text-[var(--color-muted)]">{t('assets.detail.symbolLabel')}</span>
               {editing
                 ? <input value={symbol} onChange={e => setSymbol(e.target.value)}
-                    placeholder="例：0050.TW"
+                    placeholder={t('assets.detail.symbolPlaceholder')}
                     className="text-right bg-transparent text-sm outline-none border-b border-[var(--color-accent)] w-full" />
                 : <span className="text-right text-sm">{initial.symbol ?? '—'}</span>}
             </div>
           )}
           {[
-            { label: '幣別', value: initial.currencyCode },
-            { label: '類型', value: SUB_KIND_LABELS[initial.subKind] ?? initial.subKind },
-            { label: '報價', value: PRICING_LABELS[initial.pricingMode] ?? initial.pricingMode },
+            { label: t('assets.detail.currencyLabel'), value: initial.currencyCode },
+            { label: t('assets.detail.typeLabel'), value: t(`asset.subKinds.${initial.subKind}` as Parameters<typeof t>[0], { defaultValue: initial.subKind }) },
+            { label: t('assets.detail.pricingLabel'), value: t(`asset.pricingModes.${initial.pricingMode}` as Parameters<typeof t>[0], { defaultValue: initial.pricingMode }) },
           ].map(({ label, value }) => (
             <div key={label} className="grid grid-cols-[6rem_1fr] items-center px-4 py-3 border-b border-[var(--color-border)]">
               <span className="text-sm text-[var(--color-muted)]">{label}</span>
@@ -142,18 +140,18 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
               <>
                 <button onClick={() => { setEditing(false); setName(initial.name); setSymbol(initial.symbol ?? '') }}
                   className="flex-1 border border-[var(--color-border)] rounded-lg py-2 text-sm">
-                  取消
+                  {t('common.cancel')}
                 </button>
                 <button onClick={handleSave} disabled={!name.trim() || saving}
                   className="flex-1 bg-[var(--color-accent)] text-white rounded-lg py-2 text-sm disabled:opacity-40">
-                  {saving ? '儲存中…' : '儲存'}
+                  {saving ? t('common.saving') : t('common.save')}
                 </button>
               </>
             ) : (
               <button onClick={() => setEditing(true)}
                 className="flex-1 border border-[var(--color-border)] rounded-lg py-2 text-sm
                   hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors">
-                編輯名稱 / 代號
+                {t('assets.detail.editNameSymbol')}
               </button>
             )}
           </div>
@@ -162,7 +160,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
               <button onClick={() => setPriceModalOpen(true)}
                 className="w-full border border-[var(--color-border)] rounded-lg py-2 text-sm
                   hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors">
-                更新今日價格
+                {t('assets.detail.updatePrice')}
               </button>
             </div>
           )}
@@ -171,14 +169,12 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
 
       {/* ── Account distribution ── */}
       <section>
-        <h2 className="text-sm font-semibold mb-3">持倉分布</h2>
+        <h2 className="text-sm font-semibold mb-3">{t('assets.detail.holdingDistribution')}</h2>
         {holdings.length === 0 ? (
-          <p className="text-sm text-[var(--color-muted)]">尚無持倉</p>
+          <p className="text-sm text-[var(--color-muted)]">{t('assets.detail.noHoldings')}</p>
         ) : (
           <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
             {holdings.map((h, i) => {
-              // Within a single asset, all holdings share the same unit price,
-              // so quantity proportion == value proportion
               const qty = Number(h.quantity)
               const pct = totalQty > 0 ? (qty / totalQty) * 100 : 0
               return (
@@ -213,7 +209,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
       {/* ── Value trend chart ── */}
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold">價值趨勢</h2>
+          <h2 className="text-sm font-semibold">{t('assets.detail.valueTrend')}</h2>
           <div className="flex gap-1 p-0.5 bg-[var(--color-bg)] rounded-lg">
             {(['30d', '1y', 'all'] as ChartRange[]).map(r => (
               <button key={r} onClick={() => setRange(r)}
@@ -221,7 +217,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
                   ${range === r
                     ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
                     : 'text-[var(--color-muted)]'}`}>
-                {r === '30d' ? '30天' : r === '1y' ? '1年' : '全部'}
+                {rangeLabels[r]}
               </button>
             ))}
           </div>
@@ -236,7 +232,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
                 <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted)' }} width={75}
                   tickFormatter={v => formatValue(Number(v), 'TWD')} />
                 <Tooltip
-                  formatter={(v: unknown) => [formatValue(Number(v ?? 0), 'TWD'), '估值']}
+                  formatter={(v: unknown) => [formatValue(Number(v ?? 0), 'TWD'), t('assets.detail.valueLabel')]}
                   labelStyle={{ color: 'var(--color-muted)', fontSize: 12 }}
                   contentStyle={{ background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 8 }} />
                 <Line type="monotone" dataKey="value" stroke="var(--color-accent)"
@@ -245,33 +241,33 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
             </ResponsiveContainer>
           </div>
         ) : (
-          <p className="text-sm text-[var(--color-muted)] py-8 text-center">尚無歷史資料</p>
+          <p className="text-sm text-[var(--color-muted)] py-8 text-center">{t('assets.detail.noHistory')}</p>
         )}
       </section>
 
       {/* ── Transaction history ── */}
       <section>
-        <h2 className="text-sm font-semibold mb-3">交易紀錄</h2>
+        <h2 className="text-sm font-semibold mb-3">{t('assets.detail.transactions')}</h2>
         {sortedTxns.length === 0 ? (
-          <p className="text-sm text-[var(--color-muted)]">尚無交易紀錄</p>
+          <p className="text-sm text-[var(--color-muted)]">{t('assets.detail.noTransactions')}</p>
         ) : (
           <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-            {sortedTxns.map((t, i) => {
-              const isPositive = t.txnType === 'buy' || t.txnType === 'transfer_in'
-              const isNeutral = t.txnType === 'adjustment'
+            {sortedTxns.map((txn, i) => {
+              const isPositive = txn.txnType === 'buy' || txn.txnType === 'transfer_in'
+              const isNeutral = txn.txnType === 'adjustment'
               return (
-                <div key={t.id}
+                <div key={txn.id}
                   className={`flex items-center justify-between pl-3 pr-4 py-3 text-sm border-l-2
                     ${isNeutral ? 'border-l-yellow-400' : isPositive ? 'border-l-green-500' : 'border-l-red-500'}
                     ${i < sortedTxns.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
                   <div>
-                    <span className="text-[var(--color-muted)] text-xs">{t.txnDate}</span>
-                    {t.note && <p className="text-xs text-[var(--color-muted)] mt-0.5">{t.note}</p>}
+                    <span className="text-[var(--color-muted)] text-xs">{txn.txnDate}</span>
+                    {txn.note && <p className="text-xs text-[var(--color-muted)] mt-0.5">{txn.note}</p>}
                   </div>
                   <span className={`font-medium tabular-nums
                     ${isNeutral ? 'text-yellow-400' : isPositive ? 'text-green-500' : 'text-red-500'}`}>
                     {isNeutral ? '±' : isPositive ? '+' : '−'}
-                    {Number(t.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
+                    {Number(txn.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
                   </span>
                 </div>
               )

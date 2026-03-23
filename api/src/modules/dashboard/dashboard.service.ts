@@ -1,8 +1,6 @@
 import { db } from '../../db/client'
 import * as repo from './dashboard.repository'
-
-const VALID_CURRENCIES = ['TWD', 'USD', 'JPY'] as const
-type DisplayCurrency = typeof VALID_CURRENCIES[number]
+import { SUPPORTED_CURRENCIES, type SupportedCurrency as DisplayCurrency } from '../../currencies'
 
 const CATEGORY_META: Record<string, { label: string; color: string }> = {
   liquid:     { label: '流動資金', color: '#078080' },

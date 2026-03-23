@@ -1,30 +1,26 @@
 'use client'
 import { useState } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 import { RefreshCw } from 'lucide-react'
 import { BASE } from '@/lib/api'
 import type { SnapshotItem } from '@/lib/types'
 
 interface SnapshotGrouped { category: string; items: SnapshotItem[] }
 
-const CAT_LABELS: Record<string, string> = {
-  liquid: '流動資金', investment: '投資', fixed: '固定資產',
-  receivable: '應收款', debt: '負債',
-}
-
 const ZERO_DECIMAL = new Set(['TWD', 'JPY', 'KRW'])
 
-function fmtAmount(value: number, currency: string) {
+function fmtAmount(value: number, currency: string, locale: string) {
   const decimals = ZERO_DECIMAL.has(currency) ? 0 : 2
-  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: decimals }).format(value) + ' ' + currency
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: decimals }).format(value) + ' ' + currency
 }
 
-function fmtQty(quantity: number, unit: string | null) {
+function fmtQty(quantity: number, unit: string | null, locale: string) {
   const decimals = Number.isInteger(quantity) ? 0 : 4
-  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: decimals }).format(quantity) + (unit ? ' ' + unit : '')
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: decimals }).format(quantity) + (unit ? ' ' + unit : '')
 }
 
-function fmtTWD(v: number) {
-  return '≈ ' + new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 }).format(v) + ' TWD'
+function fmtTWD(v: number, locale: string) {
+  return '≈ ' + new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(v) + ' TWD'
 }
 
 interface Props {
@@ -44,6 +40,8 @@ function groupByCategory(items: SnapshotItem[]): SnapshotGrouped[] {
 }
 
 export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
+  const t = useTranslations()
+  const locale = useLocale()
   const [expanded, setExpanded] = useState<string | null>(null)
   const [details, setDetails] = useState<Record<string, SnapshotGrouped[]>>({})
 
@@ -65,7 +63,7 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
         <div key={date} className="rounded-lg border border-[var(--color-border)]">
           <div className="flex items-center justify-between px-4 py-3">
             <button onClick={() => toggle(date)} className="font-medium">{date}</button>
-            <button onClick={() => onRebuild(date)} title="重建快照"
+            <button onClick={() => onRebuild(date)} title={t('snapshots.rebuildTitle')}
               className="text-[var(--color-muted)] hover:text-[var(--color-accent)]">
               <RefreshCw size={14} />
             </button>
@@ -75,7 +73,7 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
               {details[date].map(({ category, items }) => (
                 <div key={category}>
                   <p className="text-xs font-semibold text-[var(--color-muted)] mb-1">
-                    {CAT_LABELS[category] ?? category}
+                    {t(`asset.categories.${category}` as Parameters<typeof t>[0], { defaultValue: category })}
                   </p>
                   {items.map(item => {
                     // Liquid: primary = amount in native currency (quantity × price)
@@ -88,15 +86,15 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
                         <div className="text-right font-mono">
                           {isLiquid ? (
                             <>
-                              <div>{fmtAmount(item.quantity * item.price, item.currencyCode)}</div>
+                              <div>{fmtAmount(item.quantity * item.price, item.currencyCode, locale)}</div>
                               {item.currencyCode !== 'TWD' && (
-                                <div className="text-xs text-[var(--color-muted)]">{fmtTWD(item.valueInBase)}</div>
+                                <div className="text-xs text-[var(--color-muted)]">{fmtTWD(item.valueInBase, locale)}</div>
                               )}
                             </>
                           ) : (
                             <>
-                              <div>{fmtQty(item.quantity, item.unit)}</div>
-                              <div className="text-xs text-[var(--color-muted)]">{fmtTWD(item.valueInBase)}</div>
+                              <div>{fmtQty(item.quantity, item.unit, locale)}</div>
+                              <div className="text-xs text-[var(--color-muted)]">{fmtTWD(item.valueInBase, locale)}</div>
                             </>
                           )}
                         </div>

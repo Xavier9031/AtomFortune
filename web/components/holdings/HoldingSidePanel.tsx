@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import useSWR, { mutate as globalMutate } from 'swr'
 import { BASE, fetcher } from '@/lib/api'
 import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker, Transaction } from '@/lib/types'
@@ -16,48 +17,49 @@ const LIQUID_SUBKINDS: SubKind[] = ['bank_account', 'physical_cash', 'e_wallet']
 
 import { ACC_GROUPS, type AccTypeItem } from '@/lib/accountTypes'
 
-interface AssetKindItem { subKind: SubKind; label: string; icon: string; assetClass: AssetClass; category: Category; useTicker?: boolean }
-interface AssetGroup { label: string; colorClass: string; items: AssetKindItem[] }
-const ASSET_GROUPS: AssetGroup[] = [
-  { label: '流動資金', colorClass: 'bg-green-500', items: [
-    { subKind: 'physical_cash', label: '現金', icon: '💵', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'bank_account', label: '銀行存款', icon: '🏦', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'e_wallet', label: '電子錢包', icon: '📲', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'other', label: '其他流動資金', icon: '📦', assetClass: 'asset', category: 'liquid' },
-  ]},
-  { label: '投資', colorClass: 'bg-indigo-500', items: [
-    { subKind: 'stock', label: '股票/ETF', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'crypto', label: '加密貨幣', icon: '₿', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'fund', label: '基金', icon: '💰', assetClass: 'asset', category: 'investment' },
-    { subKind: 'precious_metal', label: '實體貴金屬', icon: '🥇', assetClass: 'asset', category: 'investment' },
-    { subKind: 'other', label: '其他投資', icon: '📦', assetClass: 'asset', category: 'investment' },
-  ]},
-  { label: '固定資產', colorClass: 'bg-violet-500', items: [
-    { subKind: 'real_estate', label: '不動產', icon: '🏠', assetClass: 'asset', category: 'fixed' },
-    { subKind: 'vehicle', label: '車輛', icon: '🚗', assetClass: 'asset', category: 'fixed' },
-    { subKind: 'other', label: '其他固定資產', icon: '📦', assetClass: 'asset', category: 'fixed' },
-  ]},
-  { label: '應收款', colorClass: 'bg-sky-400', items: [
-    { subKind: 'receivable', label: '應收款', icon: '📋', assetClass: 'asset', category: 'receivable' },
-  ]},
-  { label: '負債', colorClass: 'bg-slate-400', items: [
-    { subKind: 'credit_card', label: '信用卡', icon: '💳', assetClass: 'liability', category: 'debt' },
-    { subKind: 'mortgage', label: '房貸', icon: '🏡', assetClass: 'liability', category: 'debt' },
-    { subKind: 'personal_loan', label: '個人貸款', icon: '💸', assetClass: 'liability', category: 'debt' },
-    { subKind: 'other', label: '其他負債', icon: '📦', assetClass: 'liability', category: 'debt' },
-  ]},
-]
+interface AssetKindItem { subKind: SubKind; labelKey: string; icon: string; assetClass: AssetClass; category: Category; useTicker?: boolean }
+interface AssetGroup { labelKey: string; colorClass: string; items: AssetKindItem[] }
 
 const PRECIOUS_METALS = [
-  { name: '黃金', symbol: 'XAUUSD=X' },
-  { name: '白銀', symbol: 'XAGUSD=X' },
-  { name: '鉑金', symbol: 'XPTUSD=X' },
+  { nameKey: 'assets.preciousMetals.gold' as const, symbol: 'XAUUSD=X' },
+  { nameKey: 'assets.preciousMetals.silver' as const, symbol: 'XAGUSD=X' },
+  { nameKey: 'assets.preciousMetals.platinum' as const, symbol: 'XPTUSD=X' },
 ]
 
-const ACCT_TYPE_LABELS: Record<string, string> = {
-  bank: '銀行', broker: '券商', crypto_exchange: '加密貨幣交易所',
-  e_wallet: '電子錢包', cash: '現金', other: '其他',
-}
+const UNIT_OPTIONS = [
+  { value: '公克', tKey: 'assets.units.gram' as const },
+  { value: '盎司', tKey: 'assets.units.ounce' as const },
+]
+
+const ASSET_GROUPS: AssetGroup[] = [
+  { labelKey: 'asset.groups.liquid', colorClass: 'bg-green-500', items: [
+    { subKind: 'physical_cash', labelKey: 'asset.subKinds.physical_cash', icon: '💵', assetClass: 'asset', category: 'liquid' },
+    { subKind: 'bank_account', labelKey: 'asset.subKinds.bank_account', icon: '🏦', assetClass: 'asset', category: 'liquid' },
+    { subKind: 'e_wallet', labelKey: 'asset.subKinds.e_wallet', icon: '📲', assetClass: 'asset', category: 'liquid' },
+    { subKind: 'other', labelKey: 'asset.itemLabels.liquid_other', icon: '📦', assetClass: 'asset', category: 'liquid' },
+  ]},
+  { labelKey: 'asset.groups.investment', colorClass: 'bg-indigo-500', items: [
+    { subKind: 'stock', labelKey: 'asset.itemLabels.stock_etf', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
+    { subKind: 'crypto', labelKey: 'asset.subKinds.crypto', icon: '₿', assetClass: 'asset', category: 'investment', useTicker: true },
+    { subKind: 'fund', labelKey: 'asset.subKinds.fund', icon: '💰', assetClass: 'asset', category: 'investment' },
+    { subKind: 'precious_metal', labelKey: 'asset.subKinds.precious_metal', icon: '🥇', assetClass: 'asset', category: 'investment' },
+    { subKind: 'other', labelKey: 'asset.itemLabels.investment_other', icon: '📦', assetClass: 'asset', category: 'investment' },
+  ]},
+  { labelKey: 'asset.groups.fixed', colorClass: 'bg-violet-500', items: [
+    { subKind: 'real_estate', labelKey: 'asset.subKinds.real_estate', icon: '🏠', assetClass: 'asset', category: 'fixed' },
+    { subKind: 'vehicle', labelKey: 'asset.subKinds.vehicle', icon: '🚗', assetClass: 'asset', category: 'fixed' },
+    { subKind: 'other', labelKey: 'asset.itemLabels.fixed_other', icon: '📦', assetClass: 'asset', category: 'fixed' },
+  ]},
+  { labelKey: 'asset.groups.receivable', colorClass: 'bg-sky-400', items: [
+    { subKind: 'receivable', labelKey: 'asset.subKinds.receivable', icon: '📋', assetClass: 'asset', category: 'receivable' },
+  ]},
+  { labelKey: 'asset.groups.debt', colorClass: 'bg-slate-400', items: [
+    { subKind: 'credit_card', labelKey: 'asset.subKinds.credit_card', icon: '💳', assetClass: 'liability', category: 'debt' },
+    { subKind: 'mortgage', labelKey: 'asset.subKinds.mortgage', icon: '🏡', assetClass: 'liability', category: 'debt' },
+    { subKind: 'personal_loan', labelKey: 'asset.subKinds.personal_loan', icon: '💸', assetClass: 'liability', category: 'debt' },
+    { subKind: 'other', labelKey: 'asset.itemLabels.debt_other', icon: '📦', assetClass: 'liability', category: 'debt' },
+  ]},
+]
 
 const DEFAULT_PRICING: Record<string, PricingMode> = {
   bank_account: 'fixed', physical_cash: 'fixed', stablecoin: 'fixed',
@@ -69,6 +71,7 @@ const DEFAULT_PRICING: Record<string, PricingMode> = {
 }
 
 export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
+  const t = useTranslations()
   const [views, setViews] = useState<View[]>(['main'])
   const currentView = views[views.length - 1]
   function pushView(v: View) { setViews(prev => [...prev, v]) }
@@ -137,13 +140,13 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     } finally { setSavingAccount(false) }
   }
 
-  function handleTickerSelect(t: Ticker) {
-    setSelectedTicker(t)
-    setPendingAssetKind(prev => prev ? { ...prev, subKind: t.type as SubKind } : prev)
-    setNewAssetName(t.name)
-    setNewAssetSymbol(t.symbol)
-    setNewAssetCurrency(t.type === 'crypto' || t.country === 'US' ? 'USD' : 'TWD')
-    setNewAssetUnit(t.type === 'crypto' ? t.symbol.toUpperCase() : '股')
+  function handleTickerSelect(ticker: Ticker) {
+    setSelectedTicker(ticker)
+    setPendingAssetKind(prev => prev ? { ...prev, subKind: ticker.type as SubKind } : prev)
+    setNewAssetName(ticker.name)
+    setNewAssetSymbol(ticker.symbol)
+    setNewAssetCurrency(ticker.type === 'crypto' || ticker.country === 'US' ? 'USD' : 'TWD')
+    setNewAssetUnit(ticker.type === 'crypto' ? ticker.symbol.toUpperCase() : '股')
     pushView('assetForm')
   }
 
@@ -207,7 +210,6 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity: bal }),
       })
-      // Always create a transaction record for quantity changes
       const prevQty = mode === 'edit' ? Number(holding!.quantity) : 0
       const delta = bal - prevQty
       if (delta !== 0) {
@@ -231,7 +233,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   }
 
   async function handleDelete() {
-    if (!confirm(`確認刪除「${holding!.assetName}」的持倉？此操作無法復原。`)) return
+    if (!confirm(t('holdings.deleteConfirm', { name: holding!.assetName }))) return
     await fetch(`${BASE}/holdings/${holding!.assetId}/${holding!.accountId}`, { method: 'DELETE' })
     globalMutate(`${BASE}/holdings`)
     handleClose()
@@ -248,7 +250,6 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     onClose()
   }
 
-
   const canSubmit = mode === 'add'
     ? isLiquidAccount
       ? !!(selectedAccount && quantity && !isNaN(parseFloat(quantity)))
@@ -258,14 +259,14 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
       : !!(quantity && parseFloat(quantity) !== 0)
 
   const viewTitle: Record<View, string> = {
-    main: mode === 'add' ? '新增持倉' : '編輯持倉',
-    acctPicker: '選擇帳戶',
-    acctTypePicker: '新增帳戶',
-    acctForm: pendingAccType?.label ?? '帳戶資訊',
-    assetPicker: '選擇資產',
-    assetKindPicker: '新增資產',
-    assetTickerSearch: pendingAssetKind?.subKind === 'crypto' ? '搜尋加密貨幣' : '搜尋股票/ETF',
-    assetForm: selectedTicker ? selectedTicker.name : (pendingAssetKind?.label ?? '資產資訊'),
+    main: mode === 'add' ? t('holdings.add') : t('holdings.edit'),
+    acctPicker: t('holdings.acctPicker'),
+    acctTypePicker: t('holdings.addAccountTitle'),
+    acctForm: pendingAccType ? t(`account.typeLabels.${pendingAccType.type}` as Parameters<typeof t>[0]) : t('holdings.acctInfo'),
+    assetPicker: t('holdings.assetPicker'),
+    assetKindPicker: t('holdings.addAssetKind'),
+    assetTickerSearch: pendingAssetKind?.subKind === 'crypto' ? t('assets.tickerSearch.crypto') : t('assets.tickerSearch.stockEtf'),
+    assetForm: selectedTicker ? selectedTicker.name : (pendingAssetKind ? t(pendingAssetKind.labelKey as Parameters<typeof t>[0]) : t('holdings.assetInfo')),
   }
 
   return (
@@ -298,12 +299,12 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   <span className="text-sm text-[var(--color-muted)]">· {holding.institution}</span>
                 )}
                 <span className="text-xs px-1.5 py-0.5 rounded bg-[var(--color-border)] text-[var(--color-muted)]">
-                  {ACCT_TYPE_LABELS[holding.accountType] ?? holding.accountType}
+                  {t(`account.types.${holding.accountType}` as Parameters<typeof t>[0], { defaultValue: holding.accountType })}
                 </span>
               </div>
               {holding.latestValueInBase != null && (
                 <p className="text-sm text-[var(--color-muted)] mt-1">
-                  估值：{Number(holding.latestValueInBase).toLocaleString()}
+                  {t('holdings.estimatedValue')}{Number(holding.latestValueInBase).toLocaleString()}
                 </p>
               )}
             </div>
@@ -312,12 +313,12 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               <button onClick={() => { setQtyMode('set'); setQuantity(String(Number(holding.quantity))) }}
                 className={`flex-1 py-1.5 text-xs rounded-lg font-medium transition-colors
                   ${qtyMode === 'set' ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm' : 'text-[var(--color-muted)]'}`}>
-                設定數量
+                {t('holdings.setQuantity')}
               </button>
               <button onClick={() => { setQtyMode('adjust'); setQuantity('') }}
                 className={`flex-1 py-1.5 text-xs rounded-lg font-medium transition-colors
                   ${qtyMode === 'adjust' ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm' : 'text-[var(--color-muted)]'}`}>
-                增減數量
+                {t('holdings.adjustQuantity')}
               </button>
             </div>
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
@@ -337,7 +338,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   </div>
                 ) : (
                   <span className="text-sm text-[var(--color-muted)] w-16">
-                    {isLiquidHolding ? '餘額' : '數量'}
+                    {isLiquidHolding ? t('holdings.balance') : t('holdings.quantity')}
                   </span>
                 )}
                 <input type="number" min="0" value={quantity} onChange={e => setQuantity(e.target.value)}
@@ -349,23 +350,23 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               </div>
               {qtyMode === 'adjust' && quantity !== '' && !isNaN(parseFloat(quantity)) && parseFloat(quantity) > 0 && (
                 <div className="px-4 py-2 text-xs text-[var(--color-muted)] text-right border-b border-[var(--color-border)]">
-                  結果：{String(Number(Number(holding.quantity) + (adjustSign === '-' ? -parseFloat(quantity) : parseFloat(quantity))))} {getHoldingUnit(holding)}
+                  {t('holdings.result')}{String(Number(Number(holding.quantity) + (adjustSign === '-' ? -parseFloat(quantity) : parseFloat(quantity))))} {getHoldingUnit(holding)}
                 </div>
               )}
               <div className="flex items-center px-4 py-3.5">
-                <span className="text-sm text-[var(--color-muted)] w-16">備註</span>
-                <input value={note} onChange={e => setNote(e.target.value)} placeholder="選填"
+                <span className="text-sm text-[var(--color-muted)] w-16">{t('account.noteLabel')}</span>
+                <input value={note} onChange={e => setNote(e.target.value)} placeholder={t('common.optional')}
                   className="flex-1 text-right bg-transparent text-sm outline-none" />
               </div>
             </div>
             <div className="flex gap-3">
               <button onClick={handleSave} disabled={!canSubmit}
                 className="flex-1 bg-[var(--color-accent)] text-white rounded-xl py-3 font-medium disabled:opacity-40">
-                更新
+                {t('holdings.update')}
               </button>
               <button onClick={handleDelete}
                 className="flex-1 border border-red-400 text-red-500 rounded-xl py-3">
-                刪除
+                {t('common.delete')}
               </button>
             </div>
             <HoldingTransactions assetId={holding.assetId} accountId={holding.accountId} />
@@ -380,7 +381,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl
                 bg-[var(--color-bg)] border border-[var(--color-border)]
                 hover:border-[var(--color-accent)] transition-colors text-left">
-              <span className="text-sm text-[var(--color-muted)]">帳戶</span>
+              <span className="text-sm text-[var(--color-muted)]">{t('holdings.accountLabel')}</span>
               <div className="flex items-center gap-2 text-sm">
                 {selectedAccountObj ? (
                   <div className="text-right">
@@ -390,7 +391,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                     )}
                   </div>
                 ) : (
-                  <span className="text-[var(--color-muted)]">選擇帳戶</span>
+                  <span className="text-[var(--color-muted)]">{t('holdings.selectAccount')}</span>
                 )}
                 <span className="text-[var(--color-muted)] text-lg leading-none">›</span>
               </div>
@@ -402,7 +403,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                 className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl
                   bg-[var(--color-bg)] border border-[var(--color-border)]
                   hover:border-[var(--color-accent)] transition-colors text-left">
-                <span className="text-sm text-[var(--color-muted)]">資產</span>
+                <span className="text-sm text-[var(--color-muted)]">{t('holdings.assetLabel')}</span>
                 <div className="flex items-center gap-2 text-sm">
                   {selectedAssetObj ? (
                     <div className="flex items-center gap-2">
@@ -415,7 +416,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                       <span className="font-medium">{selectedAssetObj.name}</span>
                     </div>
                   ) : (
-                    <span className="text-[var(--color-muted)]">選擇資產</span>
+                    <span className="text-[var(--color-muted)]">{t('holdings.selectAsset')}</span>
                   )}
                   <span className="text-[var(--color-muted)] text-lg leading-none">›</span>
                 </div>
@@ -426,7 +427,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden bg-[var(--color-bg)]">
               <div className="flex items-center px-4 py-4 border-b border-[var(--color-border)]">
                 <span className="text-sm font-medium">
-                  {isLiquidAccount ? '餘額' : '數量'}
+                  {isLiquidAccount ? t('holdings.balance') : t('holdings.quantity')}
                 </span>
                 <div className="flex-1 flex items-center justify-end gap-2">
                   <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)}
@@ -444,8 +445,8 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               </div>
               {!isLiquidAccount && (
                 <div className="flex items-center px-4 py-3.5">
-                  <span className="text-sm text-[var(--color-muted)]">備註</span>
-                  <input value={note} onChange={e => setNote(e.target.value)} placeholder="選填"
+                  <span className="text-sm text-[var(--color-muted)]">{t('account.noteLabel')}</span>
+                  <input value={note} onChange={e => setNote(e.target.value)} placeholder={t('common.optional')}
                     className="flex-1 text-right bg-transparent text-sm outline-none" />
                 </div>
               )}
@@ -455,7 +456,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               <button onClick={handleSave} disabled={!canSubmit}
                 className="w-full py-3.5 bg-[var(--color-accent)] text-white rounded-xl font-medium
                   disabled:opacity-40 transition-opacity text-base">
-                {isLiquidAccount ? '設定餘額' : '建立持倉'}
+                {isLiquidAccount ? t('holdings.setBalance') : t('holdings.createHolding')}
               </button>
             </div>
           </div>
@@ -466,7 +467,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
           <div className="p-4 space-y-2">
             {(accounts ?? []).length === 0 && (
               <p className="text-sm text-center text-[var(--color-muted)] py-8">
-                尚無帳戶，點下方建立第一個帳戶
+                {t('holdings.noAccounts')}
               </p>
             )}
             {(accounts ?? []).map(a => (
@@ -491,32 +492,35 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               className="w-full flex items-center justify-center gap-2 px-4 py-3.5 mt-2 rounded-xl
                 border border-dashed border-[var(--color-border)] text-[var(--color-accent)] text-sm
                 hover:border-[var(--color-accent)] transition-colors">
-              ＋ 新增帳戶
+              {t('holdings.addAccountButton')}
             </button>
           </div>
         )}
 
-        {/* ── ACCOUNT TYPE PICKER (Percento style) ── */}
+        {/* ── ACCOUNT TYPE PICKER ── */}
         {currentView === 'acctTypePicker' && (
           <div>
             {ACC_GROUPS.map(group => (
-              <div key={group.label}>
+              <div key={group.groupKey}>
                 <div className="px-4 py-2 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
                   <span className="text-xs font-semibold tracking-wider text-[var(--color-muted)] uppercase">
-                    {group.label}</span>
+                    {t(`account.groups.${group.groupKey}` as Parameters<typeof t>[0])}
+                  </span>
                 </div>
                 {group.items.map(item => (
                   <button key={item.type}
                     onClick={() => {
                       setPendingAccType(item)
-                      setNewAccName(item.label)
+                      setNewAccName(t(`account.typeLabels.${item.type}` as Parameters<typeof t>[0]))
                       setNewAccInstitution('')
                       pushView('acctForm')
                     }}
                     className="w-full flex items-center gap-4 px-4 py-4 bg-[var(--color-surface)]
                       hover:bg-[var(--color-bg)] border-b border-[var(--color-border)] transition-colors">
                     <span className="text-xl w-8 text-center">{item.icon}</span>
-                    <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                    <span className="text-sm font-medium flex-1 text-left">
+                      {t(`account.typeLabels.${item.type}` as Parameters<typeof t>[0])}
+                    </span>
                     <span className="text-[var(--color-muted)]">›</span>
                   </button>
                 ))}
@@ -530,27 +534,29 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
           <div className="p-4 space-y-4">
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
               <span className="text-2xl">{pendingAccType.icon}</span>
-              <span className="font-medium text-sm">{pendingAccType.label}</span>
+              <span className="font-medium text-sm">
+                {t(`account.typeLabels.${pendingAccType.type}` as Parameters<typeof t>[0])}
+              </span>
             </div>
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
               <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                <span className="text-sm text-[var(--color-muted)]">帳戶名稱</span>
+                <span className="text-sm text-[var(--color-muted)]">{t('holdings.acctNameLabel')}</span>
                 <input value={newAccName} onChange={e => setNewAccName(e.target.value)}
-                  placeholder={`例：我的${pendingAccType.label}`} autoFocus
+                  placeholder={t('holdings.acctNamePlaceholder', { type: t(`account.typeLabels.${pendingAccType.type}` as Parameters<typeof t>[0]) })} autoFocus
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
               <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
-                <span className="text-sm text-[var(--color-muted)]">機構</span>
+                <span className="text-sm text-[var(--color-muted)]">{t('account.institutionLabel')}</span>
                 <input value={newAccInstitution} autoComplete="off"
                   onChange={e => setNewAccInstitution(e.target.value)}
-                  placeholder="選填（例：玉山銀行）"
+                  placeholder={t('account.institutionPlaceholder')}
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
             </div>
             <button onClick={handleCreateAccount} disabled={!newAccName.trim() || savingAccount}
               className="w-full py-3.5 bg-[var(--color-accent)] text-white rounded-xl font-medium
                 disabled:opacity-40 transition-opacity">
-              {savingAccount ? '建立中…' : '建立帳戶'}
+              {savingAccount ? t('holdings.creatingAccount') : t('account.createButton')}
             </button>
           </div>
         )}
@@ -558,21 +564,21 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
         {/* ── ASSET PICKER ── */}
         {currentView === 'assetPicker' && (
           <div>
-            {/* ＋ 新增資產 — inline expand */}
+            {/* + New Asset — inline expand */}
             <button onClick={() => setExpandNewAsset(p => !p)}
               className="w-full flex items-center justify-center gap-2 px-4 py-3.5
                 border-b border-[var(--color-border)] text-[var(--color-accent)] text-sm
                 hover:bg-[var(--color-bg)] transition-colors font-medium">
-              {expandNewAsset ? '－ 收起' : '＋ 新增資產'}
+              {expandNewAsset ? t('holdings.collapseNewAsset') : t('holdings.expandNewAsset')}
             </button>
 
             {expandNewAsset && (
               <div className="border-b border-[var(--color-border)]">
                 {ASSET_GROUPS.map(group => (
-                  <div key={group.label}>
+                  <div key={group.labelKey}>
                     <div className="px-4 py-2 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
                       <span className="text-xs font-semibold tracking-wider text-[var(--color-muted)] uppercase">
-                        {group.label}
+                        {t(group.labelKey as Parameters<typeof t>[0])}
                       </span>
                     </div>
                     {group.items.map((item, idx) => (
@@ -582,7 +588,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                           setPendingAssetKind(item)
                           setSelectedTicker(null)
                           setSelectedPreciousMetal(null)
-                          setNewAssetName(item.label)
+                          setNewAssetName(t(item.labelKey as Parameters<typeof t>[0]))
                           setNewAssetSymbol(''); setNewAssetCurrency('TWD'); setNewAssetUnit('公克')
                           if (item.useTicker) {
                             pushView('assetTickerSearch')
@@ -593,9 +599,11 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                         className="w-full flex items-center gap-4 px-4 py-3.5 bg-[var(--color-surface)]
                           hover:bg-[var(--color-bg)] border-b border-[var(--color-border)] transition-colors">
                         <span className="text-lg w-7 text-center">{item.icon}</span>
-                        <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                        <span className="text-sm font-medium flex-1 text-left">
+                          {t(item.labelKey as Parameters<typeof t>[0])}
+                        </span>
                         {item.useTicker && (
-                          <span className="text-xs text-[var(--color-muted)] mr-1">搜尋</span>
+                          <span className="text-xs text-[var(--color-muted)] mr-1">{t('assets.search')}</span>
                         )}
                         <span className="text-[var(--color-muted)]">›</span>
                       </button>
@@ -609,7 +617,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
             <div className="p-4 space-y-2">
               {(assets ?? []).length === 0 && !expandNewAsset && (
                 <p className="text-sm text-center text-[var(--color-muted)] py-8">
-                  尚無資產，點上方「＋ 新增資產」建立
+                  {t('holdings.noAssets')}
                 </p>
               )}
               {(assets ?? []).map(a => (
@@ -659,30 +667,34 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                     ${selectedTicker.type === 'etf' ? 'bg-indigo-100 text-indigo-700'
                       : selectedTicker.type === 'crypto' ? 'bg-orange-100 text-orange-700'
                       : 'bg-green-100 text-green-700'}`}>
-                    {selectedTicker.type === 'etf' ? 'ETF' : selectedTicker.type === 'crypto' ? '加密貨幣' : '股票'}
+                    {selectedTicker.type === 'etf' ? 'ETF'
+                      : selectedTicker.type === 'crypto' ? t('assets.tickerTypes.crypto')
+                      : t('assets.tickerTypes.stock')}
                   </span>
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
                 <span className="text-2xl">{pendingAssetKind.icon}</span>
-                <span className="font-medium text-sm">{pendingAssetKind.label}</span>
+                <span className="font-medium text-sm">
+                  {t(pendingAssetKind.labelKey as Parameters<typeof t>[0])}
+                </span>
               </div>
             )}
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
               <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                <span className="text-sm text-[var(--color-muted)]">名稱</span>
+                <span className="text-sm text-[var(--color-muted)]">{t('assets.form.nameLabel')}</span>
                 <input value={newAssetName} onChange={e => setNewAssetName(e.target.value)}
-                  placeholder="例：台積電" autoFocus={!selectedTicker}
+                  placeholder={t('assets.form.namePlaceholder')} autoFocus={!selectedTicker}
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
               {DEFAULT_PRICING[pendingAssetKind.subKind] === 'market' && pendingAssetKind.subKind !== 'precious_metal' && (
                 <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                  <span className="text-sm text-[var(--color-muted)]">代號</span>
+                  <span className="text-sm text-[var(--color-muted)]">{t('assets.form.symbolLabel')}</span>
                   {selectedTicker
                     ? <span className="text-right text-sm text-[var(--color-muted)]">{newAssetSymbol}</span>
                     : <input value={newAssetSymbol} onChange={e => setNewAssetSymbol(e.target.value)}
-                        placeholder="例：2330.TW"
+                        placeholder={t('assets.detail.symbolPlaceholder')}
                         className="text-right bg-transparent text-sm outline-none w-full" />
                   }
                 </div>
@@ -690,13 +702,13 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               {pendingAssetKind.subKind === 'precious_metal' && (
                 <>
                   <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                    <span className="text-sm text-[var(--color-muted)]">金屬</span>
+                    <span className="text-sm text-[var(--color-muted)]">{t('assets.form.metalLabel')}</span>
                     <div className="flex justify-end gap-2">
                       {PRECIOUS_METALS.map(m => (
                         <button key={m.symbol} type="button"
                           onClick={() => {
                             setSelectedPreciousMetal(m)
-                            setNewAssetName(m.name)
+                            setNewAssetName(t(m.nameKey))
                             setNewAssetSymbol(m.symbol)
                             setNewAssetCurrency('USD')
                           }}
@@ -704,21 +716,21 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                             ${selectedPreciousMetal?.symbol === m.symbol
                               ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
                               : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
-                          {m.name}
+                          {t(m.nameKey)}
                         </button>
                       ))}
                     </div>
                   </div>
                   <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                    <span className="text-sm text-[var(--color-muted)]">單位</span>
+                    <span className="text-sm text-[var(--color-muted)]">{t('assets.form.unitLabel')}</span>
                     <div className="flex justify-end gap-2">
-                      {['公克', '盎司'].map(u => (
-                        <button key={u} type="button" onClick={() => setNewAssetUnit(u)}
+                      {UNIT_OPTIONS.map(u => (
+                        <button key={u.value} type="button" onClick={() => setNewAssetUnit(u.value)}
                           className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
-                            ${newAssetUnit === u
+                            ${newAssetUnit === u.value
                               ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
                               : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
-                          {u}
+                          {t(u.tKey)}
                         </button>
                       ))}
                     </div>
@@ -727,7 +739,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               )}
               {DEFAULT_PRICING[pendingAssetKind.subKind] !== 'market' && pendingAssetKind.subKind !== 'precious_metal' && (
                 <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5">
-                  <span className="text-sm text-[var(--color-muted)]">幣別</span>
+                  <span className="text-sm text-[var(--color-muted)]">{t('assets.form.currencyLabel')}</span>
                   {selectedTicker
                     ? <span className="text-right text-sm text-[var(--color-muted)]">{newAssetCurrency}</span>
                     : <input value={newAssetCurrency}
@@ -741,7 +753,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
             <button onClick={handleCreateAsset} disabled={!newAssetName.trim() || savingAsset}
               className="w-full py-3.5 bg-[var(--color-accent)] text-white rounded-xl font-medium
                 disabled:opacity-40 transition-opacity">
-              {savingAsset ? '建立中…' : '建立資產'}
+              {savingAsset ? t('holdings.creatingAsset') : t('assets.createButton')}
             </button>
           </div>
         )}
@@ -751,11 +763,8 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   )
 }
 
-const TXN_TYPE_LABELS: Record<string, string> = {
-  buy: '買入', sell: '賣出', transfer_in: '轉入', transfer_out: '轉出', adjustment: '調整',
-}
-
 function HoldingTransactions({ assetId, accountId }: { assetId: string; accountId: string }) {
+  const t = useTranslations()
   const { data: txns } = useSWR<Transaction[]>(
     `${BASE}/transactions?assetId=${assetId}&accountId=${accountId}`,
     fetcher,
@@ -768,33 +777,35 @@ function HoldingTransactions({ assetId, accountId }: { assetId: string; accountI
   return (
     <div className="pt-2">
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">交易紀錄</p>
+        <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
+          {t('holdings.txnHistory')}
+        </p>
         {hasMore && (
           <a href={`/assets/${assetId}`}
             className="text-xs text-[var(--color-accent)] hover:underline">
-            查看完整紀錄
+            {t('holdings.viewAllTxns')}
           </a>
         )}
       </div>
       {!txns || txns.length === 0
-        ? <p className="text-sm text-[var(--color-muted)] text-center py-4">尚無交易紀錄</p>
+        ? <p className="text-sm text-[var(--color-muted)] text-center py-4">{t('holdings.noTxns')}</p>
         : (
           <>
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-              {visible.map((t, i) => {
-                const isPositive = t.txnType === 'buy' || t.txnType === 'transfer_in'
+              {visible.map((txn, i) => {
+                const isPositive = txn.txnType === 'buy' || txn.txnType === 'transfer_in'
                 return (
-                  <div key={t.id}
+                  <div key={txn.id}
                     className={`flex items-center justify-between pl-3 pr-4 py-3 text-sm border-l-2
                       ${isPositive ? 'border-l-green-500' : 'border-l-red-500'}
                       ${i < visible.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
                     <div>
-                      <span className="text-[var(--color-muted)] text-xs">{t.txnDate}</span>
-                      {t.note && <p className="text-xs text-[var(--color-muted)] mt-0.5">{t.note}</p>}
+                      <span className="text-[var(--color-muted)] text-xs">{txn.txnDate}</span>
+                      {txn.note && <p className="text-xs text-[var(--color-muted)] mt-0.5">{txn.note}</p>}
                     </div>
                     <span className={`font-medium tabular-nums ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
                       {isPositive ? '+' : '−'}
-                      {Number(t.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
+                      {Number(txn.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
                     </span>
                   </div>
                 )
@@ -802,9 +813,9 @@ function HoldingTransactions({ assetId, accountId }: { assetId: string; accountI
             </div>
             {hasMore && (
               <p className="text-xs text-[var(--color-muted)] text-center mt-2">
-                顯示最近 10 筆，共 {sorted.length} 筆 ·{' '}
+                {t('holdings.showingRecent', { total: sorted.length })} ·{' '}
                 <a href={`/assets/${assetId}`} className="text-[var(--color-accent)] hover:underline">
-                  查看完整紀錄
+                  {t('holdings.viewAllTxns')}
                 </a>
               </p>
             )}

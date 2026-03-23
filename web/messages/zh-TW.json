@@ -1,0 +1,286 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "holdings": "Holdings",
+    "assets": "資產管理",
+    "accounts": "帳戶管理",
+    "snapshots": "快照",
+    "settings": "設定"
+  },
+  "common": {
+    "save": "儲存",
+    "saving": "儲存中…",
+    "cancel": "取消",
+    "delete": "刪除",
+    "edit": "編輯",
+    "create": "建立",
+    "close": "關閉",
+    "confirm": "確認",
+    "loading": "載入中…",
+    "noData": "尚無資料",
+    "optional": "選填",
+    "back": "返回",
+    "add": "新增",
+    "search": "搜尋",
+    "notFound": "找不到"
+  },
+  "accounts": {
+    "title": "帳戶管理",
+    "addButton": "+ 新增帳戶",
+    "columns": {
+      "name": "名稱",
+      "type": "類型",
+      "institution": "機構",
+      "note": "備註",
+      "holdingsCount": "持倉數"
+    }
+  },
+  "account": {
+    "typePickerTitle": "選擇帳戶類型",
+    "editTitle": "編輯帳戶",
+    "addTitle": "新增帳戶",
+    "namePlaceholder": "例：台幣活存",
+    "institutionLabel": "機構",
+    "institutionPlaceholder": "選填（例：玉山銀行）",
+    "noteLabel": "備註",
+    "notePlaceholder": "選填",
+    "nameLabel": "名稱",
+    "typeLabel": "類型",
+    "createButton": "建立帳戶",
+    "deleteButton": "刪除帳戶",
+    "deleteConfirm": "確認刪除帳戶？",
+    "deleteBlockedByHoldings": "請先移除所有持倉才能刪除帳戶",
+    "deleteFailed": "刪除失敗",
+    "groups": {
+      "liquid": "流動資金",
+      "investment": "投資",
+      "other": "其他"
+    },
+    "types": {
+      "bank": "銀行",
+      "broker": "券商",
+      "crypto_exchange": "加密貨幣交易所",
+      "e_wallet": "電子錢包",
+      "cash": "現金",
+      "other": "其他"
+    },
+    "typeLabels": {
+      "bank": "銀行帳戶",
+      "broker": "券商",
+      "crypto_exchange": "加密貨幣交易所",
+      "e_wallet": "電子錢包",
+      "cash": "現金",
+      "other": "其他"
+    }
+  },
+  "assets": {
+    "title": "資產設定",
+    "addButton": "+ 新增資產",
+    "kindPickerTitle": "選擇資產類型",
+    "editTitle": "編輯資產",
+    "newAssetTitle": "新增資產",
+    "createButton": "建立資產",
+    "deleteButton": "刪除資產",
+    "deleteConfirm": "確認刪除此資產？若有持倉或快照將無法刪除。",
+    "deleteFailed": "刪除失敗：請先移除所有持倉與快照",
+    "search": "搜尋",
+    "tickerSearch": {
+      "crypto": "搜尋加密貨幣",
+      "stockEtf": "搜尋股票/ETF"
+    },
+    "tickerTypes": {
+      "stock": "股票",
+      "crypto": "加密貨幣"
+    },
+    "form": {
+      "nameLabel": "名稱",
+      "namePlaceholder": "例：台積電",
+      "symbolLabel": "代號",
+      "currencyLabel": "幣別",
+      "metalLabel": "金屬",
+      "unitLabel": "單位"
+    },
+    "preciousMetals": {
+      "gold": "黃金",
+      "silver": "白銀",
+      "platinum": "鉑金"
+    },
+    "units": {
+      "gram": "公克",
+      "ounce": "盎司"
+    },
+    "columns": {
+      "name": "名稱",
+      "type": "類型",
+      "symbol": "代號",
+      "currency": "幣別",
+      "pricing": "報價"
+    },
+    "detail": {
+      "settingsTitle": "資產設定",
+      "nameLabel": "名稱",
+      "symbolLabel": "代號",
+      "symbolPlaceholder": "例：0050.TW",
+      "currencyLabel": "幣別",
+      "typeLabel": "類型",
+      "pricingLabel": "報價",
+      "editNameSymbol": "編輯名稱 / 代號",
+      "updatePrice": "更新今日價格",
+      "holdingDistribution": "持倉分布",
+      "noHoldings": "尚無持倉",
+      "valueTrend": "價值趨勢",
+      "range30d": "30天",
+      "range1y": "1年",
+      "rangeAll": "全部",
+      "valueLabel": "估值",
+      "noHistory": "尚無歷史資料",
+      "transactions": "交易紀錄",
+      "noTransactions": "尚無交易紀錄"
+    }
+  },
+  "asset": {
+    "subKinds": {
+      "bank_account": "銀行存款",
+      "physical_cash": "現金",
+      "e_wallet": "電子錢包",
+      "stablecoin": "穩定幣",
+      "stock": "股票",
+      "etf": "ETF",
+      "fund": "基金",
+      "crypto": "加密貨幣",
+      "precious_metal": "實體貴金屬",
+      "real_estate": "不動產",
+      "vehicle": "車輛",
+      "receivable": "應收款",
+      "credit_card": "信用卡",
+      "mortgage": "房貸",
+      "personal_loan": "個人貸款",
+      "other": "其他"
+    },
+    "categories": {
+      "liquid": "流動資金",
+      "investment": "投資",
+      "fixed": "固定資產",
+      "receivable": "應收款",
+      "debt": "負債"
+    },
+    "pricingModes": {
+      "market": "市價",
+      "fixed": "固定",
+      "manual": "手動"
+    },
+    "groups": {
+      "liquid": "流動資金",
+      "investment": "投資",
+      "fixed": "固定資產",
+      "receivable": "應收款",
+      "debt": "負債",
+      "other": "其他"
+    },
+    "itemLabels": {
+      "liquid_other": "其他流動資金",
+      "stock_etf": "股票/ETF",
+      "investment_other": "其他投資",
+      "fixed_other": "其他固定資產",
+      "debt_other": "其他負債"
+    }
+  },
+  "holdings": {
+    "title": "持倉管理",
+    "addButton": "新增持倉",
+    "empty": "尚無持倉，點右上角「+ 新增持倉」開始",
+    "add": "新增持倉",
+    "edit": "編輯持倉",
+    "acctPicker": "選擇帳戶",
+    "addAccountTitle": "新增帳戶",
+    "acctInfo": "帳戶資訊",
+    "assetPicker": "選擇資產",
+    "addAssetKind": "新增資產",
+    "assetInfo": "資產資訊",
+    "setQuantity": "設定數量",
+    "adjustQuantity": "增減數量",
+    "balance": "餘額",
+    "quantity": "數量",
+    "result": "結果：",
+    "update": "更新",
+    "setBalance": "設定餘額",
+    "createHolding": "建立持倉",
+    "deleteConfirm": "確認刪除「{name}」的持倉？此操作無法復原。",
+    "noAccounts": "尚無帳戶，點下方建立第一個帳戶",
+    "addAccountButton": "＋ 新增帳戶",
+    "selectAccount": "選擇帳戶",
+    "accountLabel": "帳戶",
+    "assetLabel": "資產",
+    "selectAsset": "選擇資產",
+    "estimatedValue": "估值：",
+    "expandNewAsset": "＋ 新增資產",
+    "collapseNewAsset": "－ 收起",
+    "noAssets": "尚無資產，點上方「＋ 新增資產」建立",
+    "creatingAccount": "建立中…",
+    "creatingAsset": "建立中…",
+    "acctNameLabel": "帳戶名稱",
+    "acctNamePlaceholder": "例：我的{type}",
+    "txnHistory": "交易紀錄",
+    "viewAllTxns": "查看完整紀錄",
+    "noTxns": "尚無交易紀錄",
+    "showingRecent": "顯示最近 10 筆，共 {total} 筆",
+    "columns": {
+      "assetName": "資產名稱",
+      "account": "帳戶",
+      "institution": "機構",
+      "type": "類型",
+      "quantity": "數量",
+      "value": "估值"
+    }
+  },
+  "dashboard": {
+    "netWorth": "Net Worth",
+    "realtime": "即時",
+    "asOf": "資料截至",
+    "assets": "資產",
+    "liabilities": "負債",
+    "allocation": "資產配置",
+    "history": "淨值歷史",
+    "noHistory": "尚無歷史快照",
+    "triggerSnapshot": "執行今日快照",
+    "triggeringSnapshot": "執行中…",
+    "snapshotDone": "完成！重新整理中…",
+    "snapshotFailed": "失敗，請稍後再試",
+    "vsSnapshot": "較快照（{date}）",
+    "noDataTitle": "尚無資料",
+    "noDataDesc": "完成以下步驟後，儀表板將自動顯示你的淨值概覽。",
+    "goToAccounts": "前往「帳戶管理」",
+    "addAccountsDesc": "新增你的帳戶（銀行、券商、錢包等）",
+    "goToHoldings": "前往「持倉管理」",
+    "addHoldingsDesc": "新增持倉並設定餘額或數量",
+    "allocationOverview": "全覽",
+    "byAccount": "按帳戶",
+    "byAsset": "按資產",
+    "noHoldingData": "無持倉資料"
+  },
+  "settings": {
+    "title": "設定",
+    "darkMode": "深色模式",
+    "language": "語言",
+    "snapshotSchedule": "快照排程（唯讀）",
+    "snapshotScheduleDesc": "由環境變數 SNAPSHOT_SCHEDULE 控制，需重啟服務才能變更。",
+    "languages": {
+      "zh-TW": "繁體中文",
+      "en": "English"
+    }
+  },
+  "snapshots": {
+    "title": "快照紀錄",
+    "triggerButton": "立即快照",
+    "triggering": "快照中…",
+    "triggerMarketPrices": "更新今日市場價格",
+    "fetchingPrices": "正在向 Yahoo Finance 抓取報價…",
+    "updateResult": "{date} 更新結果",
+    "priceOk": "成功",
+    "priceFailed": "失敗",
+    "fxRate": "匯率",
+    "snapshotItems": "快照 {count} 筆",
+    "priceFetchFailed": "無法取得",
+    "rebuildTitle": "重建快照"
+  }
+}

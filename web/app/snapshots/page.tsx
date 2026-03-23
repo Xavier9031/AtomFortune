@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import useSWR from 'swr'
 import { RefreshCw, CheckCircle, XCircle, Database } from 'lucide-react'
 import { BASE, fetcher } from '@/lib/api'
@@ -9,21 +10,30 @@ type PriceResult = { assetId: string; name: string; symbol: string; price: numbe
 type TriggerResult = { date: string; prices: PriceResult[]; fxStatus: 'ok' | 'failed'; snapshotItemsWritten: number }
 
 export default function SnapshotsPage() {
+  const t = useTranslations()
   const { data, mutate } = useSWR<{ snapshotDate: string; netWorth: number }[]>(
     `${BASE}/snapshots/history?range=all`, fetcher)
   const dates = (data ?? []).map(d => d.snapshotDate).sort().reverse()
 
   const [triggering, setTriggering] = useState(false)
   const [result, setResult] = useState<TriggerResult | null>(null)
+  const [triggerError, setTriggerError] = useState<string | null>(null)
 
   async function handleTriggerToday() {
     setTriggering(true)
     setResult(null)
+    setTriggerError(null)
     try {
       const res = await fetch(`${BASE}/snapshots/trigger`, { method: 'POST' })
-      const json: TriggerResult = await res.json()
-      setResult(json)
-      await mutate()
+      const json = await res.json()
+      if (!res.ok) {
+        setTriggerError(json.error ?? `HTTP ${res.status}`)
+      } else {
+        setResult(json as TriggerResult)
+        await mutate()
+      }
+    } catch (err) {
+      setTriggerError(err instanceof Error ? err.message : String(err))
     } finally {
       setTriggering(false)
     }
@@ -41,39 +51,44 @@ export default function SnapshotsPage() {
     <main className="p-6 max-w-3xl mx-auto space-y-6">
       {/* Header + trigger button */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">快照歷史</h1>
+        <h1 className="text-xl font-bold">{t('snapshots.title')}</h1>
         <button onClick={handleTriggerToday} disabled={triggering}
           className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--color-accent)] text-white
             text-sm font-medium disabled:opacity-50 transition-opacity">
           <RefreshCw size={14} className={triggering ? 'animate-spin' : ''} />
-          {triggering
-            ? `正在向 Yahoo Finance 抓取報價…`
-            : '更新今日市場價格'}
+          {triggering ? t('snapshots.fetchingPrices') : t('snapshots.triggerMarketPrices')}
         </button>
       </div>
+
+      {/* Error panel */}
+      {triggerError && (
+        <div className="rounded-xl border border-red-400 bg-red-50 dark:bg-red-950/20 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+          {triggerError}
+        </div>
+      )}
 
       {/* Result panel */}
       {result && (
         <div className="rounded-xl border border-[var(--color-border)] overflow-hidden text-sm">
           {/* Summary header */}
           <div className="px-4 py-3 bg-[var(--color-bg)] flex items-center justify-between">
-            <span className="font-semibold">{result.date} 更新結果</span>
+            <span className="font-semibold">{t('snapshots.updateResult', { date: result.date })}</span>
             <div className="flex items-center gap-3 text-xs text-[var(--color-muted)]">
               <span className="flex items-center gap-1 text-green-500">
-                <CheckCircle size={12} /> {okCount} 成功
+                <CheckCircle size={12} /> {okCount} {t('snapshots.priceOk')}
               </span>
               {failCount > 0 && (
                 <span className="flex items-center gap-1 text-red-400">
-                  <XCircle size={12} /> {failCount} 失敗
+                  <XCircle size={12} /> {failCount} {t('snapshots.priceFailed')}
                 </span>
               )}
               <span className={`flex items-center gap-1 ${result.fxStatus === 'ok' ? 'text-green-500' : 'text-red-400'}`}>
                 {result.fxStatus === 'ok' ? <CheckCircle size={12} /> : <XCircle size={12} />}
-                匯率
+                {t('snapshots.fxRate')}
               </span>
               <span className="flex items-center gap-1">
                 <Database size={12} />
-                快照 {result.snapshotItemsWritten} 筆
+                {t('snapshots.snapshotItems', { count: result.snapshotItemsWritten })}
               </span>
             </div>
           </div>
@@ -93,7 +108,7 @@ export default function SnapshotsPage() {
               <span className={p.status === 'ok' ? 'font-mono text-xs' : 'text-xs text-[var(--color-muted)]'}>
                 {p.price != null
                   ? new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 }).format(p.price)
-                  : '無法取得'}
+                  : t('snapshots.priceFetchFailed')}
               </span>
             </div>
           ))}

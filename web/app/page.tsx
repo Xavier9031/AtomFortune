@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { useCurrency } from '@/context/CurrencyContext'
 import { useLiveDashboard, useNetWorthHistory, BASE } from '@/lib/api'
 import NetWorthHeader from '@/components/dashboard/NetWorthHeader'
@@ -8,6 +9,7 @@ import NetWorthChart from '@/components/dashboard/NetWorthChart'
 import type { DashboardSummary } from '@/lib/types'
 
 function TriggerSnapshotButton() {
+  const t = useTranslations('dashboard')
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   async function trigger() {
     setStatus('loading')
@@ -22,15 +24,16 @@ function TriggerSnapshotButton() {
   return (
     <button onClick={trigger} disabled={status === 'loading' || status === 'done'}
       className="px-6 py-2 bg-[var(--color-accent)] text-white rounded-lg disabled:opacity-60">
-      {status === 'idle' && '執行今日快照'}
-      {status === 'loading' && '執行中…'}
-      {status === 'done' && '完成！重新整理中…'}
-      {status === 'error' && '失敗，請稍後再試'}
+      {status === 'idle' && t('triggerSnapshot')}
+      {status === 'loading' && t('triggeringSnapshot')}
+      {status === 'done' && t('snapshotDone')}
+      {status === 'error' && t('snapshotFailed')}
     </button>
   )
 }
 
 export default function DashboardPage() {
+  const t = useTranslations('dashboard')
   const { currency } = useCurrency()
   const { data: live, isLoading: liveLoading } = useLiveDashboard(currency)
   const { data: history } = useNetWorthHistory(currency)
@@ -52,24 +55,22 @@ export default function DashboardPage() {
       <div className="flex flex-col items-center justify-center py-24 text-center space-y-6">
         <div className="text-5xl">📊</div>
         <div className="space-y-2">
-          <h2 className="text-xl font-bold">尚無資料</h2>
-          <p className="text-sm text-[var(--color-muted)] max-w-sm">
-            完成以下步驟後，儀表板將自動顯示你的淨值概覽。
-          </p>
+          <h2 className="text-xl font-bold">{t('noDataTitle')}</h2>
+          <p className="text-sm text-[var(--color-muted)] max-w-sm">{t('noDataDesc')}</p>
         </div>
         <ol className="text-left space-y-3 text-sm">
           <li className="flex gap-3 items-start">
             <span className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-[var(--color-accent)] text-white flex items-center justify-center text-xs font-bold">1</span>
             <div>
-              <a href="/accounts" className="font-medium text-[var(--color-accent)] hover:underline">前往「帳戶管理」</a>
-              <span className="text-[var(--color-muted)]"> 新增你的帳戶（銀行、券商、錢包等）</span>
+              <a href="/accounts" className="font-medium text-[var(--color-accent)] hover:underline">{t('goToAccounts')}</a>
+              <span className="text-[var(--color-muted)]"> {t('addAccountsDesc')}</span>
             </div>
           </li>
           <li className="flex gap-3 items-start">
             <span className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-[var(--color-accent)] text-white flex items-center justify-center text-xs font-bold">2</span>
             <div>
-              <a href="/holdings" className="font-medium text-[var(--color-accent)] hover:underline">前往「持倉管理」</a>
-              <span className="text-[var(--color-muted)]"> 新增持倉並設定餘額或數量</span>
+              <a href="/holdings" className="font-medium text-[var(--color-accent)] hover:underline">{t('goToHoldings')}</a>
+              <span className="text-[var(--color-muted)]"> {t('addHoldingsDesc')}</span>
             </div>
           </li>
         </ol>
@@ -94,7 +95,7 @@ export default function DashboardPage() {
       <NetWorthHeader summary={liveSummary} />
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)]">
-          <h2 className="text-sm font-semibold mb-3">資產配置</h2>
+          <h2 className="text-sm font-semibold mb-3">{t('allocation')}</h2>
           <AllocationBreakdown
             categories={live.categories}
             totalAssets={live.totalAssets}
@@ -103,11 +104,11 @@ export default function DashboardPage() {
           />
         </div>
         <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)]">
-          <h2 className="text-sm font-semibold mb-3">淨值歷史</h2>
+          <h2 className="text-sm font-semibold mb-3">{t('history')}</h2>
           {history && history.data.length > 0
             ? <NetWorthChart data={history} />
             : <div className="flex items-center justify-center h-40 text-sm text-[var(--color-muted)] flex-col gap-2">
-                <p>尚無歷史快照</p>
+                <p>{t('noHistory')}</p>
                 <TriggerSnapshotButton />
               </div>
           }

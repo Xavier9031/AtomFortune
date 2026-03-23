@@ -3,7 +3,11 @@ import { createContext, useContext, useState, useEffect } from 'react'
 import type { Currency } from '@/lib/types'
 
 const STORAGE_KEY = 'displayCurrency'
-const VALID: Currency[] = ['TWD', 'USD', 'JPY']
+const VALID: Currency[] = [
+  'TWD', 'USD', 'JPY', 'EUR', 'GBP', 'CNY', 'HKD',
+  'SGD', 'AUD', 'CAD', 'CHF', 'KRW', 'MYR', 'THB',
+  'VND', 'IDR', 'PHP',
+]
 
 interface CurrencyCtx { currency: Currency; setCurrency: (c: Currency) => void }
 const CurrencyContext = createContext<CurrencyCtx>({ currency: 'TWD', setCurrency: () => {} })

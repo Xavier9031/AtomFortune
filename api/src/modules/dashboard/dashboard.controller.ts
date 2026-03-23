@@ -2,8 +2,9 @@ import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
 import * as service from './dashboard.service'
+import { SUPPORTED_CURRENCIES } from '../../currencies'
 
-const displayCurrencySchema = z.enum(['TWD', 'USD', 'JPY']).default('TWD')
+const displayCurrencySchema = z.enum(SUPPORTED_CURRENCIES).default('TWD')
 
 export const dashboardRouter = new Hono()
 

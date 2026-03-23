@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import useSWR from 'swr'
 import { BASE, fetcher } from '@/lib/api'
 import type { AllocationCategory, Category, Holding } from '@/lib/types'
@@ -8,10 +9,6 @@ import { getHoldingUnit } from '@/lib/utils'
 const CAT_COLORS: Record<Category, string> = {
   liquid: '#22c55e', investment: '#6366f1', fixed: '#8b5cf6',
   receivable: '#38bdf8', debt: '#94a3b8',
-}
-const CAT_LABELS: Record<Category, string> = {
-  liquid: '流動資金', investment: '投資', fixed: '固定資產',
-  receivable: '應收款', debt: '負債',
 }
 
 type GroupBy = 'account' | 'asset'
@@ -36,6 +33,8 @@ interface Props {
 }
 
 export default function AllocationBreakdown({ categories, totalAssets, totalLiabilities, displayCurrency }: Props) {
+  const t = useTranslations('dashboard')
+  const tAsset = useTranslations('asset')
   const { data: holdings } = useSWR<Holding[]>(`${BASE}/holdings`, fetcher)
   const [path, setPath] = useState<string[]>([])
   const [groupBy, setGroupBy] = useState<GroupBy>('account')
@@ -45,8 +44,8 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
     const assetCats = categories.filter(c => c.category !== 'debt')
     const liabCats = categories.filter(c => c.category === 'debt')
     const classes = [
-      { key: 'asset', label: '資產', value: totalAssets, cats: assetCats },
-      { key: 'liability', label: '負債', value: totalLiabilities, cats: liabCats },
+      { key: 'asset', label: t('assets'), value: totalAssets, cats: assetCats },
+      { key: 'liability', label: t('liabilities'), value: totalLiabilities, cats: liabCats },
     ].filter(g => g.value > 0)
 
     return (
@@ -68,7 +67,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
                 return (
                   <div key={c.category}>
                     <div className="flex justify-between text-xs text-[var(--color-muted)]">
-                      <span style={{ color: CAT_COLORS[c.category] }}>{c.label}</span>
+                      <span style={{ color: CAT_COLORS[c.category] }}>{tAsset(`categories.${c.category}`)}</span>
                       <span>{fmt(c.value, displayCurrency)} · {pct.toFixed(1)}%</span>
                     </div>
                     <PctBar pct={pct} color={CAT_COLORS[c.category]} />
@@ -83,7 +82,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
   }
 
   const isAsset = path[0] === 'asset'
-  const classLabel = isAsset ? '資產' : '負債'
+  const classLabel = isAsset ? t('assets') : t('liabilities')
   const classTotal = isAsset ? totalAssets : totalLiabilities
 
   // ─── Level 1: 類別 ───
@@ -94,7 +93,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
 
     return (
       <div className="space-y-3">
-        <Breadcrumb path={path} setPath={setPath} />
+        <Breadcrumb path={path} setPath={setPath} classLabel={classLabel} />
         <div className="grid grid-cols-2 gap-3">
           {cats.map(c => {
             const pct = classTotal > 0 ? (c.value / classTotal) * 100 : 0
@@ -104,7 +103,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
                   hover:bg-[var(--color-bg)] transition-colors group">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold" style={{ color: CAT_COLORS[c.category] }}>
-                    {CAT_LABELS[c.category]}
+                    {tAsset(`categories.${c.category}`)}
                   </span>
                   <span className="text-xs text-[var(--color-muted)] group-hover:text-[var(--color-text)]">›</span>
                 </div>
@@ -125,12 +124,11 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
     const catData = categories.find(c => c.category === cat)
     const catHoldings = (holdings ?? []).filter(h => h.category === cat)
 
-    // Distribute live AllocationItem values proportionally by quantity across holdings
     const assetTotalQty = new Map<string, number>()
     for (const h of catHoldings) {
       assetTotalQty.set(h.assetId, (assetTotalQty.get(h.assetId) ?? 0) + Number(h.quantity))
     }
-    const liveValues = new Map<string, number>() // key: assetId+accountId
+    const liveValues = new Map<string, number>()
     for (const h of catHoldings) {
       const item = catData?.items.find(i => i.assetId === h.assetId)
       const totalQty = assetTotalQty.get(h.assetId) ?? 1
@@ -140,7 +138,8 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
 
     return (
       <div className="space-y-3">
-        <Breadcrumb path={path} setPath={setPath} catLabel={CAT_LABELS[cat]}
+        <Breadcrumb path={path} setPath={setPath} classLabel={classLabel}
+          catLabel={tAsset(`categories.${cat}`)}
           total={catData ? fmt(catData.value, displayCurrency) : undefined} />
 
         <div className="flex gap-1 p-0.5 bg-[var(--color-bg)] rounded-lg w-fit">
@@ -150,7 +149,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
                 ${groupBy === g
                   ? 'bg-[var(--color-surface)] shadow-sm font-semibold'
                   : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
-              {g === 'account' ? '按帳戶' : '按資產'}
+              {g === 'account' ? t('byAccount') : t('byAsset')}
             </button>
           ))}
         </div>
@@ -165,19 +164,19 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
   return null
 }
 
-function Breadcrumb({ path, setPath, catLabel, total }: {
-  path: string[]; setPath: (p: string[]) => void; catLabel?: string; total?: string
+function Breadcrumb({ path, setPath, classLabel, catLabel, total }: {
+  path: string[]; setPath: (p: string[]) => void; classLabel: string; catLabel?: string; total?: string
 }) {
-  const isAsset = path[0] === 'asset'
+  const t = useTranslations('dashboard')
   return (
     <div className="flex items-center gap-1 text-sm flex-wrap">
-      <button onClick={() => setPath([])} className="text-[var(--color-muted)] hover:text-[var(--color-text)]">全覽</button>
+      <button onClick={() => setPath([])} className="text-[var(--color-muted)] hover:text-[var(--color-text)]">{t('allocationOverview')}</button>
       <span className="text-[var(--color-muted)]">›</span>
       {path.length === 1
-        ? <span className="font-medium">{isAsset ? '資產' : '負債'}</span>
+        ? <span className="font-medium">{classLabel}</span>
         : <>
             <button onClick={() => setPath([path[0]])} className="text-[var(--color-muted)] hover:text-[var(--color-text)]">
-              {isAsset ? '資產' : '負債'}
+              {classLabel}
             </button>
             <span className="text-[var(--color-muted)]">›</span>
             <span className="font-medium">{catLabel}</span>
@@ -188,6 +187,7 @@ function Breadcrumb({ path, setPath, catLabel, total }: {
 }
 
 function ByAccount({ holdings, liveValues, displayCurrency }: { holdings: Holding[]; liveValues: Map<string, number>; displayCurrency: string }) {
+  const t = useTranslations('dashboard')
   const groups = new Map<string, { name: string; institution: string | null; total: number; rows: Holding[] }>()
   for (const h of holdings) {
     if (!groups.has(h.accountId)) groups.set(h.accountId, {
@@ -227,7 +227,6 @@ function ByAccount({ holdings, liveValues, displayCurrency }: { holdings: Holdin
 function ByAsset({ holdings, liveValues, displayCurrency }: { holdings: Holding[]; liveValues: Map<string, number>; displayCurrency: string }) {
   if (holdings.length === 0) return <Empty />
 
-  // Group by assetId, summing values across accounts
   const groups = new Map<string, {
     representative: Holding; total: number; rows: { h: Holding; value: number }[]
   }>()
@@ -309,5 +308,6 @@ function ValueBlock({ h, value, displayCurrency }: { h: Holding; value: number; 
 }
 
 function Empty() {
-  return <p className="text-sm text-[var(--color-muted)] text-center py-6">無持倉資料</p>
+  const t = useTranslations('dashboard')
+  return <p className="text-sm text-[var(--color-muted)] text-center py-6">{t('noHoldingData')}</p>
 }

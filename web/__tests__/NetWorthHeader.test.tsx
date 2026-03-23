@@ -4,7 +4,7 @@ import NetWorthHeader from '../components/dashboard/NetWorthHeader'
 const summary = {
   snapshotDate: '2026-03-22', displayCurrency: 'TWD' as const,
   netWorth: 12847320, totalAssets: 13199320, totalLiabilities: 352000,
-  changeAmount: 289000, changePct: 2.30, missingAssets: [],
+  changeAmount: 289000, changePct: 2.30, prevSnapshotDate: '2026-03-21', missingAssets: [],
 }
 
 test('renders net worth value', () => {

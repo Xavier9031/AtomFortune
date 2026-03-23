@@ -1,4 +1,7 @@
-export type Currency = 'TWD' | 'USD' | 'JPY'
+export type Currency =
+  | 'TWD' | 'USD' | 'JPY' | 'EUR' | 'GBP' | 'CNY' | 'HKD'
+  | 'SGD' | 'AUD' | 'CAD' | 'CHF' | 'KRW' | 'MYR' | 'THB'
+  | 'VND' | 'IDR' | 'PHP'
 export type Category = 'liquid' | 'investment' | 'fixed' | 'receivable' | 'debt'
 
 export interface DashboardSummary {

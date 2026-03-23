@@ -8,12 +8,12 @@ const assets: Asset[] = [
 ]
 
 it('renders asset row with all columns', () => {
-  render(<AssetsTable assets={assets} onDelete={jest.fn()} />)
+  render(<AssetsTable assets={assets} onNavigate={jest.fn()} />)
   expect(screen.getAllByText('AAPL').length).toBeGreaterThan(0)
   expect(screen.getByText('market')).toBeInTheDocument()
 })
 
 it('navigates to /assets/[id] on row click', () => {
-  render(<AssetsTable assets={assets} onDelete={jest.fn()} />)
+  render(<AssetsTable assets={assets} onNavigate={jest.fn()} />)
   expect(screen.getByRole('link', { name: /AAPL/i })).toHaveAttribute('href', '/assets/1')
 })

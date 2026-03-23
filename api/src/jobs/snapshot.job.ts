@@ -100,8 +100,13 @@ export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date())
   const today = formatDate(snapshotDate)
 
   const marketAssets = await getMarketAssets(db)
-  const pricesMap = await fetchMarketPrices(marketAssets)
-  await upsertPrices(db, pricesMap, today)
+  let pricesMap = new Map<string, number>()
+  try {
+    pricesMap = await fetchMarketPrices(marketAssets)
+    await upsertPrices(db, pricesMap, today)
+  } catch (err) {
+    console.warn('Market price fetch failed:', err)
+  }
 
   const priceResults = marketAssets.map(a => ({
     assetId: a.id,
