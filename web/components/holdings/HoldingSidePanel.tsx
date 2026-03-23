@@ -1,8 +1,8 @@
 'use client'
 import { useState, useEffect } from 'react'
-import useSWR from 'swr'
+import useSWR, { mutate as globalMutate } from 'swr'
 import { BASE, fetcher } from '@/lib/api'
-import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker } from '@/lib/types'
+import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker, Transaction } from '@/lib/types'
 import { TickerSearch } from '@/components/assets/TickerSearch'
 
 type View = 'main' | 'acctPicker' | 'acctTypePicker' | 'acctForm' | 'assetPicker' | 'assetKindPicker' | 'assetTickerSearch' | 'assetForm'
@@ -218,6 +218,9 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
         })
       }
     }
+    if (holding) {
+      globalMutate(`${BASE}/transactions?assetId=${holding.assetId}&accountId=${holding.accountId}`)
+    }
     onClose()
   }
 
@@ -309,20 +312,12 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                       rounded px-2 py-1 text-xs font-bold outline-none" />
                 )}
               </div>
-              {!isLiquidHolding && (
-                <div className="flex items-center px-4 py-3.5">
-                  <span className="text-sm text-[var(--color-muted)] w-16">備註</span>
-                  <input value={note} onChange={e => setNote(e.target.value)} placeholder="選填"
-                    className="flex-1 text-right bg-transparent text-sm outline-none" />
-                </div>
-              )}
+              <div className="flex items-center px-4 py-3.5">
+                <span className="text-sm text-[var(--color-muted)] w-16">備註</span>
+                <input value={note} onChange={e => setNote(e.target.value)} placeholder="選填"
+                  className="flex-1 text-right bg-transparent text-sm outline-none" />
+              </div>
             </div>
-            {!isLiquidHolding && (
-              <a href={`/assets/${holding.assetId}`}
-                className="text-sm text-[var(--color-accent)] underline block text-center">
-                查看資產詳情
-              </a>
-            )}
             <div className="flex gap-3">
               <button onClick={handleSave} disabled={!canSubmit}
                 className="flex-1 bg-[var(--color-accent)] text-white rounded-xl py-3 font-medium disabled:opacity-40">
@@ -333,6 +328,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                 刪除
               </button>
             </div>
+            <HoldingTransactions assetId={holding.assetId} accountId={holding.accountId} />
           </div>
         )}
 
@@ -693,6 +689,48 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
         )}
 
       </div>
+    </div>
+  )
+}
+
+const TXN_TYPE_LABELS: Record<string, string> = {
+  buy: '買入', sell: '賣出', transfer_in: '轉入', transfer_out: '轉出', adjustment: '調整',
+}
+
+function HoldingTransactions({ assetId, accountId }: { assetId: string; accountId: string }) {
+  const { data: txns } = useSWR<Transaction[]>(
+    `${BASE}/transactions?assetId=${assetId}&accountId=${accountId}`,
+    fetcher,
+  )
+
+  return (
+    <div className="pt-2">
+      <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2">交易紀錄</p>
+      {!txns || txns.length === 0
+        ? <p className="text-sm text-[var(--color-muted)] text-center py-4">尚無交易紀錄</p>
+        : (
+          <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+            {[...txns].sort((a, b) => b.txnDate.localeCompare(a.txnDate)).map((t, i, arr) => (
+              <div key={t.id}
+                className={`flex items-center justify-between px-4 py-3 text-sm
+                  ${i < arr.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
+                <div>
+                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full mr-2
+                    ${t.txnType === 'buy' || t.txnType === 'transfer_in' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
+                    {TXN_TYPE_LABELS[t.txnType] ?? t.txnType}
+                  </span>
+                  <span className="text-[var(--color-muted)] text-xs">{t.txnDate}</span>
+                  {t.note && <p className="text-xs text-[var(--color-muted)] mt-0.5">{t.note}</p>}
+                </div>
+                <span className="font-medium tabular-nums">
+                  {t.txnType === 'sell' || t.txnType === 'transfer_out' ? '−' : '+'}
+                  {Number(t.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
+                </span>
+              </div>
+            ))}
+          </div>
+        )
+      }
     </div>
   )
 }
