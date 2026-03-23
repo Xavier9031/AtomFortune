@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import useSWR from 'swr'
-import { RefreshCw, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { RefreshCw, CheckCircle, XCircle, Database } from 'lucide-react'
 import { BASE, fetcher } from '@/lib/api'
 import { SnapshotsList } from '@/components/snapshots/SnapshotsList'
 
@@ -72,7 +72,7 @@ export default function SnapshotsPage() {
                 匯率
               </span>
               <span className="flex items-center gap-1">
-                <AlertCircle size={12} />
+                <Database size={12} />
                 快照 {result.snapshotItemsWritten} 筆
               </span>
             </div>
