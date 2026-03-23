@@ -263,9 +263,6 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     onClose()
   }
 
-  const knownInstitutions = Array.from(
-    new Set((accounts ?? []).map(a => a.institution).filter(Boolean) as string[])
-  )
 
   const canSubmit = mode === 'add'
     ? isLiquidAccount
@@ -546,9 +543,6 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
         {/* ── ACCOUNT FORM ── */}
         {currentView === 'acctForm' && pendingAccType && (
           <div className="p-4 space-y-4">
-            <datalist id="known-institutions">
-              {knownInstitutions.map(i => <option key={i} value={i} />)}
-            </datalist>
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
               <span className="text-2xl">{pendingAccType.icon}</span>
               <span className="font-medium text-sm">{pendingAccType.label}</span>
@@ -562,7 +556,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               </div>
               <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
                 <span className="text-sm text-[var(--color-muted)]">機構</span>
-                <input list="known-institutions" value={newAccInstitution}
+                <input value={newAccInstitution} autoComplete="off"
                   onChange={e => setNewAccInstitution(e.target.value)}
                   placeholder="選填（例：玉山銀行）"
                   className="text-right bg-transparent text-sm outline-none w-full" />
