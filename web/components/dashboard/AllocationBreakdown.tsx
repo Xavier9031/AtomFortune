@@ -229,36 +229,46 @@ function ByAsset({ holdings, liveValues, displayCurrency }: { holdings: Holding[
 
   // Group by assetId, summing values across accounts
   const groups = new Map<string, {
-    representative: Holding; total: number; totalQty: number; accounts: string[]
+    representative: Holding; total: number; rows: { h: Holding; value: number }[]
   }>()
   for (const h of holdings) {
     const val = liveValues.get(h.assetId + h.accountId) ?? 0
     if (!groups.has(h.assetId)) {
-      groups.set(h.assetId, { representative: h, total: 0, totalQty: 0, accounts: [] })
+      groups.set(h.assetId, { representative: h, total: 0, rows: [] })
     }
     const g = groups.get(h.assetId)!
     g.total += val
-    g.totalQty += Number(h.quantity)
-    g.accounts.push(h.accountName)
+    g.rows.push({ h, value: val })
   }
 
   return (
     <div className="space-y-2">
-      {[...groups.values()].sort((a, b) => b.total - a.total).map(({ representative: h, total, totalQty, accounts }) => (
-        <div key={h.assetId}
-          className="rounded-xl border border-[var(--color-border)] p-4 flex justify-between items-center">
-          <div>
-            <div className="font-medium text-sm">{h.assetName}</div>
-            <div className="text-xs text-[var(--color-muted)] mt-0.5">{accounts.join(' · ')}</div>
+      {[...groups.values()].sort((a, b) => b.total - a.total).map(({ representative: h, total, rows }) => (
+        <div key={h.assetId} className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+          <div className="px-4 py-3 bg-[var(--color-bg)] flex justify-between items-center">
+            <span className="font-medium text-sm">{h.assetName}</span>
+            <span className="text-sm font-semibold">{fmt(total, displayCurrency)}</span>
           </div>
-          <div className="text-right">
-            <div className="text-sm font-medium">{fmt(total, displayCurrency)}</div>
-            {h.currencyCode !== displayCurrency && (
-              <div className="text-xs text-[var(--color-muted)]">
-                {new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 6 }).format(totalQty)} {getHoldingUnit(h)}
+          {rows.map(({ h: rh, value }, i) => {
+            const pct = total > 0 ? (value / total) * 100 : 0
+            return (
+              <div key={rh.accountId}
+                className={`px-4 py-2.5 text-sm ${i < rows.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
+                <div className="flex justify-between items-center">
+                  <span className="text-[var(--color-muted)]">
+                    {rh.accountName}{rh.institution ? ` · ${rh.institution}` : ''}
+                  </span>
+                  <ValueBlock h={rh} value={value} displayCurrency={displayCurrency} />
+                </div>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <div className="flex-1 h-1 rounded-full bg-[var(--color-bg)] overflow-hidden">
+                    <div className="h-full rounded-full bg-indigo-400 transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
+                  </div>
+                  <span className="text-xs text-[var(--color-muted)] w-10 text-right">{pct.toFixed(1)}%</span>
+                </div>
               </div>
-            )}
-          </div>
+            )
+          })}
         </div>
       ))}
     </div>
