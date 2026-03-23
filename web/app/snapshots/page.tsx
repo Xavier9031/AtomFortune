@@ -17,15 +17,23 @@ export default function SnapshotsPage() {
 
   const [triggering, setTriggering] = useState(false)
   const [result, setResult] = useState<TriggerResult | null>(null)
+  const [triggerError, setTriggerError] = useState<string | null>(null)
 
   async function handleTriggerToday() {
     setTriggering(true)
     setResult(null)
+    setTriggerError(null)
     try {
       const res = await fetch(`${BASE}/snapshots/trigger`, { method: 'POST' })
-      const json: TriggerResult = await res.json()
-      setResult(json)
-      await mutate()
+      const json = await res.json()
+      if (!res.ok) {
+        setTriggerError(json.error ?? `HTTP ${res.status}`)
+      } else {
+        setResult(json as TriggerResult)
+        await mutate()
+      }
+    } catch (err) {
+      setTriggerError(err instanceof Error ? err.message : String(err))
     } finally {
       setTriggering(false)
     }
@@ -51,6 +59,13 @@ export default function SnapshotsPage() {
           {triggering ? t('snapshots.fetchingPrices') : t('snapshots.triggerMarketPrices')}
         </button>
       </div>
+
+      {/* Error panel */}
+      {triggerError && (
+        <div className="rounded-xl border border-red-400 bg-red-50 dark:bg-red-950/20 px-4 py-3 text-sm text-red-600 dark:text-red-400">
+          {triggerError}
+        </div>
+      )}
 
       {/* Result panel */}
       {result && (
