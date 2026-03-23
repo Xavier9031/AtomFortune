@@ -25,7 +25,23 @@ export default function TopBar() {
 
   return (
     <header className="h-14 flex items-center justify-between px-6 border-b border-border bg-surface">
-      <img src="/atomworth-logo.svg" alt="AtomWorth" className="h-7 w-auto" />
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" className="h-7 w-auto" aria-label="AtomWorth">
+        <g transform="translate(174,80)" fill="none" stroke="#2A8B8B" strokeWidth="2.2">
+          <ellipse rx="38" ry="18" transform="rotate(0)"/>
+          <ellipse rx="38" ry="18" transform="rotate(60)"/>
+          <ellipse rx="38" ry="18" transform="rotate(-60)"/>
+        </g>
+        <circle cx="174" cy="80" r="22" fill="#2A8B8B"/>
+        <g transform="translate(174,80)">
+          <rect x="-11" y="3" width="5" height="5" fill="#C8EAEA" rx="1"/>
+          <rect x="-4" y="-1" width="5" height="9" fill="#A8D8D8" rx="1"/>
+          <rect x="3" y="-6" width="5" height="14" fill="#7ECECE" rx="1"/>
+          <polyline points="-9,2 -1,-4 7,-9" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <polyline points="3,-11 7,-9 5,-5" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        </g>
+        <text x="14" y="110" fontFamily="Georgia,'Times New Roman',serif" fontWeight="700" fontSize="92" fill="currentColor" letterSpacing="-2">At</text>
+        <text x="210" y="110" fontFamily="Georgia,'Times New Roman',serif" fontWeight="700" fontSize="92" fill="currentColor" letterSpacing="-2">mWorth</text>
+      </svg>
       <div className="flex items-center gap-3">
         <select
           aria-label="currency"
