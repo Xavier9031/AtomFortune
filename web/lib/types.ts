@@ -71,6 +71,6 @@ export interface Transaction {
 }
 export interface SnapshotItem {
   assetId: string; accountId: string; assetName: string; accountName: string
-  quantity: number; price: number; currencyCode: string
+  quantity: number; price: number; currencyCode: string; unit: string | null
   fxRate: number; valueInBase: number
 }

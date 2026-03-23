@@ -11,10 +11,16 @@ const CAT_LABELS: Record<string, string> = {
   receivable: '應收款', debt: '負債',
 }
 
-function fmtNative(quantity: number, price: number, currencyCode: string) {
-  const value = quantity * price
-  const decimals = ['TWD', 'JPY', 'KRW'].includes(currencyCode) ? 0 : 2
-  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: decimals }).format(value) + ' ' + currencyCode
+const ZERO_DECIMAL = new Set(['TWD', 'JPY', 'KRW'])
+
+function fmtAmount(value: number, currency: string) {
+  const decimals = ZERO_DECIMAL.has(currency) ? 0 : 2
+  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: decimals }).format(value) + ' ' + currency
+}
+
+function fmtQty(quantity: number, unit: string | null) {
+  const decimals = Number.isInteger(quantity) ? 0 : 4
+  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: decimals }).format(quantity) + (unit ? ' ' + unit : '')
 }
 
 function fmtTWD(v: number) {
@@ -71,18 +77,32 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
                   <p className="text-xs font-semibold text-[var(--color-muted)] mb-1">
                     {CAT_LABELS[category] ?? category}
                   </p>
-                  {items.map(item => (
-                    <div key={`${item.assetId}-${item.accountId}`}
-                      className="flex justify-between text-sm py-1">
-                      <span>{item.assetName} · {item.accountName}</span>
-                      <div className="text-right">
-                        <div className="font-mono">{fmtNative(item.quantity, item.price, item.currencyCode)}</div>
-                        {item.currencyCode !== 'TWD' && (
-                          <div className="text-xs text-[var(--color-muted)]">{fmtTWD(item.valueInBase)}</div>
-                        )}
+                  {items.map(item => {
+                    // Liquid: primary = amount in native currency (quantity × price)
+                    // Investment/others with unit: primary = quantity + unit, secondary = TWD
+                    const isLiquid = category === 'liquid'
+                    return (
+                      <div key={`${item.assetId}-${item.accountId}`}
+                        className="flex justify-between text-sm py-1">
+                        <span>{item.assetName} · {item.accountName}</span>
+                        <div className="text-right font-mono">
+                          {isLiquid ? (
+                            <>
+                              <div>{fmtAmount(item.quantity * item.price, item.currencyCode)}</div>
+                              {item.currencyCode !== 'TWD' && (
+                                <div className="text-xs text-[var(--color-muted)]">{fmtTWD(item.valueInBase)}</div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div>{fmtQty(item.quantity, item.unit)}</div>
+                              <div className="text-xs text-[var(--color-muted)]">{fmtTWD(item.valueInBase)}</div>
+                            </>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               ))}
             </div>

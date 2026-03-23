@@ -52,8 +52,8 @@ export async function getSnapshotByDate(db: DrizzleDB, date: string) {
       assetName: assets.name, accountName: accounts.name,
       assetClass: assets.assetClass, category: assets.category,
       quantity: snapshotItems.quantity, price: snapshotItems.price,
-      currencyCode: assets.currencyCode, fxRate: snapshotItems.fxRate,
-      valueInBase: snapshotItems.valueInBase,
+      currencyCode: assets.currencyCode, unit: assets.unit,
+      fxRate: snapshotItems.fxRate, valueInBase: snapshotItems.valueInBase,
     })
     .from(snapshotItems)
     .innerJoin(assets, eq(snapshotItems.assetId, assets.id))
