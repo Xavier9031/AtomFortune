@@ -236,14 +236,14 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
       globalMutate(`${BASE}/transactions?assetId=${holding.assetId}&accountId=${holding.accountId}`)
     }
     globalMutate(`${BASE}/holdings`)
-    onClose()
+    handleClose()
   }
 
   async function handleDelete() {
     if (!confirm(`確認刪除「${holding!.assetName}」的持倉？此操作無法復原。`)) return
     await fetch(`${BASE}/holdings/${holding!.assetId}/${holding!.accountId}`, { method: 'DELETE' })
     globalMutate(`${BASE}/holdings`)
-    onClose()
+    handleClose()
   }
 
   function handleClose() {
