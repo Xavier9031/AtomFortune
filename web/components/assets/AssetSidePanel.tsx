@@ -19,6 +19,12 @@ interface AssetKindItem {
 }
 interface AssetGroup { label: string; colorClass: string; items: AssetKindItem[] }
 
+const PRECIOUS_METALS = [
+  { name: '黃金', symbol: 'XAUUSD=X' },
+  { name: '白銀', symbol: 'XAGUSD=X' },
+  { name: '鉑金', symbol: 'XPTUSD=X' },
+]
+
 const ASSET_GROUPS: AssetGroup[] = [
   { label: '流動資金', colorClass: 'bg-green-500', items: [
     { subKind: 'bank_account', label: '銀行存款', icon: '🏦', assetClass: 'asset', category: 'liquid' },
@@ -29,7 +35,6 @@ const ASSET_GROUPS: AssetGroup[] = [
     { subKind: 'stock', label: '股票/ETF', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
     { subKind: 'fund', label: '基金', icon: '💰', assetClass: 'asset', category: 'investment' },
     { subKind: 'crypto', label: '加密貨幣', icon: '₿', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'stablecoin', label: '穩定幣', icon: '💲', assetClass: 'asset', category: 'investment' },
     { subKind: 'precious_metal', label: '實體貴金屬', icon: '🥇', assetClass: 'asset', category: 'investment' },
   ]},
   { label: '固定資產', colorClass: 'bg-violet-500', items: [
@@ -50,7 +55,7 @@ const DEFAULT_PRICING: Record<string, PricingMode> = {
   bank_account: 'fixed', physical_cash: 'fixed', stablecoin: 'fixed', e_wallet: 'fixed',
   receivable: 'fixed', credit_card: 'fixed', mortgage: 'fixed', personal_loan: 'fixed',
   stock: 'market', etf: 'market', crypto: 'market',
-  fund: 'manual', precious_metal: 'manual', real_estate: 'manual', vehicle: 'manual',
+  fund: 'manual', precious_metal: 'market', real_estate: 'manual', vehicle: 'manual',
 }
 
 const SUB_KIND_LABELS: Record<string, string> = {
@@ -67,6 +72,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
   const [view, setView] = useState<View>('kindPicker')
   const [pendingKind, setPendingKind] = useState<AssetKindItem | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null)
+  const [selectedMetal, setSelectedMetal] = useState<typeof PRECIOUS_METALS[number] | null>(null)
   const [form, setForm] = useState({ name: '', symbol: '', currencyCode: 'TWD', unit: '公克' })
   const [saving, setSaving] = useState(false)
 
@@ -79,6 +85,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
       setView('kindPicker')
       setPendingKind(null)
       setSelectedTicker(null)
+      setSelectedMetal(null)
       setForm({ name: '', symbol: '', currencyCode: 'TWD', unit: '公克' })
     }
   }, [open, asset])
@@ -256,8 +263,8 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                   autoFocus={!selectedTicker} placeholder="例：台積電"
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
-              {/* Symbol — editable only if not from ticker search */}
-              {isMarket && (
+              {/* Symbol — editable for market assets; read-only for ticker/precious metal */}
+              {isMarket && pendingKind?.subKind !== 'precious_metal' && (
                 <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
                   <span className="text-sm text-[var(--color-muted)]">代號</span>
                   {selectedTicker
@@ -278,22 +285,42 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                   </div>
                 </div>
               )}
-              {/* Precious metal: unit picker */}
-              {pendingKind?.subKind === 'precious_metal' && (
-                <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
-                  <span className="text-sm text-[var(--color-muted)]">單位</span>
-                  <div className="flex justify-end gap-2">
-                    {['公克', '盎司'].map(u => (
-                      <button key={u} onClick={() => setForm(p => ({ ...p, unit: u }))}
-                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
-                          ${form.unit === u
-                            ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
-                            : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
-                        {u}
-                      </button>
-                    ))}
+              {/* Precious metal: metal type + unit */}
+              {!asset && pendingKind?.subKind === 'precious_metal' && (
+                <>
+                  <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
+                    <span className="text-sm text-[var(--color-muted)]">金屬</span>
+                    <div className="flex justify-end gap-2">
+                      {PRECIOUS_METALS.map(m => (
+                        <button key={m.symbol} type="button"
+                          onClick={() => {
+                            setSelectedMetal(m)
+                            setForm(p => ({ ...p, name: m.name, symbol: m.symbol, currencyCode: 'USD' }))
+                          }}
+                          className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
+                            ${selectedMetal?.symbol === m.symbol
+                              ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
+                              : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
+                          {m.name}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                  <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
+                    <span className="text-sm text-[var(--color-muted)]">單位</span>
+                    <div className="flex justify-end gap-2">
+                      {['公克', '盎司'].map(u => (
+                        <button key={u} type="button" onClick={() => setForm(p => ({ ...p, unit: u }))}
+                          className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
+                            ${form.unit === u
+                              ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
+                              : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
+                          {u}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
               {/* Edit mode: read-only type & pricing info */}
               {asset && (

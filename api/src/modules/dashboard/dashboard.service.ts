@@ -86,7 +86,8 @@ export async function getLiveData(displayCurrency: DisplayCurrency) {
 
   const assetMap = new Map<string, AssetEntry>()
   for (const row of rows) {
-    const valueInBase = Number(row.quantity) * Number(row.price) * Number(row.fxToBase)
+    const unitMultiplier = row.subKind === 'precious_metal' && row.unit === '公克' ? 1 / 31.1035 : 1
+    const valueInBase = Number(row.quantity) * unitMultiplier * Number(row.price) * Number(row.fxToBase)
     const existing = assetMap.get(row.assetId)
     if (existing) existing.value += valueInBase
     else assetMap.set(row.assetId, {

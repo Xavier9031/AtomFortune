@@ -43,7 +43,6 @@ const ASSET_GROUPS: AssetGroup[] = [
     { subKind: 'stock', label: '股票/ETF', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
     { subKind: 'fund', label: '基金', icon: '💰', assetClass: 'asset', category: 'investment' },
     { subKind: 'crypto', label: '加密貨幣', icon: '₿', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'stablecoin', label: '穩定幣', icon: '💲', assetClass: 'asset', category: 'investment' },
     { subKind: 'precious_metal', label: '實體貴金屬', icon: '🥇', assetClass: 'asset', category: 'investment' },
     { subKind: 'other', label: '其他投資', icon: '📦', assetClass: 'asset', category: 'investment' },
   ]},
@@ -63,6 +62,12 @@ const ASSET_GROUPS: AssetGroup[] = [
   ]},
 ]
 
+const PRECIOUS_METALS = [
+  { name: '黃金', symbol: 'XAUUSD=X' },
+  { name: '白銀', symbol: 'XAGUSD=X' },
+  { name: '鉑金', symbol: 'XPTUSD=X' },
+]
+
 const ACCT_TYPE_LABELS: Record<string, string> = {
   bank: '銀行', broker: '券商', crypto_exchange: '加密貨幣交易所',
   e_wallet: '電子錢包', cash: '現金', other: '其他',
@@ -73,7 +78,7 @@ const DEFAULT_PRICING: Record<string, PricingMode> = {
   e_wallet: 'fixed', receivable: 'fixed', credit_card: 'fixed',
   mortgage: 'fixed', personal_loan: 'fixed',
   stock: 'market', etf: 'market', crypto: 'market',
-  fund: 'manual', precious_metal: 'manual', real_estate: 'manual',
+  fund: 'manual', precious_metal: 'market', real_estate: 'manual',
   vehicle: 'manual', other: 'manual',
 }
 
@@ -103,6 +108,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   // Asset creation state
   const [pendingAssetKind, setPendingAssetKind] = useState<AssetKindItem | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null)
+  const [selectedPreciousMetal, setSelectedPreciousMetal] = useState<typeof PRECIOUS_METALS[number] | null>(null)
   const [newAssetName, setNewAssetName] = useState('')
   const [newAssetSymbol, setNewAssetSymbol] = useState('')
   const [newAssetCurrency, setNewAssetCurrency] = useState('TWD')
@@ -552,6 +558,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                           setExpandNewAsset(false)
                           setPendingAssetKind(item)
                           setSelectedTicker(null)
+                          setSelectedPreciousMetal(null)
                           setNewAssetName(item.label)
                           setNewAssetSymbol(''); setNewAssetCurrency('TWD'); setNewAssetUnit('公克')
                           if (item.useTicker) {
@@ -646,7 +653,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   placeholder="例：台積電" autoFocus={!selectedTicker}
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
-              {DEFAULT_PRICING[pendingAssetKind.subKind] === 'market' && (
+              {DEFAULT_PRICING[pendingAssetKind.subKind] === 'market' && pendingAssetKind.subKind !== 'precious_metal' && (
                 <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
                   <span className="text-sm text-[var(--color-muted)]">代號</span>
                   {selectedTicker
@@ -657,31 +664,54 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   }
                 </div>
               )}
-              <div className={`grid grid-cols-[4rem_1fr] items-center px-4 py-3.5
-                ${pendingAssetKind.subKind === 'precious_metal' ? 'border-b border-[var(--color-border)]' : ''}`}>
-                <span className="text-sm text-[var(--color-muted)]">幣別</span>
-                {selectedTicker
-                  ? <span className="text-right text-sm text-[var(--color-muted)]">{newAssetCurrency}</span>
-                  : <input value={newAssetCurrency}
-                      onChange={e => setNewAssetCurrency(e.target.value.toUpperCase())}
-                      placeholder="TWD"
-                      className="text-right bg-transparent text-sm outline-none w-full" />
-                }
-              </div>
               {pendingAssetKind.subKind === 'precious_metal' && (
-                <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5">
-                  <span className="text-sm text-[var(--color-muted)]">單位</span>
-                  <div className="flex justify-end gap-2">
-                    {['公克', '盎司'].map(u => (
-                      <button key={u} onClick={() => setNewAssetUnit(u)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
-                          ${newAssetUnit === u
-                            ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
-                            : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
-                        {u}
-                      </button>
-                    ))}
+                <>
+                  <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
+                    <span className="text-sm text-[var(--color-muted)]">金屬</span>
+                    <div className="flex justify-end gap-2">
+                      {PRECIOUS_METALS.map(m => (
+                        <button key={m.symbol} type="button"
+                          onClick={() => {
+                            setSelectedPreciousMetal(m)
+                            setNewAssetName(m.name)
+                            setNewAssetSymbol(m.symbol)
+                            setNewAssetCurrency('USD')
+                          }}
+                          className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
+                            ${selectedPreciousMetal?.symbol === m.symbol
+                              ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
+                              : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
+                          {m.name}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                  <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
+                    <span className="text-sm text-[var(--color-muted)]">單位</span>
+                    <div className="flex justify-end gap-2">
+                      {['公克', '盎司'].map(u => (
+                        <button key={u} type="button" onClick={() => setNewAssetUnit(u)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
+                            ${newAssetUnit === u
+                              ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
+                              : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
+                          {u}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+              {DEFAULT_PRICING[pendingAssetKind.subKind] !== 'market' && pendingAssetKind.subKind !== 'precious_metal' && (
+                <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5">
+                  <span className="text-sm text-[var(--color-muted)]">幣別</span>
+                  {selectedTicker
+                    ? <span className="text-right text-sm text-[var(--color-muted)]">{newAssetCurrency}</span>
+                    : <input value={newAssetCurrency}
+                        onChange={e => setNewAssetCurrency(e.target.value.toUpperCase())}
+                        placeholder="TWD"
+                        className="text-right bg-transparent text-sm outline-none w-full" />
+                  }
                 </div>
               )}
             </div>

@@ -81,6 +81,8 @@ export async function getLiveHoldings(db: DrizzleDB) {
     assetClass: assets.assetClass,
     category: assets.category,
     currencyCode: assets.currencyCode,
+    subKind: assets.subKind,
+    unit: assets.unit,
     quantity: holdings.quantity,
     price: sql<string>`COALESCE(
       (SELECT p.price FROM prices p WHERE p."assetId" = ${assets.id}

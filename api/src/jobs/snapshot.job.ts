@@ -18,10 +18,16 @@ export async function getAllHoldingsWithAssets(tx: DrizzleDB) {
     .select({
       assetId: holdings.assetId, accountId: holdings.accountId,
       quantity: holdings.quantity, pricingMode: assets.pricingMode,
-      currencyCode: assets.currencyCode,
+      currencyCode: assets.currencyCode, subKind: assets.subKind, unit: assets.unit,
     })
     .from(holdings)
     .innerJoin(assets, eq(holdings.assetId, assets.id))
+}
+
+// Precious metal prices are quoted per troy ounce; convert grams to oz for value calc
+function getUnitMultiplier(subKind: string | null, unit: string | null): number {
+  if (subKind === 'precious_metal' && unit === '公克') return 1 / 31.1035
+  return 1
 }
 
 export async function resolvePrice(
@@ -104,7 +110,8 @@ export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date())
       if (price === null) { missingAssets.push(h.assetId); continue }
 
       const fxRate = await resolveFxRate(tx, h.currencyCode, today)
-      const valueInBase = Number(h.quantity) * price * fxRate
+      const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
+      const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
 
       await tx.insert(snapshotItems).values({
         snapshotDate: today, assetId: h.assetId, accountId: h.accountId,
