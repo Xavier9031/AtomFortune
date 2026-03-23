@@ -17,14 +17,20 @@ export const useAllocation = (currency: Currency, date?: string) =>
 export const useNetWorthHistory = (currency: Currency, range = '30d') =>
   useSWR<NetWorthHistory>(
     `${BASE}/dashboard/net-worth-history?range=${range}&displayCurrency=${currency}`,
-    fetcher
+    fetcher,
+    { keepPreviousData: true }
   )
 
 export const useCategoryHistory = (currency: Currency, range = '30d') =>
   useSWR<CategoryHistory>(
     `${BASE}/dashboard/category-history?range=${range}&displayCurrency=${currency}`,
-    fetcher
+    fetcher,
+    { keepPreviousData: true }
   )
 
 export const useLiveDashboard = (currency: Currency) =>
-  useSWR<LiveDashboard>(`${BASE}/dashboard/live?displayCurrency=${currency}`, fetcher)
+  useSWR<LiveDashboard>(
+    `${BASE}/dashboard/live?displayCurrency=${currency}`,
+    fetcher,
+    { keepPreviousData: true }
+  )
