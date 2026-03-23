@@ -31,7 +31,7 @@ export default function AllocationTreemap({ data, onCategorySelect }: Props) {
           aspectRatio={4 / 3}
           content={<CustomCell onClick={(c: any) => onCategorySelect(c.category)} />}
         >
-          <Tooltip formatter={(v: number) => formatValue(v, data.displayCurrency)} />
+          <Tooltip formatter={((v: number | string | undefined) => formatValue(Number(v ?? 0), data.displayCurrency)) as any} />
         </Treemap>
       </ResponsiveContainer>
     </div>

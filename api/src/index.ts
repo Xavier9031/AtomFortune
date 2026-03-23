@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { serve } from '@hono/node-server'
+import { migrate } from 'drizzle-orm/postgres-js/migrator'
 import assetsController from './modules/assets/assets.controller'
 import accountsController from './modules/accounts/accounts.controller'
 import holdingsController from './modules/holdings/holdings.controller'
@@ -12,6 +13,7 @@ import { db } from './db/client'
 import { dailySnapshotJob } from './jobs/snapshot.job'
 import { snapshotsRouter } from './modules/snapshots/snapshots.controller'
 import { dashboardRouter } from './modules/dashboard/dashboard.controller'
+import path from 'path'
 
 const app = new Hono()
 
@@ -42,6 +44,11 @@ app.onError((err, c) => {
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
 
 if (process.env.NODE_ENV !== 'test') {
+  const migrationsFolder = path.join(__dirname, '..', 'drizzle')
+  migrate(db, { migrationsFolder })
+    .then(() => console.log('DB migrations applied'))
+    .catch(err => console.error('Migration failed:', err))
+
   serve({ fetch: app.fetch, port: config.port })
 
   // Register daily snapshot cron only outside test environment

@@ -4,7 +4,7 @@ import type { NetWorthHistory } from '@/lib/types'
 import { formatValue } from '@/lib/utils'
 
 export default function NetWorthChart({ data }: { data: NetWorthHistory }) {
-  const fmt = (v: number) => formatValue(v, data.displayCurrency)
+  const fmt = ((v: number | string | undefined) => formatValue(Number(v ?? 0), data.displayCurrency)) as any
   return (
     <div data-testid="net-worth-chart" className="h-64 w-full">
       <ResponsiveContainer width="100%" height="100%">
