@@ -39,7 +39,13 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
 
   const holdings = (allHoldings ?? []).filter(h => h.assetId === initial.id)
   const totalQty = holdings.reduce((s, h) => s + Number(h.quantity), 0)
-  const totalValue = holdings.reduce((s, h) => s + (h.latestValueInBase ?? 0), 0)
+  // For fixed-price TWD assets (liquid), quantity IS the TWD value; use as fallback when no snapshot yet
+  function effectiveValue(h: Holding): number {
+    if (h.latestValueInBase != null) return h.latestValueInBase
+    if (h.pricingMode === 'fixed' && h.currencyCode === 'TWD') return Number(h.quantity)
+    return 0
+  }
+  const totalValue = holdings.reduce((s, h) => s + effectiveValue(h), 0)
   const chartData = (snapshots ?? []).map(d => ({ date: d.snapshotDate, value: Number(d.valueInBase) }))
   const sortedTxns = [...(txns ?? [])].sort((a, b) => b.txnDate.localeCompare(a.txnDate))
   const unit = initial.unit ?? initial.symbol ?? initial.currencyCode
@@ -177,7 +183,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
         ) : (
           <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
             {holdings.map((h, i) => {
-              const val = h.latestValueInBase ?? 0
+              const val = effectiveValue(h)
               const pct = totalValue > 0 ? (val / totalValue) * 100 : 0
               return (
                 <div key={`${h.assetId}-${h.accountId}`}
