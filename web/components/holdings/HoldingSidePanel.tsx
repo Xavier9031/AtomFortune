@@ -782,32 +782,54 @@ function HoldingTransactions({ assetId, accountId }: { assetId: string; accountI
     fetcher,
   )
 
+  const sorted = txns ? [...txns].sort((a, b) => b.txnDate.localeCompare(a.txnDate)) : []
+  const visible = sorted.slice(0, 10)
+  const hasMore = sorted.length > 10
+
   return (
     <div className="pt-2">
-      <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider mb-2">交易紀錄</p>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">交易紀錄</p>
+        {hasMore && (
+          <a href={`/assets/${assetId}`}
+            className="text-xs text-[var(--color-accent)] hover:underline">
+            查看完整紀錄
+          </a>
+        )}
+      </div>
       {!txns || txns.length === 0
         ? <p className="text-sm text-[var(--color-muted)] text-center py-4">尚無交易紀錄</p>
         : (
-          <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-            {[...txns].sort((a, b) => b.txnDate.localeCompare(a.txnDate)).map((t, i, arr) => {
-              const isPositive = t.txnType === 'buy' || t.txnType === 'transfer_in'
-              return (
-                <div key={t.id}
-                  className={`flex items-center justify-between pl-3 pr-4 py-3 text-sm border-l-2
-                    ${isPositive ? 'border-l-green-500' : 'border-l-red-500'}
-                    ${i < arr.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
-                  <div>
-                    <span className="text-[var(--color-muted)] text-xs">{t.txnDate}</span>
-                    {t.note && <p className="text-xs text-[var(--color-muted)] mt-0.5">{t.note}</p>}
+          <>
+            <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+              {visible.map((t, i) => {
+                const isPositive = t.txnType === 'buy' || t.txnType === 'transfer_in'
+                return (
+                  <div key={t.id}
+                    className={`flex items-center justify-between pl-3 pr-4 py-3 text-sm border-l-2
+                      ${isPositive ? 'border-l-green-500' : 'border-l-red-500'}
+                      ${i < visible.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
+                    <div>
+                      <span className="text-[var(--color-muted)] text-xs">{t.txnDate}</span>
+                      {t.note && <p className="text-xs text-[var(--color-muted)] mt-0.5">{t.note}</p>}
+                    </div>
+                    <span className={`font-medium tabular-nums ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                      {isPositive ? '+' : '−'}
+                      {Number(t.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
+                    </span>
                   </div>
-                  <span className={`font-medium tabular-nums ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
-                    {isPositive ? '+' : '−'}
-                    {Number(t.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+            {hasMore && (
+              <p className="text-xs text-[var(--color-muted)] text-center mt-2">
+                顯示最近 10 筆，共 {sorted.length} 筆 ·{' '}
+                <a href={`/assets/${assetId}`} className="text-[var(--color-accent)] hover:underline">
+                  查看完整紀錄
+                </a>
+              </p>
+            )}
+          </>
         )
       }
     </div>

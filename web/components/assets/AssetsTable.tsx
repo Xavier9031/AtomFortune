@@ -12,7 +12,7 @@ const PRICING_LABELS: Record<string, string> = {
   market: '市價', fixed: '固定', manual: '手動',
 }
 
-export function AssetsTable({ assets, onEdit }: { assets: Asset[]; onEdit: (a: Asset) => void }) {
+export function AssetsTable({ assets, onNavigate }: { assets: Asset[]; onNavigate: (a: Asset) => void }) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
       <table className="w-full text-sm">
@@ -27,7 +27,7 @@ export function AssetsTable({ assets, onEdit }: { assets: Asset[]; onEdit: (a: A
         </thead>
         <tbody>
           {assets.map((a, i) => (
-            <tr key={a.id} onClick={() => onEdit(a)}
+            <tr key={a.id} onClick={() => onNavigate(a)}
               className={`cursor-pointer ${i < assets.length - 1 ? 'border-b border-[var(--color-border)]' : ''}
                 hover:bg-[var(--color-bg)] transition-colors`}>
               <td className="px-4 py-3 whitespace-nowrap font-medium">{a.name}</td>

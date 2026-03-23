@@ -113,14 +113,24 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
           <p className="text-sm text-[var(--color-muted)]">尚無交易紀錄</p>
         ) : (
           <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-            {(txns ?? []).map((t, i) => (
-              <div key={t.id}
-                className={`flex justify-between text-sm px-4 py-3
-                  ${i < (txns?.length ?? 0) - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
-                <span className="text-[var(--color-muted)]">{t.txnDate} · {t.txnType}</span>
-                <span className="font-medium">{t.quantity}</span>
-              </div>
-            ))}
+            {[...(txns ?? [])].sort((a, b) => b.txnDate.localeCompare(a.txnDate)).map((t, i, arr) => {
+              const isPositive = t.txnType === 'buy' || t.txnType === 'transfer_in'
+              return (
+                <div key={t.id}
+                  className={`flex items-center justify-between pl-3 pr-4 py-3 text-sm border-l-2
+                    ${isPositive ? 'border-l-green-500' : 'border-l-red-500'}
+                    ${i < arr.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
+                  <div>
+                    <span className="text-[var(--color-muted)] text-xs">{t.txnDate}</span>
+                    {t.note && <p className="text-xs text-[var(--color-muted)] mt-0.5">{t.note}</p>}
+                  </div>
+                  <span className={`font-medium tabular-nums ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                    {isPositive ? '+' : '−'}
+                    {Number(t.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
+                  </span>
+                </div>
+              )
+            })}
           </div>
         )}
       </section>
