@@ -376,7 +376,9 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   ) : selectedAssetObj && (
                     <span className="px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
                       rounded-full text-xs font-bold shrink-0">
-                      {selectedAssetObj.currencyCode}
+                      {selectedAssetObj.subKind === 'crypto' && selectedAssetObj.symbol
+                        ? selectedAssetObj.symbol
+                        : selectedAssetObj.unit ?? selectedAssetObj.currencyCode}
                     </span>
                   )}
                 </div>
