@@ -144,7 +144,7 @@ export async function getLiveData(displayCurrency: DisplayCurrency) {
     netWorth: Math.round(netWorthTWD / fxRate * 100) / 100,
     totalAssets: Math.round(totalAssets / fxRate * 100) / 100,
     totalLiabilities: Math.round(totalLiabilities / fxRate * 100) / 100,
-    changeAmount, changePct, categories,
+    changeAmount, changePct, prevSnapshotDate: latestDate ?? null, categories,
   }
 }
 

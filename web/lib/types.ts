@@ -9,6 +9,7 @@ export interface DashboardSummary {
   totalLiabilities: number
   changeAmount: number | null
   changePct: number | null
+  prevSnapshotDate: string | null
   missingAssets: string[]
 }
 
@@ -29,6 +30,7 @@ export interface LiveDashboard {
   totalLiabilities: number
   changeAmount: number | null
   changePct: number | null
+  prevSnapshotDate: string | null
   categories: AllocationCategory[]
 }
 

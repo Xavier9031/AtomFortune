@@ -85,6 +85,7 @@ export default function DashboardPage() {
     totalLiabilities: live.totalLiabilities,
     changeAmount: live.changeAmount,
     changePct: live.changePct,
+    prevSnapshotDate: live.prevSnapshotDate ?? null,
     missingAssets: [],
   }
 
