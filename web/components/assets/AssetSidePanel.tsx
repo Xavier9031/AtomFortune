@@ -178,8 +178,10 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
           <div>
             {ASSET_GROUPS.map(group => (
               <div key={group.label}>
-                <div className={`px-4 py-3 ${group.colorClass} text-white font-semibold text-sm`}>
-                  {group.label}
+                <div className="px-4 py-2 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
+                  <span className="text-xs font-semibold tracking-wider text-[var(--color-muted)] uppercase">
+                    {group.label}
+                  </span>
                 </div>
                 {group.items.map((item, idx) => (
                   <button key={`${item.subKind}-${idx}`} onClick={() => handleKindSelect(item)}
