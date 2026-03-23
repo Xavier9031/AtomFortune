@@ -1,5 +1,5 @@
 import useSWR from 'swr'
-import type { Currency, DashboardSummary, AllocationData, NetWorthHistory } from './types'
+import type { Currency, DashboardSummary, AllocationData, NetWorthHistory, LiveDashboard } from './types'
 
 export const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v1'
 export const fetcher = (url: string) =>
@@ -19,3 +19,6 @@ export const useNetWorthHistory = (currency: Currency, range = '30d') =>
     `${BASE}/dashboard/net-worth-history?range=${range}&displayCurrency=${currency}`,
     fetcher
   )
+
+export const useLiveDashboard = (currency: Currency) =>
+  useSWR<LiveDashboard>(`${BASE}/dashboard/live?displayCurrency=${currency}`, fetcher)

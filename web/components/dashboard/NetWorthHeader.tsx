@@ -6,7 +6,9 @@ export default function NetWorthHeader({ summary }: { summary: DashboardSummary 
   const positive = (summary.changePct ?? 0) >= 0
   return (
     <div className="mb-6">
-      <p className="text-sm text-muted mb-1">Net Worth · 資料截至 {summary.snapshotDate}</p>
+      <p className="text-sm text-muted mb-1">
+        Net Worth · {summary.snapshotDate === '即時' ? '即時' : `資料截至 ${summary.snapshotDate}`}
+      </p>
       <div className="flex items-end gap-3">
         <span data-testid="net-worth-value" className="text-4xl font-bold">
           {formatValue(summary.netWorth, summary.displayCurrency)}
