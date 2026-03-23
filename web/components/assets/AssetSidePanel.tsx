@@ -64,19 +64,19 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
   const [view, setView] = useState<View>('kindPicker')
   const [pendingKind, setPendingKind] = useState<AssetKindItem | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null)
-  const [form, setForm] = useState({ name: '', symbol: '', currencyCode: 'TWD' })
+  const [form, setForm] = useState({ name: '', symbol: '', currencyCode: 'TWD', unit: '公克' })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!open) return
     if (asset) {
       setView('form')
-      setForm({ name: asset.name, symbol: asset.symbol ?? '', currencyCode: asset.currencyCode })
+      setForm({ name: asset.name, symbol: asset.symbol ?? '', currencyCode: asset.currencyCode, unit: asset.unit ?? '公克' })
     } else {
       setView('kindPicker')
       setPendingKind(null)
       setSelectedTicker(null)
-      setForm({ name: '', symbol: '', currencyCode: 'TWD' })
+      setForm({ name: '', symbol: '', currencyCode: 'TWD', unit: '公克' })
     }
   }, [open, asset])
 
@@ -95,11 +95,12 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
     setSelectedTicker(t)
     // update pendingKind subKind to the actual type from ticker
     setPendingKind(prev => prev ? { ...prev, subKind: t.type as SubKind } : prev)
-    setForm({
+    setForm(p => ({
+      ...p,
       name: t.name,
       symbol: t.symbol,
       currencyCode: t.country === 'US' ? 'USD' : 'TWD',
-    })
+    }))
     setView('form')
   }
 
@@ -130,6 +131,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
             currencyCode: form.currencyCode.trim().toUpperCase() || 'TWD',
             pricingMode: DEFAULT_PRICING[pendingKind.subKind] ?? 'manual',
             symbol: form.symbol.trim() || undefined,
+            unit: pendingKind.subKind === 'precious_metal' ? form.unit : undefined,
           }),
         })
       }
@@ -247,7 +249,8 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
               )}
               {/* Currency */}
               {!asset ? (
-                <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
+                <div className={`grid grid-cols-[5rem_1fr] items-center px-4 py-3.5
+                  ${pendingKind?.subKind === 'precious_metal' ? 'border-b border-[var(--color-border)]' : ''}`}>
                   <span className="text-sm text-[var(--color-muted)]">幣別</span>
                   {selectedTicker
                     ? <span className="text-right text-sm text-[var(--color-muted)]">{form.currencyCode}</span>
@@ -269,7 +272,40 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                       <span className="text-right text-sm text-[var(--color-muted)]">{value}</span>
                     </div>
                   ))}
+                  {asset.subKind === 'precious_metal' && (
+                    <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-t border-[var(--color-border)]">
+                      <span className="text-sm text-[var(--color-muted)]">單位</span>
+                      <div className="flex justify-end gap-2">
+                        {['公克', '盎司'].map(u => (
+                          <button key={u} onClick={() => setForm(p => ({ ...p, unit: u }))}
+                            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
+                              ${form.unit === u
+                                ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
+                                : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
+                            {u}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
+              )}
+              {/* Unit — only for new precious_metal */}
+              {!asset && pendingKind?.subKind === 'precious_metal' && (
+                <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
+                  <span className="text-sm text-[var(--color-muted)]">單位</span>
+                  <div className="flex justify-end gap-2">
+                    {['公克', '盎司'].map(u => (
+                      <button key={u} onClick={() => setForm(p => ({ ...p, unit: u }))}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
+                          ${form.unit === u
+                            ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
+                            : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
+                        {u}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
 

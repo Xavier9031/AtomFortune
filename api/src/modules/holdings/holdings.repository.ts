@@ -17,6 +17,7 @@ export class HoldingsRepository {
         subKind: assets.subKind,
         currencyCode: assets.currencyCode,
         pricingMode: assets.pricingMode,
+        unit: assets.unit,
         accountName: accounts.name,
         accountType: accounts.accountType,
         institution: accounts.institution,

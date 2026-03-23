@@ -19,6 +19,7 @@ export const assets = pgTable('assets', {
   market: text('market'),
   currencyCode: text('currencyCode').notNull(),
   pricingMode: text('pricingMode').notNull(),
+  unit: text('unit'),
   createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 })

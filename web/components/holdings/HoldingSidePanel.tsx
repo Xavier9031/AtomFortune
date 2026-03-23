@@ -96,6 +96,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   const [newAssetName, setNewAssetName] = useState('')
   const [newAssetSymbol, setNewAssetSymbol] = useState('')
   const [newAssetCurrency, setNewAssetCurrency] = useState('TWD')
+  const [newAssetUnit, setNewAssetUnit] = useState('公克')
   const [savingAsset, setSavingAsset] = useState(false)
 
   const { data: accounts, mutate: mutateAccounts } = useSWR<Account[]>(`${BASE}/accounts`, fetcher)
@@ -154,12 +155,13 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
           currencyCode: newAssetCurrency.trim().toUpperCase() || 'TWD',
           pricingMode: DEFAULT_PRICING[pendingAssetKind.subKind] ?? 'manual',
           symbol: newAssetSymbol.trim() || undefined,
+          unit: pendingAssetKind.subKind === 'precious_metal' ? newAssetUnit : undefined,
         }),
       })
       const created: Asset = await res.json()
       await mutateAssets()
       setSelectedAsset(created.id)
-      setNewAssetName(''); setNewAssetSymbol(''); setSelectedTicker(null)
+      setNewAssetName(''); setNewAssetSymbol(''); setSelectedTicker(null); setNewAssetUnit('公克')
       resetViews()
     } finally { setSavingAsset(false) }
   }
@@ -608,7 +610,8 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   }
                 </div>
               )}
-              <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5">
+              <div className={`grid grid-cols-[4rem_1fr] items-center px-4 py-3.5
+                ${pendingAssetKind.subKind === 'precious_metal' ? 'border-b border-[var(--color-border)]' : ''}`}>
                 <span className="text-sm text-[var(--color-muted)]">幣別</span>
                 {selectedTicker
                   ? <span className="text-right text-sm text-[var(--color-muted)]">{newAssetCurrency}</span>
@@ -618,6 +621,22 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                       className="text-right bg-transparent text-sm outline-none w-full" />
                 }
               </div>
+              {pendingAssetKind.subKind === 'precious_metal' && (
+                <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5">
+                  <span className="text-sm text-[var(--color-muted)]">單位</span>
+                  <div className="flex justify-end gap-2">
+                    {['公克', '盎司'].map(u => (
+                      <button key={u} onClick={() => setNewAssetUnit(u)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors
+                          ${newAssetUnit === u
+                            ? 'bg-[var(--color-accent)] text-white border-[var(--color-accent)]'
+                            : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)]'}`}>
+                        {u}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
             <button onClick={handleCreateAsset} disabled={!newAssetName.trim() || savingAsset}
               className="w-full py-3.5 bg-[var(--color-accent)] text-white rounded-xl font-medium

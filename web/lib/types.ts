@@ -43,7 +43,7 @@ export type TxnType = 'buy' | 'sell' | 'transfer_in' | 'transfer_out' | 'adjustm
 export interface Asset {
   id: string; name: string; assetClass: AssetClass; category: Category
   subKind: SubKind; symbol?: string; market?: string
-  currencyCode: string; pricingMode: PricingMode
+  currencyCode: string; pricingMode: PricingMode; unit?: string
 }
 export interface Account {
   id: string; name: string; institution?: string
@@ -53,7 +53,7 @@ export interface Account {
 export interface Holding {
   assetId: string; accountId: string; quantity: number
   assetName: string; assetClass: AssetClass; category: Category
-  subKind: SubKind; currencyCode: string; pricingMode: PricingMode
+  subKind: SubKind; currencyCode: string; pricingMode: PricingMode; unit?: string | null
   accountName: string; accountType: AccountType; institution?: string | null
   latestValueInBase: number | null; updatedAt: string
 }
