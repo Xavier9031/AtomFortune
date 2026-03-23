@@ -1,0 +1,12 @@
+services:
+  api:
+    build:
+      context: ./api
+      target: dev
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    command: npx tsx watch src/index.ts
+  db:
+    ports:
+      - "5432:5432"

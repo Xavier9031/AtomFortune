@@ -1,0 +1,72 @@
+'use client'
+import { useState } from 'react'
+import { RefreshCw } from 'lucide-react'
+import { BASE } from '@/lib/api'
+import type { SnapshotItem } from '@/lib/types'
+
+interface SnapshotGrouped { category: string; items: SnapshotItem[] }
+
+interface Props {
+  dates: string[]
+  onRebuild: (date: string) => void
+  onExpand: (date: string) => void
+}
+
+function groupByCategory(items: SnapshotItem[]): SnapshotGrouped[] {
+  const map = new Map<string, SnapshotItem[]>()
+  for (const item of items) {
+    const cat = (item as SnapshotItem & { category?: string }).category ?? 'other'
+    if (!map.has(cat)) map.set(cat, [])
+    map.get(cat)!.push(item)
+  }
+  return Array.from(map.entries()).map(([category, items]) => ({ category, items }))
+}
+
+export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [details, setDetails] = useState<Record<string, SnapshotGrouped[]>>({})
+
+  async function toggle(date: string) {
+    if (expanded === date) { setExpanded(null); return }
+    setExpanded(date)
+    onExpand(date)
+    if (!details[date]) {
+      const res = await fetch(`${BASE}/snapshots/${date}`)
+      const data = await res.json()
+      const grouped = groupByCategory(data.items as SnapshotItem[])
+      setDetails(prev => ({ ...prev, [date]: grouped }))
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      {dates.map(date => (
+        <div key={date} className="rounded-lg border border-[var(--color-border)]">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button onClick={() => toggle(date)} className="font-medium">{date}</button>
+            <button onClick={() => onRebuild(date)} title="重建快照"
+              className="text-[var(--color-muted)] hover:text-[var(--color-accent)]">
+              <RefreshCw size={14} />
+            </button>
+          </div>
+          {expanded === date && details[date] && (
+            <div className="border-t px-4 py-3 space-y-4">
+              {details[date].map(({ category, items }) => (
+                <div key={category}>
+                  <p className="text-xs font-semibold uppercase text-[var(--color-muted)] mb-1">{category}</p>
+                  {items.map(item => (
+                    <div key={`${item.assetId}-${item.accountId}`}
+                      className="flex justify-between text-sm py-1">
+                      <span>{item.assetName} / {item.accountName}</span>
+                      <span>{item.valueInBase.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}

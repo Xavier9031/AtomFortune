@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+:root {
+  --color-bg:       #f8f5f2;
+  --color-surface:  #fffffe;
+  --color-text:     #232323;
+  --color-muted:    #888;
+  --color-accent:   #078080;
+  --color-coral:    #f45d48;
+  --color-border:   #e8e8e8;
+  --cat-liquid:     #078080;
+  --cat-investment: #7c3aed;
+  --cat-fixed:      #1d4ed8;
+  --cat-receivable: #f59e0b;
+  --cat-debt:       #f45d48;
+}
+
+[data-theme="dark"] {
+  --color-bg:      #1a1916;
+  --color-surface: #232320;
+  --color-text:    #f8f5f2;
+  --color-muted:   #888;
+  --color-border:  #333;
+  --color-accent:  #0a9e9e;
+  --color-coral:   #ff7059;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+@theme inline {
+  --color-bg:             var(--color-bg);
+  --color-surface:        var(--color-surface);
+  --color-accent:         var(--color-accent);
+  --color-coral:          var(--color-coral);
+  --color-border:         var(--color-border);
+  --color-muted:          var(--color-muted);
+  --color-cat-liquid:     var(--cat-liquid);
+  --color-cat-investment: var(--cat-investment);
+  --color-cat-fixed:      var(--cat-fixed);
+  --color-cat-receivable: var(--cat-receivable);
+  --color-cat-debt:       var(--cat-debt);
+}
