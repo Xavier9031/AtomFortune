@@ -1,11 +1,19 @@
 /**
- * Demo data seed script — Real Market Data Edition
+ * Demo data seed script — Real Market Data + Life Story Edition
  * Run from the api/ directory: node scripts/seed-demo.mjs
  *
- * Fetches 1 year of real prices from Yahoo Finance, then simulates
- * a user who makes daily portfolio snapshots for one full year.
+ * Story: A salaried worker who spends a year saving up, buys their first home,
+ * and continues DCA investing while rebuilding emergency fund post-purchase.
  *
- * 5 accounts · 12 assets · 365 daily snapshots · real market prices
+ * Key events:
+ *   - 2025-03-24 ~ 2025-06-30: Saving hard for down payment (3.8M → 4.5M TWD)
+ *   - 2025-07-01: Mid-year bonus +300K TWD
+ *   - 2025-07-15: 🏠 Buys apartment — 4,400,000 down payment, 10,500,000 mortgage
+ *   - Monthly salary: +120K TWD; mortgage payment: -45K; net +75K/month
+ *   - 2026-01-01: Year-end bonus +325K TWD
+ *   - Monthly BTC DCA: 0.03 BTC/month
+ *   - Quarterly 0050 ETF DCA: 1,000 shares/quarter
+ *   - Occasional TSMC, NVDA, ETH, Gold purchases
  */
 
 import postgres from 'postgres'
@@ -18,11 +26,11 @@ const sql = postgres(DB_URL)
 // ─── Fixed IDs ────────────────────────────────────────────────────────────────
 
 const ACC = {
-  bank1:   '11111111-0000-4000-0000-000000000001',
-  bank2:   '11111111-0000-4000-0000-000000000002',
-  broker:  '11111111-0000-4000-0000-000000000003',
-  crypto:  '11111111-0000-4000-0000-000000000004',
-  misc:    '11111111-0000-4000-0000-000000000005',
+  bank1:   '11111111-0000-4000-0000-000000000001', // 台灣銀行（主帳戶）
+  bank2:   '11111111-0000-4000-0000-000000000002', // 國泰世華銀行（外幣）
+  broker:  '11111111-0000-4000-0000-000000000003', // 永豐金證券
+  crypto:  '11111111-0000-4000-0000-000000000004', // Binance
+  misc:    '11111111-0000-4000-0000-000000000005', // 個人帳戶（房產・黃金）
 }
 
 const ASS = {
@@ -40,7 +48,6 @@ const ASS = {
   gold:    '22222222-0000-4000-0000-000000000012',
 }
 
-// Account for each asset
 const ACCT = {
   [ASS.twd]:      ACC.bank1,
   [ASS.usd]:      ACC.bank2,
@@ -56,7 +63,7 @@ const ACCT = {
   [ASS.gold]:     ACC.misc,
 }
 
-// ─── Date range ────────────────────────────────────────────────────────────────
+// ─── Date utilities ───────────────────────────────────────────────────────────
 
 const START_DATE = '2025-03-24'
 const END_DATE   = '2026-03-24'
@@ -91,18 +98,15 @@ async function fetchYahoo(symbol) {
 
   const timestamps = result.timestamp ?? []
   const closes = result.indicators?.quote?.[0]?.close ?? []
-
   const map = new Map()
   for (let i = 0; i < timestamps.length; i++) {
     if (closes[i] != null) {
-      const date = new Date(timestamps[i] * 1000).toISOString().slice(0, 10)
-      map.set(date, closes[i])
+      map.set(new Date(timestamps[i] * 1000).toISOString().slice(0, 10), closes[i])
     }
   }
   return map
 }
 
-// Forward-fill: for each calendar date, use the most recent known price
 function forwardFill(priceMap) {
   const result = new Map()
   let last = null
@@ -117,51 +121,126 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
 // ─── Quantity step functions ──────────────────────────────────────────────────
 //
-// Portfolio story (same human, same DCA plan as before):
-//   - Starts with 1.05M TWD savings + 12M property + 6.8M mortgage
-//   - Gradually builds investments by shifting cash → securities
-//   - Mortgage pays down ~25K/month automatically
+// Each array = sorted [date, cumulative_qty] pairs.
+// qtyOn(assetId, date) returns the quantity as of that date.
 //
-// Each entry: [date_from_inclusive, cumulative_quantity]
+// ── TWD savings story ──
+//   Phase 1 (Mar–Jun 2025): Saving up for house down payment
+//     Monthly: +120K salary − 50K living = +70K/month
+//   Phase 2 (Jul 1): Mid-year bonus +300K → total ~4.5M
+//   Phase 3 (Jul 15): 🏠 Down payment −4,400,000 → drops to ~180K
+//   Phase 4 (Jul–Dec): Rebuild with salary − mortgage payment
+//     Monthly: +120K salary − 50K living − 45K mortgage = +25K/month
+//   Phase 5 (Jan 2026): Year-end bonus +325K
 
 const STEPS = {
   [ASS.twd]: [
-    ['2025-03-24', 1050000],
-    ['2025-06-10',  930000],  // bought 0050 #1
-    ['2025-08-18',  850000],  // bought TSMC #2
-    ['2025-09-12',  810000],  // bought 0050 #2
-    ['2025-12-05',  710000],  // bought 0050 #3
-    ['2026-01-08',  680000],  // bought TSMC #3
-    ['2026-02-15',  620000],  // bought 0050 #4
+    ['2025-03-24', 3_800_000],
+    ['2025-04-01', 3_940_000],  // Apr salary
+    ['2025-05-01', 4_080_000],  // May salary
+    ['2025-06-01', 4_220_000],  // Jun salary
+    ['2025-07-01', 4_520_000],  // Jul salary + mid-year bonus 300K
+    ['2025-07-15',   120_000],  // 🏠 paid 4,400,000 down payment + closing costs
+    ['2025-08-01',   195_000],  // Aug net: +75K (salary 120K − living 50K − mortgage 45K + rounding)
+    ['2025-09-01',   270_000],
+    ['2025-10-01',   345_000],
+    ['2025-11-01',   420_000],
+    ['2025-12-01',   495_000],
+    ['2026-01-01',   895_000],  // Jan: +75K + year-end bonus 325K
+    ['2026-02-01',   970_000],
+    ['2026-03-01', 1_045_000],
   ],
-  [ASS.usd]:   [['2025-03-24', 15000]],
-  [ASS.jpy]:   [['2025-03-24', 450000]],
-  [ASS.cash]:  [['2025-03-24', 12000]],
+
+  // USD savings: dips when buying USD-denominated assets
+  [ASS.usd]: [
+    ['2025-03-24', 18_000],
+    ['2025-05-15', 17_100],   // bought NVDA 10 × ~90 USD
+    ['2025-11-20', 15_700],   // bought NVDA 10 × ~140 USD
+  ],
+
+  // JPY: travel money, stays constant
+  [ASS.jpy]: [['2025-03-24', 500_000]],
+
+  // Cash: petty cash, stays constant
+  [ASS.cash]: [['2025-03-24', 15_000]],
+
+  // 0050 ETF — quarterly DCA, 1000 shares each
   [ASS.e0050]: [
     ['2025-03-24',    0],
-    ['2025-06-10',  500],
-    ['2025-09-12', 1000],
-    ['2025-12-05', 2000],
-    ['2026-02-15', 3000],
+    ['2025-04-10', 1000],   // Q1: 1000 shares
+    ['2025-07-10', 2000],   // Q2: +1000
+    ['2025-10-10', 3000],   // Q3: +1000
+    ['2026-01-10', 4000],   // Q4: +1000
   ],
-  [ASS.tsmc]:  [
+
+  // TSMC — blue chip anchor position + 1 add
+  [ASS.tsmc]: [
     ['2025-03-24', 200],
-    ['2025-08-18', 400],
-    ['2026-01-08', 500],
+    ['2025-09-20', 300],   // +100 after summer dip
+    ['2026-02-10', 400],   // +100 new year
   ],
-  [ASS.nvda]:  [['2025-03-24', 0], ['2025-05-15', 10], ['2025-11-20', 20]],
-  [ASS.btc]:   [['2025-03-24', 0], ['2025-04-10', 0.05], ['2025-08-22', 0.10], ['2025-12-01', 0.15]],
-  [ASS.eth]:   [['2025-03-24', 0], ['2025-04-15', 2.0], ['2025-09-30', 4.0], ['2026-02-01', 5.0]],
-  [ASS.realty]:[['2025-03-24', 15800000]],
-  [ASS.gold]:  [['2025-03-24', 0], ['2025-05-20', 30], ['2025-09-15', 60], ['2026-01-10', 100]],
+
+  // NVDA — US tech exposure
+  [ASS.nvda]: [
+    ['2025-03-24',  0],
+    ['2025-05-15', 10],
+    ['2025-11-20', 20],
+  ],
+
+  // BTC — monthly DCA 0.03/month, already had 0.10
+  [ASS.btc]: [
+    ['2025-03-24', 0.10],
+    ['2025-04-10', 0.13],
+    ['2025-05-10', 0.16],
+    ['2025-06-10', 0.19],
+    ['2025-07-10', 0.22],
+    ['2025-08-10', 0.25],
+    ['2025-09-10', 0.28],
+    ['2025-10-10', 0.31],
+    ['2025-11-10', 0.34],
+    ['2025-12-10', 0.37],
+    ['2026-01-10', 0.40],
+    ['2026-02-10', 0.43],
+    ['2026-03-10', 0.46],
+  ],
+
+  // ETH — occasional buy
+  [ASS.eth]: [
+    ['2025-03-24', 2.0],
+    ['2025-08-20', 3.0],
+    ['2025-12-15', 4.0],
+  ],
+
+  // 🏠 Real estate: 0 until house purchase, then 14,500,000 TWD
+  // (pricingMode=fixed: qty = value, price = 1)
+  [ASS.realty]: [
+    ['2025-03-24',          0],
+    ['2025-07-15', 14_500_000],
+  ],
+
+  // 房屋貸款 (liability): 0 until purchase, then paying down ~25K/month
+  [ASS.mortgage]: [
+    ['2025-03-24',          0],
+    ['2025-07-15', 10_500_000],
+    ['2025-08-01', 10_475_000],
+    ['2025-09-01', 10_450_000],
+    ['2025-10-01', 10_425_000],
+    ['2025-11-01', 10_400_000],
+    ['2025-12-01', 10_375_000],
+    ['2026-01-01', 10_350_000],
+    ['2026-02-01', 10_325_000],
+    ['2026-03-01', 10_300_000],
+  ],
+
+  // Gold — inflation hedge, bought twice
+  [ASS.gold]: [
+    ['2025-03-24',   0],
+    ['2025-09-05',  50],
+    ['2026-01-20', 100],
+  ],
 }
 
 function qtyOn(assetId, date) {
-  if (assetId === ASS.mortgage) {
-    // Linear paydown: 6,800,000 → 6,500,000 over the year
-    const t = (new Date(date) - new Date(START_DATE)) / (new Date(END_DATE) - new Date(START_DATE))
-    return Math.round(6800000 - t * 300000)
-  }
   const steps = STEPS[assetId]
   if (!steps) return 0
   let qty = 0
@@ -189,8 +268,8 @@ async function main() {
     ['BTC',     'BTC-USD'],
     ['ETH',     'ETH-USD'],
     ['GOLD_OZ', 'GC=F'],       // USD per troy oz
-    ['USDTWD',  'USDTWD=X'],   // TWD per 1 USD
-    ['JPYTWD',  'JPYTWD=X'],   // TWD per 1 JPY
+    ['USDTWD',  'USDTWD=X'],
+    ['JPYTWD',  'JPYTWD=X'],
   ]
 
   const raw = {}
@@ -201,42 +280,36 @@ async function main() {
       const last = [...raw[key].values()].at(-1)
       console.log(`   ${symbol.padEnd(12)} ${raw[key].size} days  latest: ${last?.toFixed(2)}`)
     } catch (e) {
-      console.warn(`   ⚠️  ${symbol}: ${e.message} — will use fallback`)
+      console.warn(`   ⚠️  ${symbol}: ${e.message} — using fallback`)
       raw[key] = new Map()
     }
     await sleep(250)
   }
 
   // Fallbacks
-  if (raw['USDTWD'].size < 10) {
-    console.log('   Using fallback USD/TWD = 32.1')
-    for (const d of ALL_DATES) raw['USDTWD'].set(d, 32.1)
-  }
-  if (raw['JPYTWD'].size < 10) {
-    console.log('   Using fallback JPY/TWD = 0.212')
-    for (const d of ALL_DATES) raw['JPYTWD'].set(d, 0.212)
-  }
+  if (raw['USDTWD'].size < 10) for (const d of ALL_DATES) raw['USDTWD'].set(d, 32.1)
+  if (raw['JPYTWD'].size < 10) for (const d of ALL_DATES) raw['JPYTWD'].set(d, 0.212)
 
-  // Compute gold price in TWD/gram = GC(USD/oz) × USDTWD / 31.1035
-  raw['GOLD_TWD_G'] = new Map()
+  // Gold TWD/gram = GC(USD/oz) × USDTWD / 31.1035
+  raw['GOLD_G'] = new Map()
   for (const date of ALL_DATES) {
-    const oz   = raw['GOLD_OZ'].get(date)
-    const fx   = raw['USDTWD'].get(date)
-    if (oz && fx) raw['GOLD_TWD_G'].set(date, +(oz * fx / 31.1035).toFixed(2))
+    const oz = raw['GOLD_OZ'].get(date)
+    const fx = raw['USDTWD'].get(date)
+    if (oz && fx) raw['GOLD_G'].set(date, +(oz * fx / 31.1035).toFixed(2))
   }
 
-  // Lookup helpers
   const PRICE_MAP = {
     [ASS.e0050]: raw['0050'],
     [ASS.tsmc]:  raw['TSMC'],
     [ASS.nvda]:  raw['NVDA'],
     [ASS.btc]:   raw['BTC'],
     [ASS.eth]:   raw['ETH'],
-    [ASS.gold]:  raw['GOLD_TWD_G'],
+    [ASS.gold]:  raw['GOLD_G'],
   }
 
+  // price = 1 for fixed/liquid assets (qty IS the TWD value or native-currency amount)
   function priceOn(assetId, date) {
-    return PRICE_MAP[assetId]?.get(date) ?? 1  // liquid/fixed/manual → price = 1 (quantity is the amount)
+    return PRICE_MAP[assetId]?.get(date) ?? 1
   }
 
   function fxOn(assetId, date) {
@@ -261,8 +334,8 @@ async function main() {
   // ── Accounts ────────────────────────────────────────────────────────────────
   console.log('🏦 Inserting accounts…')
   await sql`INSERT INTO "accounts" (id, name, institution, "accountType", note) VALUES
-    (${ACC.bank1},  '台銀活存',   '台灣銀行',    'bank',            '主要往來帳戶'),
-    (${ACC.bank2},  '國泰活存',   '國泰世華銀行', 'bank',            '儲蓄帳戶'),
+    (${ACC.bank1},  '台銀活存',   '台灣銀行',    'bank',            '主要往來帳戶・薪資入帳'),
+    (${ACC.bank2},  '國泰活存',   '國泰世華銀行', 'bank',            '外幣儲蓄帳戶'),
     (${ACC.broker}, '永豐金證券', '永豐金證券',   'broker',          '台股交割帳戶'),
     (${ACC.crypto}, 'Binance',    'Binance',      'crypto_exchange', '加密貨幣交易所'),
     (${ACC.misc},   '個人帳戶',   null,           'other',           '現金・不動產・黃金')`
@@ -281,7 +354,7 @@ async function main() {
     (${ASS.nvda},     'NVIDIA',      'asset',     'investment', 'stock',         'NVDA',   'USD', 'market', 'shares'),
     (${ASS.btc},      '比特幣',      'asset',     'investment', 'crypto',        'BTC',    'USD', 'market', null),
     (${ASS.eth},      '以太幣',      'asset',     'investment', 'crypto',        'ETH',    'USD', 'market', null),
-    (${ASS.realty},   '台北市公寓',  'asset',     'fixed',      'real_estate',   null,     'TWD', 'fixed',  'unit'),
+    (${ASS.realty},   '台北市公寓',  'asset',     'fixed',      'real_estate',   null,     'TWD', 'manual', 'unit'),
     (${ASS.mortgage}, '房屋貸款',    'liability', 'debt',       'mortgage',      null,     'TWD', 'fixed',  null),
     (${ASS.gold},     '黃金',        'asset',     'investment', 'precious_metal',null,     'TWD', 'manual', 'gram')`
 
@@ -289,6 +362,7 @@ async function main() {
   console.log('💼 Inserting holdings…')
   for (const assetId of Object.values(ASS)) {
     const qty = qtyOn(assetId, END_DATE)
+    if (qty === 0) continue  // skip assets not yet held
     await sql`INSERT INTO "holdings" ("assetId", "accountId", quantity)
       VALUES (${assetId}, ${ACCT[assetId]}, ${qty})`
   }
@@ -296,24 +370,37 @@ async function main() {
   // ── Transactions ────────────────────────────────────────────────────────────
   console.log('🧾 Inserting transactions…')
   const txns = [
-    [txId(1),  ASS.tsmc,  ACC.broker, 'buy',   200,  '2025-03-20', '初始建倉'],
-    [txId(2),  ASS.tsmc,  ACC.broker, 'buy',   200,  '2025-08-18', '逢低加碼'],
-    [txId(3),  ASS.tsmc,  ACC.broker, 'buy',   100,  '2026-01-08', '新年加碼'],
-    [txId(4),  ASS.e0050, ACC.broker, 'buy',   500,  '2025-06-10', '定期定額 #1'],
-    [txId(5),  ASS.e0050, ACC.broker, 'buy',   500,  '2025-09-12', '定期定額 #2'],
-    [txId(6),  ASS.e0050, ACC.broker, 'buy',  1000,  '2025-12-05', '年終加碼'],
-    [txId(7),  ASS.e0050, ACC.broker, 'buy',  1000,  '2026-02-15', '定期定額 #3'],
-    [txId(8),  ASS.nvda,  ACC.broker, 'buy',    10,  '2025-05-15', 'AI 主題建倉'],
-    [txId(9),  ASS.nvda,  ACC.broker, 'buy',    10,  '2025-11-20', '加碼'],
-    [txId(10), ASS.btc,   ACC.crypto, 'buy',  0.05,  '2025-04-10', '首次購入'],
-    [txId(11), ASS.btc,   ACC.crypto, 'buy',  0.05,  '2025-08-22', 'DCA'],
-    [txId(12), ASS.btc,   ACC.crypto, 'buy',  0.05,  '2025-12-01', 'DCA'],
-    [txId(13), ASS.eth,   ACC.crypto, 'buy',   2.0,  '2025-04-15', '首次購入'],
-    [txId(14), ASS.eth,   ACC.crypto, 'buy',   2.0,  '2025-09-30', '加碼'],
-    [txId(15), ASS.eth,   ACC.crypto, 'buy',   1.0,  '2026-02-01', '逢低買進'],
-    [txId(16), ASS.gold,  ACC.misc,   'buy',    30,  '2025-05-20', '購入實體金條 30g'],
-    [txId(17), ASS.gold,  ACC.misc,   'buy',    30,  '2025-09-15', '加碼黃金 30g'],
-    [txId(18), ASS.gold,  ACC.misc,   'buy',    40,  '2026-01-10', '新年增持 40g'],
+    // TSMC — anchor position
+    [txId(1),  ASS.tsmc,  ACC.broker, 'buy',  200,  '2025-03-20', '台積電建倉'],
+    [txId(2),  ASS.tsmc,  ACC.broker, 'buy',  100,  '2025-09-20', '逢低加碼'],
+    [txId(3),  ASS.tsmc,  ACC.broker, 'buy',  100,  '2026-02-10', '新年加碼'],
+    // 0050 ETF — quarterly DCA
+    [txId(4),  ASS.e0050, ACC.broker, 'buy', 1000,  '2025-04-10', '定期定額 Q1'],
+    [txId(5),  ASS.e0050, ACC.broker, 'buy', 1000,  '2025-07-10', '定期定額 Q2'],
+    [txId(6),  ASS.e0050, ACC.broker, 'buy', 1000,  '2025-10-10', '定期定額 Q3'],
+    [txId(7),  ASS.e0050, ACC.broker, 'buy', 1000,  '2026-01-10', '定期定額 Q4'],
+    // NVDA
+    [txId(8),  ASS.nvda,  ACC.broker, 'buy',   10,  '2025-05-15', 'AI 主題建倉'],
+    [txId(9),  ASS.nvda,  ACC.broker, 'buy',   10,  '2025-11-20', '加碼'],
+    // BTC — monthly DCA 0.03/month
+    [txId(10), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2025-04-10', 'BTC 月定投'],
+    [txId(11), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2025-05-10', 'BTC 月定投'],
+    [txId(12), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2025-06-10', 'BTC 月定投'],
+    [txId(13), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2025-07-10', 'BTC 月定投'],
+    [txId(14), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2025-08-10', 'BTC 月定投'],
+    [txId(15), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2025-09-10', 'BTC 月定投'],
+    [txId(16), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2025-10-10', 'BTC 月定投'],
+    [txId(17), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2025-11-10', 'BTC 月定投'],
+    [txId(18), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2025-12-10', 'BTC 月定投'],
+    [txId(19), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2026-01-10', 'BTC 月定投'],
+    [txId(20), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2026-02-10', 'BTC 月定投'],
+    [txId(21), ASS.btc,   ACC.crypto, 'buy', 0.03,  '2026-03-10', 'BTC 月定投'],
+    // ETH
+    [txId(22), ASS.eth,   ACC.crypto, 'buy',  1.0,  '2025-08-20', 'ETH 加碼'],
+    [txId(23), ASS.eth,   ACC.crypto, 'buy',  1.0,  '2025-12-15', 'ETH 逢低買進'],
+    // Gold
+    [txId(24), ASS.gold,  ACC.misc,   'buy',   50,  '2025-09-05', '購入黃金 50g'],
+    [txId(25), ASS.gold,  ACC.misc,   'buy',   50,  '2026-01-20', '加碼黃金 50g'],
   ]
   for (const [id, assetId, accountId, txnType, quantity, txnDate, note] of txns) {
     await sql`INSERT INTO "transactions" (id, "assetId", "accountId", "txnType", quantity, "txnDate", note)
@@ -323,22 +410,17 @@ async function main() {
   // ── Daily market prices ─────────────────────────────────────────────────────
   console.log('📈 Inserting daily market prices…')
   for (const [assetId, priceMap] of Object.entries(PRICE_MAP)) {
-    const rows = []
+    let count = 0
     for (const [date, price] of priceMap) {
-      if (price > 0) rows.push({ assetId, date, price })
-    }
-    if (rows.length === 0) continue
-    // Batch insert in chunks of 200
-    for (let i = 0; i < rows.length; i += 200) {
-      const chunk = rows.slice(i, i + 200)
-      for (const r of chunk) {
+      if (price > 0) {
         await sql`
           INSERT INTO "prices" ("assetId", "priceDate", price, source)
-          VALUES (${r.assetId}, ${r.date}, ${r.price}, 'yahoo_finance')
+          VALUES (${assetId}, ${date}, ${price}, 'yahoo_finance')
           ON CONFLICT ("assetId", "priceDate") DO UPDATE SET price = EXCLUDED.price`
+        count++
       }
     }
-    console.log(`   ${assetId.slice(-4)}: ${rows.length} rows`)
+    console.log(`   ${assetId.slice(-4)}: ${count} rows`)
   }
 
   // ── Daily FX rates ──────────────────────────────────────────────────────────
@@ -361,13 +443,12 @@ async function main() {
   }
 
   // ── Daily snapshots ─────────────────────────────────────────────────────────
-  console.log(`📸 Inserting ${ALL_DATES.length} daily snapshots…`)
+  console.log(`\n📸 Inserting ${ALL_DATES.length} daily snapshots…`)
   const allAssets = Object.values(ASS)
-  let snapshotCount = 0
+  let snapshotRows = 0
 
   for (let di = 0; di < ALL_DATES.length; di++) {
     const date = ALL_DATES[di]
-    const rows = []
 
     for (const assetId of allAssets) {
       const qty = qtyOn(assetId, date)
@@ -376,19 +457,16 @@ async function main() {
       if (price === 0) continue
       const fx    = fxOn(assetId, date)
       const value = qty * price * fx
-      rows.push({ date, assetId, accountId: ACCT[assetId], qty, price, fx, value })
-    }
 
-    for (const r of rows) {
       await sql`
         INSERT INTO "snapshotItems"
           ("snapshotDate", "assetId", "accountId", quantity, price, "fxRate", "valueInBase")
-        VALUES (${r.date}, ${r.assetId}, ${r.accountId}, ${r.qty}, ${r.price}, ${r.fx}, ${r.value})
+        VALUES (${date}, ${assetId}, ${ACCT[assetId]}, ${qty}, ${price}, ${fx}, ${value})
         ON CONFLICT ("snapshotDate", "assetId", "accountId")
         DO UPDATE SET quantity = EXCLUDED.quantity, price = EXCLUDED.price,
                       "fxRate" = EXCLUDED."fxRate", "valueInBase" = EXCLUDED."valueInBase"`
+      snapshotRows++
     }
-    snapshotCount += rows.length
 
     if (di % 30 === 0 || di === ALL_DATES.length - 1) {
       process.stdout.write(`   ${date}  (${di + 1}/${ALL_DATES.length})\n`)
@@ -396,20 +474,15 @@ async function main() {
   }
 
   // ── Summary ─────────────────────────────────────────────────────────────────
-  const lastDate = ALL_DATES.at(-1)
+  const lastDate = END_DATE
   const totalAssets = allAssets
     .filter(id => id !== ASS.mortgage)
-    .reduce((s, id) => {
-      const qty = qtyOn(id, lastDate)
-      const price = priceOn(id, lastDate)
-      const fx = fxOn(id, lastDate)
-      return s + qty * price * fx
-    }, 0)
+    .reduce((s, id) => s + qtyOn(id, lastDate) * priceOn(id, lastDate) * fxOn(id, lastDate), 0)
   const totalLiab = qtyOn(ASS.mortgage, lastDate)
 
   console.log('\n✅ Seed complete!')
   console.log(`   Date range:    ${ALL_DATES[0]} → ${lastDate} (${ALL_DATES.length} days)`)
-  console.log(`   Snapshot rows: ${snapshotCount.toLocaleString()}`)
+  console.log(`   Snapshot rows: ${snapshotRows.toLocaleString()}`)
   console.log(`   Total assets:  ${Math.round(totalAssets).toLocaleString()} TWD`)
   console.log(`   Liabilities:   ${totalLiab.toLocaleString()} TWD`)
   console.log(`   Net worth:     ${Math.round(totalAssets - totalLiab).toLocaleString()} TWD`)
