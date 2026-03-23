@@ -189,11 +189,19 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity: bal }),
       })
-      if (note.trim()) {
+      // Always create a transaction record for quantity changes
+      const prevQty = mode === 'edit' ? Number(holding!.quantity) : 0
+      const delta = bal - prevQty
+      if (delta !== 0) {
+        const txnType = mode === 'add' ? 'buy' : delta > 0 ? 'buy' : 'sell'
         await fetch(`${BASE}/transactions`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ assetId, accountId, txnType: 'adjustment',
-            quantity: bal, txnDate: new Date().toISOString().slice(0, 10), note }),
+          body: JSON.stringify({
+            assetId, accountId, txnType,
+            quantity: Math.abs(delta),
+            txnDate: new Date().toISOString().slice(0, 10),
+            note: note.trim() || undefined,
+          }),
         })
       }
     }
