@@ -2,6 +2,8 @@ import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { z } from 'zod'
 import * as service from './snapshots.service'
+import { dailySnapshotJob } from '../../jobs/snapshot.job'
+import { db } from '../../db/client'
 
 const rangeSchema = z.enum(['30d', '1y', 'all']).default('30d')
 
@@ -43,6 +45,13 @@ snapshotsRouter.post('/rebuild/:date',
     return c.json(result)
   }
 )
+
+snapshotsRouter.post('/trigger', async (c) => {
+  const dateParam = c.req.query('date')
+  const snapshotDate = dateParam ? new Date(dateParam) : new Date()
+  await dailySnapshotJob(db, snapshotDate)
+  return c.json({ triggered: true, date: snapshotDate.toISOString().slice(0, 10) })
+})
 
 snapshotsRouter.post('/rebuild-range',
   zValidator('json', z.object({

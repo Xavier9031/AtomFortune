@@ -4,12 +4,14 @@ import { db } from '../../db/client'
 import { AssetsRepository } from './assets.repository'
 import { AssetsService } from './assets.service'
 import { SnapshotItemsRepository } from '../snapshot-items/snapshot-items.repository'
+import { PricesRepository } from '../prices/prices.repository'
 import { AssetCreateSchema, AssetUpdateSchema } from './assets.schema'
 
 const assetsController = new Hono()
 const repo = new AssetsRepository(db)
 const snapshotRepo = new SnapshotItemsRepository(db)
-const service = new AssetsService(repo, snapshotRepo)
+const pricesRepo = new PricesRepository(db)
+const service = new AssetsService(repo, snapshotRepo, pricesRepo)
 
 assetsController.get('/', async (c) => c.json(await service.findAll()))
 
