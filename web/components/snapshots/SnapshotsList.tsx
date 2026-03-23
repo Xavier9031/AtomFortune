@@ -1,15 +1,11 @@
 'use client'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { RefreshCw } from 'lucide-react'
 import { BASE } from '@/lib/api'
 import type { SnapshotItem } from '@/lib/types'
 
 interface SnapshotGrouped { category: string; items: SnapshotItem[] }
-
-const CAT_LABELS: Record<string, string> = {
-  liquid: '流動資金', investment: '投資', fixed: '固定資產',
-  receivable: '應收款', debt: '負債',
-}
 
 const ZERO_DECIMAL = new Set(['TWD', 'JPY', 'KRW'])
 
@@ -44,6 +40,7 @@ function groupByCategory(items: SnapshotItem[]): SnapshotGrouped[] {
 }
 
 export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
+  const t = useTranslations()
   const [expanded, setExpanded] = useState<string | null>(null)
   const [details, setDetails] = useState<Record<string, SnapshotGrouped[]>>({})
 
@@ -65,7 +62,7 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
         <div key={date} className="rounded-lg border border-[var(--color-border)]">
           <div className="flex items-center justify-between px-4 py-3">
             <button onClick={() => toggle(date)} className="font-medium">{date}</button>
-            <button onClick={() => onRebuild(date)} title="重建快照"
+            <button onClick={() => onRebuild(date)} title={t('snapshots.rebuildTitle')}
               className="text-[var(--color-muted)] hover:text-[var(--color-accent)]">
               <RefreshCw size={14} />
             </button>
@@ -75,7 +72,7 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
               {details[date].map(({ category, items }) => (
                 <div key={category}>
                   <p className="text-xs font-semibold text-[var(--color-muted)] mb-1">
-                    {CAT_LABELS[category] ?? category}
+                    {t(`asset.categories.${category}` as Parameters<typeof t>[0], { defaultValue: category })}
                   </p>
                   {items.map(item => {
                     // Liquid: primary = amount in native currency (quantity × price)
