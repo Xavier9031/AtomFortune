@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="14" fill="#F5F2ED"/>
+  <g transform="translate(32,32)" fill="none" stroke="#2A8B8B" stroke-width="2">
+    <ellipse rx="27" ry="13" transform="rotate(0)"/>
+    <ellipse rx="27" ry="13" transform="rotate(60)"/>
+    <ellipse rx="27" ry="13" transform="rotate(-60)"/>
+  </g>
+  <circle cx="32" cy="32" r="15" fill="#2A8B8B"/>
+  <!-- Rising bars + arrow -->
+  <g transform="translate(32,32)">
+    <rect x="-8" y="3"  width="4" height="4"  fill="#C8EAEA" rx="1"/>
+    <rect x="-3" y="-1" width="4" height="8"  fill="#A8D8D8" rx="1"/>
+    <rect x="2"  y="-5" width="4" height="12" fill="#7ECECE" rx="1"/>
+    <polyline points="-6,2 0,-3 6,-7" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    <polyline points="2,-9 6,-7 4,-4" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+</svg>
