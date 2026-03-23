@@ -67,9 +67,13 @@ export default function SnapshotsPage() {
                   <XCircle size={12} /> {failCount} 失敗
                 </span>
               )}
+              <span className={`flex items-center gap-1 ${result.fxStatus === 'ok' ? 'text-green-500' : 'text-red-400'}`}>
+                {result.fxStatus === 'ok' ? <CheckCircle size={12} /> : <XCircle size={12} />}
+                匯率
+              </span>
               <span className="flex items-center gap-1">
                 <AlertCircle size={12} />
-                匯率 {result.fxStatus === 'ok' ? '✓' : '✗'} · 快照 {result.snapshotItemsWritten} 筆
+                快照 {result.snapshotItemsWritten} 筆
               </span>
             </div>
           </div>
