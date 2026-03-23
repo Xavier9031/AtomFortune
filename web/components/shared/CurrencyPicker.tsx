@@ -29,11 +29,16 @@ interface Props {
 export function CurrencyPicker({ value, onChange }: Props) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const ref = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ top: 0, right: 0 })
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        dropRef.current && !dropRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) {
         setOpen(false)
         setQuery('')
       }
@@ -42,15 +47,25 @@ export function CurrencyPicker({ value, onChange }: Props) {
     return () => document.removeEventListener('mousedown', onClickOutside)
   }, [open])
 
+  function handleToggle() {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+    }
+    setOpen(p => !p)
+    setQuery('')
+  }
+
   const filtered = CURRENCIES.filter(c =>
     c.code.includes(query.toUpperCase()) || c.name.includes(query)
   )
 
   return (
-    <div ref={ref} className="relative shrink-0">
+    <div className="shrink-0">
       <button
+        ref={btnRef}
         type="button"
-        onClick={() => { setOpen(p => !p); setQuery('') }}
+        onClick={handleToggle}
         className="px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
           rounded-full text-xs font-bold flex items-center gap-1 hover:opacity-80 transition-opacity">
         {value}
@@ -58,8 +73,11 @@ export function CurrencyPicker({ value, onChange }: Props) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-52 bg-[var(--color-surface)] border
-          border-[var(--color-border)] rounded-xl shadow-xl z-50 overflow-hidden">
+        <div
+          ref={dropRef}
+          style={{ top: pos.top, right: pos.right }}
+          className="fixed w-52 bg-[var(--color-surface)] border
+            border-[var(--color-border)] rounded-xl shadow-xl z-[200] overflow-hidden">
           <div className="p-2 border-b border-[var(--color-border)]">
             <input
               autoFocus
