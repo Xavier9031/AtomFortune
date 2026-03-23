@@ -21,6 +21,11 @@ const CATEGORIES = ['liquid', 'investment', 'fixed', 'receivable', 'debt']
 type Range = '30d' | '1y' | 'all'
 type Mode = 'netWorth' | 'category'
 
+function fmtDate(d: string, range: Range): string {
+  // d = 'YYYY-MM-DD'
+  return range === '30d' ? d.slice(5) : d.slice(2, 7)  // MM-DD or YY-MM
+}
+
 function fmtTick(v: number): string {
   const abs = Math.abs(v)
   if (abs >= 1e12) return (v / 1e12).toFixed(1) + 'T'
@@ -121,7 +126,7 @@ export default function NetWorthChart({ currency }: { currency: Currency }) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={nwData?.data ?? []} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-muted)' }} tickFormatter={d => d.slice(5)} />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-muted)' }} tickFormatter={d => fmtDate(d, range)} />
               <YAxis tick={{ fontSize: 10, fill: 'var(--color-muted)' }} tickFormatter={fmtTick} width={56} />
               <Tooltip
                 formatter={(v: any) => [fmtTick(Number(v)), t('modeNetWorth')]}
@@ -139,7 +144,7 @@ export default function NetWorthChart({ currency }: { currency: Currency }) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={catData?.data ?? []} margin={{ top: 4, right: 8, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-muted)' }} tickFormatter={d => d.slice(5)} />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-muted)' }} tickFormatter={d => fmtDate(d, range)} />
               <YAxis tick={{ fontSize: 10, fill: 'var(--color-muted)' }} tickFormatter={fmtTick} width={56} />
               <Tooltip
                 formatter={(v: any, name: any) => [fmtTick(Number(v)), name]}
