@@ -81,9 +81,9 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
         {view === 'typePicker' && (
           <div>
             {ACC_GROUPS.map(group => (
-              <div key={group.label}>
+              <div key={group.groupKey}>
                 <div className={`px-4 py-3 ${group.colorClass} text-white font-semibold text-sm`}>
-                  {t(`account.groups.${group.label === '流動資金' ? 'liquid' : group.label === '投資' ? 'investment' : 'other'}` as Parameters<typeof t>[0])}
+                  {t(`account.groups.${group.groupKey}` as Parameters<typeof t>[0])}
                 </div>
                 {group.items.map(item => (
                   <button key={item.type}

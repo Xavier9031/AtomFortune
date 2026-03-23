@@ -3,6 +3,7 @@ import { useState, useEffect, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { setLocale } from '@/app/actions/setLocale'
+import { SUPPORTED_LOCALES } from '@/lib/locales'
 
 export default function SettingsPage() {
   const t = useTranslations()
@@ -44,7 +45,7 @@ export default function SettingsPage() {
       <section className="space-y-2">
         <p className="text-sm font-medium">{t('settings.language')}</p>
         <div className="flex gap-2">
-          {(['zh-TW', 'en'] as const).map(locale => (
+          {SUPPORTED_LOCALES.map(locale => (
             <button key={locale} onClick={() => handleLocale(locale)} disabled={isPending}
               className={`px-4 py-2 rounded-lg text-sm border transition-colors
                 ${isPending ? 'opacity-50 cursor-not-allowed' : ''}

@@ -501,10 +501,10 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
         {currentView === 'acctTypePicker' && (
           <div>
             {ACC_GROUPS.map(group => (
-              <div key={group.label}>
+              <div key={group.groupKey}>
                 <div className="px-4 py-2 bg-[var(--color-bg)] border-b border-[var(--color-border)]">
                   <span className="text-xs font-semibold tracking-wider text-[var(--color-muted)] uppercase">
-                    {t(`account.groups.${group.label === '流動資金' ? 'liquid' : group.label === '投資' ? 'investment' : 'other'}` as Parameters<typeof t>[0])}
+                    {t(`account.groups.${group.groupKey}` as Parameters<typeof t>[0])}
                   </span>
                 </div>
                 {group.items.map(item => (
