@@ -95,6 +95,8 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   const [selectedAsset, setSelectedAsset] = useState('')
   const [quantity, setQuantity] = useState('')
   const [qtyMode, setQtyMode] = useState<'set' | 'adjust'>('set')
+  const [adjustSign, setAdjustSign] = useState<'+' | '-'>('+')
+
   const [liquidCurrency, setLiquidCurrency] = useState('TWD')
   const [note, setNote] = useState('')
 
@@ -188,7 +190,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   async function handleSave() {
     const inputVal = parseFloat(quantity)
     const bal = (mode === 'edit' && qtyMode === 'adjust')
-      ? Number(holding!.quantity) + inputVal
+      ? Number(holding!.quantity) + (adjustSign === '-' ? -inputVal : inputVal)
       : inputVal
     if (mode === 'add' && isLiquidAccount) {
       await fetch(`${BASE}/accounts/${selectedAccount}/balance`, {
@@ -255,6 +257,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     setSelectedAccount(''); setSelectedAsset('')
     setQuantity(''); setNote(''); setLiquidCurrency('TWD')
     setQtyMode('set')
+    setAdjustSign('+')
     setSelectedTicker(null)
     setExpandNewAsset(false)
     onClose()
@@ -269,7 +272,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
       ? !!(selectedAccount && quantity && !isNaN(parseFloat(quantity)))
       : !!(selectedAccount && selectedAsset && quantity && parseFloat(quantity) !== 0)
     : qtyMode === 'adjust'
-      ? !!(quantity && !isNaN(parseFloat(quantity)) && parseFloat(quantity) !== 0)
+      ? !!(quantity && !isNaN(parseFloat(quantity)) && parseFloat(quantity) > 0)
       : !!(quantity && parseFloat(quantity) !== 0)
 
   const viewTitle: Record<View, string> = {
@@ -337,20 +340,34 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
             </div>
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
               <div className="flex items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-                <span className="text-sm text-[var(--color-muted)] w-16">
-                  {qtyMode === 'adjust' ? '增減' : isLiquidHolding ? '餘額' : '數量'}
-                </span>
-                <input type="number" value={quantity} onChange={e => setQuantity(e.target.value)}
-                  placeholder={qtyMode === 'adjust' ? '正數增加，負數減少' : ''}
-                  className="flex-1 text-right bg-transparent text-lg font-semibold outline-none placeholder:text-sm placeholder:font-normal placeholder:text-[var(--color-muted)]" />
+                {qtyMode === 'adjust' ? (
+                  <div className="flex items-center gap-1.5 mr-3">
+                    <button onClick={() => setAdjustSign('+')}
+                      className={`w-7 h-7 rounded-full text-sm font-bold transition-colors
+                        ${adjustSign === '+' ? 'bg-green-500 text-white' : 'bg-[var(--color-border)] text-[var(--color-muted)]'}`}>
+                      +
+                    </button>
+                    <button onClick={() => setAdjustSign('-')}
+                      className={`w-7 h-7 rounded-full text-sm font-bold transition-colors
+                        ${adjustSign === '-' ? 'bg-red-500 text-white' : 'bg-[var(--color-border)] text-[var(--color-muted)]'}`}>
+                      −
+                    </button>
+                  </div>
+                ) : (
+                  <span className="text-sm text-[var(--color-muted)] w-16">
+                    {isLiquidHolding ? '餘額' : '數量'}
+                  </span>
+                )}
+                <input type="number" min="0" value={quantity} onChange={e => setQuantity(e.target.value)}
+                  className="flex-1 text-right bg-transparent text-lg font-semibold outline-none" />
                 <span className="ml-2 px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
                   rounded-full text-xs font-bold shrink-0">
                   {getHoldingUnit(holding)}
                 </span>
               </div>
-              {qtyMode === 'adjust' && quantity !== '' && !isNaN(parseFloat(quantity)) && (
+              {qtyMode === 'adjust' && quantity !== '' && !isNaN(parseFloat(quantity)) && parseFloat(quantity) > 0 && (
                 <div className="px-4 py-2 text-xs text-[var(--color-muted)] text-right border-b border-[var(--color-border)]">
-                  結果：{String(Number(Number(holding.quantity) + parseFloat(quantity)))} {getHoldingUnit(holding)}
+                  結果：{String(Number(Number(holding.quantity) + (adjustSign === '-' ? -parseFloat(quantity) : parseFloat(quantity))))} {getHoldingUnit(holding)}
                 </div>
               )}
               <div className="flex items-center px-4 py-3.5">
@@ -772,24 +789,24 @@ function HoldingTransactions({ assetId, accountId }: { assetId: string; accountI
         ? <p className="text-sm text-[var(--color-muted)] text-center py-4">尚無交易紀錄</p>
         : (
           <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
-            {[...txns].sort((a, b) => b.txnDate.localeCompare(a.txnDate)).map((t, i, arr) => (
-              <div key={t.id}
-                className={`flex items-center justify-between px-4 py-3 text-sm
-                  ${i < arr.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
-                <div>
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full mr-2
-                    ${t.txnType === 'buy' || t.txnType === 'transfer_in' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}`}>
-                    {TXN_TYPE_LABELS[t.txnType] ?? t.txnType}
+            {[...txns].sort((a, b) => b.txnDate.localeCompare(a.txnDate)).map((t, i, arr) => {
+              const isPositive = t.txnType === 'buy' || t.txnType === 'transfer_in'
+              return (
+                <div key={t.id}
+                  className={`flex items-center justify-between pl-3 pr-4 py-3 text-sm border-l-2
+                    ${isPositive ? 'border-l-green-500' : 'border-l-red-500'}
+                    ${i < arr.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
+                  <div>
+                    <span className="text-[var(--color-muted)] text-xs">{t.txnDate}</span>
+                    {t.note && <p className="text-xs text-[var(--color-muted)] mt-0.5">{t.note}</p>}
+                  </div>
+                  <span className={`font-medium tabular-nums ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+                    {isPositive ? '+' : '−'}
+                    {Number(t.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
                   </span>
-                  <span className="text-[var(--color-muted)] text-xs">{t.txnDate}</span>
-                  {t.note && <p className="text-xs text-[var(--color-muted)] mt-0.5">{t.note}</p>}
                 </div>
-                <span className="font-medium tabular-nums">
-                  {t.txnType === 'sell' || t.txnType === 'transfer_out' ? '−' : '+'}
-                  {Number(t.quantity).toLocaleString('zh-TW', { maximumFractionDigits: 8 })}
-                </span>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )
       }
