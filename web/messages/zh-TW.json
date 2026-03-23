@@ -75,6 +75,39 @@
   "assets": {
     "title": "資產設定",
     "addButton": "+ 新增資產",
+    "kindPickerTitle": "選擇資產類型",
+    "editTitle": "編輯資產",
+    "newAssetTitle": "新增資產",
+    "createButton": "建立資產",
+    "deleteButton": "刪除資產",
+    "deleteConfirm": "確認刪除此資產？若有持倉或快照將無法刪除。",
+    "deleteFailed": "刪除失敗：請先移除所有持倉與快照",
+    "search": "搜尋",
+    "tickerSearch": {
+      "crypto": "搜尋加密貨幣",
+      "stockEtf": "搜尋股票/ETF"
+    },
+    "tickerTypes": {
+      "stock": "股票",
+      "crypto": "加密貨幣"
+    },
+    "form": {
+      "nameLabel": "名稱",
+      "namePlaceholder": "例：台積電",
+      "symbolLabel": "代號",
+      "currencyLabel": "幣別",
+      "metalLabel": "金屬",
+      "unitLabel": "單位"
+    },
+    "preciousMetals": {
+      "gold": "黃金",
+      "silver": "白銀",
+      "platinum": "鉑金"
+    },
+    "units": {
+      "gram": "公克",
+      "ounce": "盎司"
+    },
     "columns": {
       "name": "名稱",
       "type": "類型",
@@ -139,13 +172,57 @@
       "liquid": "流動資金",
       "investment": "投資",
       "fixed": "固定資產",
-      "debt": "負債"
+      "receivable": "應收款",
+      "debt": "負債",
+      "other": "其他"
+    },
+    "itemLabels": {
+      "liquid_other": "其他流動資金",
+      "stock_etf": "股票/ETF",
+      "investment_other": "其他投資",
+      "fixed_other": "其他固定資產",
+      "debt_other": "其他負債"
     }
   },
   "holdings": {
     "title": "持倉管理",
     "addButton": "新增持倉",
     "empty": "尚無持倉，點右上角「+ 新增持倉」開始",
+    "add": "新增持倉",
+    "edit": "編輯持倉",
+    "acctPicker": "選擇帳戶",
+    "addAccountTitle": "新增帳戶",
+    "acctInfo": "帳戶資訊",
+    "assetPicker": "選擇資產",
+    "addAssetKind": "新增資產",
+    "assetInfo": "資產資訊",
+    "setQuantity": "設定數量",
+    "adjustQuantity": "增減數量",
+    "balance": "餘額",
+    "quantity": "數量",
+    "result": "結果：",
+    "update": "更新",
+    "setBalance": "設定餘額",
+    "createHolding": "建立持倉",
+    "deleteConfirm": "確認刪除「{name}」的持倉？此操作無法復原。",
+    "noAccounts": "尚無帳戶，點下方建立第一個帳戶",
+    "addAccountButton": "＋ 新增帳戶",
+    "selectAccount": "選擇帳戶",
+    "accountLabel": "帳戶",
+    "assetLabel": "資產",
+    "selectAsset": "選擇資產",
+    "estimatedValue": "估值：",
+    "expandNewAsset": "＋ 新增資產",
+    "collapseNewAsset": "－ 收起",
+    "noAssets": "尚無資產，點上方「＋ 新增資產」建立",
+    "creatingAccount": "建立中…",
+    "creatingAsset": "建立中…",
+    "acctNameLabel": "帳戶名稱",
+    "acctNamePlaceholder": "例：我的{type}",
+    "txnHistory": "交易紀錄",
+    "viewAllTxns": "查看完整紀錄",
+    "noTxns": "尚無交易紀錄",
+    "showingRecent": "顯示最近 10 筆，共 {total} 筆",
     "columns": {
       "assetName": "資產名稱",
       "account": "帳戶",
@@ -194,6 +271,15 @@
   "snapshots": {
     "title": "快照紀錄",
     "triggerButton": "立即快照",
-    "triggering": "快照中…"
+    "triggering": "快照中…",
+    "triggerMarketPrices": "更新今日市場價格",
+    "fetchingPrices": "正在向 Yahoo Finance 抓取報價…",
+    "updateResult": "{date} 更新結果",
+    "priceOk": "成功",
+    "priceFailed": "失敗",
+    "fxRate": "匯率",
+    "snapshotItems": "快照 {count} 筆",
+    "priceFetchFailed": "無法取得",
+    "rebuildTitle": "重建快照"
   }
 }

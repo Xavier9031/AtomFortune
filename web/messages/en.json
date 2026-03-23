@@ -75,6 +75,39 @@
   "assets": {
     "title": "Assets",
     "addButton": "+ Add Asset",
+    "kindPickerTitle": "Select Asset Type",
+    "editTitle": "Edit Asset",
+    "newAssetTitle": "New Asset",
+    "createButton": "Create Asset",
+    "deleteButton": "Delete Asset",
+    "deleteConfirm": "Delete this asset? Cannot delete if there are holdings or snapshots.",
+    "deleteFailed": "Delete failed: Please remove all holdings and snapshots first",
+    "search": "Search",
+    "tickerSearch": {
+      "crypto": "Search Crypto",
+      "stockEtf": "Search Stock/ETF"
+    },
+    "tickerTypes": {
+      "stock": "Stock",
+      "crypto": "Crypto"
+    },
+    "form": {
+      "nameLabel": "Name",
+      "namePlaceholder": "e.g. Apple Inc.",
+      "symbolLabel": "Symbol",
+      "currencyLabel": "Currency",
+      "metalLabel": "Metal",
+      "unitLabel": "Unit"
+    },
+    "preciousMetals": {
+      "gold": "Gold",
+      "silver": "Silver",
+      "platinum": "Platinum"
+    },
+    "units": {
+      "gram": "Gram",
+      "ounce": "Ounce"
+    },
     "columns": {
       "name": "Name",
       "type": "Type",
@@ -139,13 +172,57 @@
       "liquid": "Liquid",
       "investment": "Investment",
       "fixed": "Fixed Assets",
-      "debt": "Liabilities"
+      "receivable": "Receivable",
+      "debt": "Liabilities",
+      "other": "Other"
+    },
+    "itemLabels": {
+      "liquid_other": "Other Liquid",
+      "stock_etf": "Stock/ETF",
+      "investment_other": "Other Investment",
+      "fixed_other": "Other Fixed Assets",
+      "debt_other": "Other Liabilities"
     }
   },
   "holdings": {
     "title": "Holdings",
     "addButton": "+ Add Holding",
     "empty": "No holdings yet. Click '+ Add Holding' to get started.",
+    "add": "Add Holding",
+    "edit": "Edit Holding",
+    "acctPicker": "Select Account",
+    "addAccountTitle": "Add Account",
+    "acctInfo": "Account Info",
+    "assetPicker": "Select Asset",
+    "addAssetKind": "Add Asset",
+    "assetInfo": "Asset Info",
+    "setQuantity": "Set Quantity",
+    "adjustQuantity": "Adjust Quantity",
+    "balance": "Balance",
+    "quantity": "Quantity",
+    "result": "Result:",
+    "update": "Update",
+    "setBalance": "Set Balance",
+    "createHolding": "Create Holding",
+    "deleteConfirm": "Delete holding of \"{name}\"? This cannot be undone.",
+    "noAccounts": "No accounts yet. Click below to create your first.",
+    "addAccountButton": "+ Add Account",
+    "selectAccount": "Select Account",
+    "accountLabel": "Account",
+    "assetLabel": "Asset",
+    "selectAsset": "Select Asset",
+    "estimatedValue": "Value:",
+    "expandNewAsset": "+ New Asset",
+    "collapseNewAsset": "− Collapse",
+    "noAssets": "No assets. Click \"+ New Asset\" above to create.",
+    "creatingAccount": "Creating…",
+    "creatingAsset": "Creating…",
+    "acctNameLabel": "Account Name",
+    "acctNamePlaceholder": "e.g. My {type}",
+    "txnHistory": "Transaction History",
+    "viewAllTxns": "View All",
+    "noTxns": "No transactions",
+    "showingRecent": "Showing 10 of {total}",
     "columns": {
       "assetName": "Asset",
       "account": "Account",
@@ -194,6 +271,15 @@
   "snapshots": {
     "title": "Snapshots",
     "triggerButton": "Snapshot Now",
-    "triggering": "Running…"
+    "triggering": "Running…",
+    "triggerMarketPrices": "Update Today's Market Prices",
+    "fetchingPrices": "Fetching prices from Yahoo Finance…",
+    "updateResult": "{date} Update Result",
+    "priceOk": "OK",
+    "priceFailed": "Failed",
+    "fxRate": "FX Rate",
+    "snapshotItems": "{count} Snapshots",
+    "priceFetchFailed": "N/A",
+    "rebuildTitle": "Rebuild Snapshot"
   }
 }
