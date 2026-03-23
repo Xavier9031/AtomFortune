@@ -41,8 +41,8 @@ const ASSET_GROUPS: AssetGroup[] = [
   ]},
   { label: '投資', colorClass: 'bg-indigo-500', items: [
     { subKind: 'stock', label: '股票/ETF', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'fund', label: '基金', icon: '💰', assetClass: 'asset', category: 'investment' },
     { subKind: 'crypto', label: '加密貨幣', icon: '₿', assetClass: 'asset', category: 'investment', useTicker: true },
+    { subKind: 'fund', label: '基金', icon: '💰', assetClass: 'asset', category: 'investment' },
     { subKind: 'precious_metal', label: '實體貴金屬', icon: '🥇', assetClass: 'asset', category: 'investment' },
     { subKind: 'other', label: '其他投資', icon: '📦', assetClass: 'asset', category: 'investment' },
   ]},
