@@ -1,38 +1,54 @@
 'use client'
-import Link from 'next/link'
-import { Trash2 } from 'lucide-react'
 import type { Asset } from '@/lib/types'
 
-export function AssetsTable({ assets, onDelete }: { assets: Asset[]; onDelete: (id: string) => void }) {
-  const cols = ['名稱', '類別', 'Category', 'Sub-kind', 'Symbol', '幣別', '報價']
+const SUB_KIND_LABELS: Record<string, string> = {
+  bank_account: '銀行存款', physical_cash: '現金', e_wallet: '電子錢包',
+  stablecoin: '穩定幣', stock: '股票', etf: 'ETF', fund: '基金',
+  crypto: '加密貨幣', precious_metal: '貴金屬', real_estate: '不動產',
+  vehicle: '車輛', receivable: '應收款', credit_card: '信用卡',
+  mortgage: '房貸', personal_loan: '個人貸款', other: '其他',
+}
+const PRICING_LABELS: Record<string, string> = {
+  market: '市價', fixed: '固定', manual: '手動',
+}
+
+export function AssetsTable({ assets, onEdit }: { assets: Asset[]; onEdit: (a: Asset) => void }) {
   return (
-    <table className="w-full text-sm border-collapse">
-      <thead>
-        <tr className="border-b text-[var(--color-muted)]">
-          {cols.map(c => <th key={c} className="px-4 py-2 text-left">{c}</th>)}
-          <th />
-        </tr>
-      </thead>
-      <tbody>
-        {assets.map(a => (
-          <tr key={a.id} className="border-b hover:bg-[var(--color-bg)]">
-            <td className="px-4 py-2">
-              <Link href={`/assets/${a.id}`} className="text-[var(--color-accent)] hover:underline">{a.name}</Link>
-            </td>
-            <td className="px-4 py-2">{a.assetClass}</td>
-            <td className="px-4 py-2">{a.category}</td>
-            <td className="px-4 py-2">{a.subKind}</td>
-            <td className="px-4 py-2">{a.symbol ?? '—'}</td>
-            <td className="px-4 py-2">{a.currencyCode}</td>
-            <td className="px-4 py-2">{a.pricingMode}</td>
-            <td className="px-4 py-2">
-              <button onClick={() => onDelete(a.id)} title="刪除">
-                <Trash2 size={14} className="text-[var(--color-muted)] hover:text-[var(--color-coral)]" />
-              </button>
-            </td>
+    <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">名稱</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">類型</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">代號</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">幣別</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">報價</th>
           </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {assets.map((a, i) => (
+            <tr key={a.id} onClick={() => onEdit(a)}
+              className={`cursor-pointer ${i < assets.length - 1 ? 'border-b border-[var(--color-border)]' : ''}
+                hover:bg-[var(--color-bg)] transition-colors`}>
+              <td className="px-4 py-3 whitespace-nowrap font-medium">{a.name}</td>
+              <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">
+                {SUB_KIND_LABELS[a.subKind] ?? a.subKind}
+              </td>
+              <td className="px-4 py-3 whitespace-nowrap">
+                {a.symbol
+                  ? <span className="px-2 py-0.5 bg-[var(--color-text)] text-[var(--color-surface)] rounded-full text-xs font-bold">
+                      {a.symbol}
+                    </span>
+                  : <span className="text-[var(--color-muted)]">—</span>}
+              </td>
+              <td className="px-4 py-3 whitespace-nowrap">{a.currencyCode}</td>
+              <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">
+                {PRICING_LABELS[a.pricingMode] ?? a.pricingMode}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   )
 }

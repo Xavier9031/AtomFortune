@@ -20,7 +20,7 @@ export default function HoldingsPage() {
   }
 
   return (
-    <main className="p-6 max-w-3xl mx-auto">
+    <main className="p-6 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-bold">持倉管理</h1>
         <button onClick={openAdd}

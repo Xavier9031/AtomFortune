@@ -22,6 +22,16 @@ export interface AllocationData { snapshotDate: string; displayCurrency: Currenc
 export interface NetWorthPoint { date: string; netWorth: number }
 export interface NetWorthHistory { displayCurrency: Currency; data: NetWorthPoint[] }
 
+export interface LiveDashboard {
+  displayCurrency: Currency
+  netWorth: number
+  totalAssets: number
+  totalLiabilities: number
+  changeAmount: number | null
+  changePct: number | null
+  categories: AllocationCategory[]
+}
+
 export type AssetClass = 'asset' | 'liability'
 export type SubKind = 'bank_account' | 'stock' | 'etf' | 'crypto' | 'fund' |
   'real_estate' | 'credit_card' | 'mortgage' | 'personal_loan' | 'physical_cash' |
@@ -38,12 +48,13 @@ export interface Asset {
 export interface Account {
   id: string; name: string; institution?: string
   accountType: AccountType; note?: string
+  balance?: string | null
 }
 export interface Holding {
   assetId: string; accountId: string; quantity: number
   assetName: string; assetClass: AssetClass; category: Category
   subKind: SubKind; currencyCode: string; pricingMode: PricingMode
-  accountName: string; accountType: AccountType
+  accountName: string; accountType: AccountType; institution?: string | null
   latestValueInBase: number | null; updatedAt: string
 }
 export interface Transaction {
