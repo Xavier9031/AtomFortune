@@ -93,13 +93,13 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
 
   function handleTickerSelect(t: Ticker) {
     setSelectedTicker(t)
-    // update pendingKind subKind to the actual type from ticker
     setPendingKind(prev => prev ? { ...prev, subKind: t.type as SubKind } : prev)
     setForm(p => ({
       ...p,
       name: t.name,
       symbol: t.symbol,
       currencyCode: t.type === 'crypto' || t.country === 'US' ? 'USD' : 'TWD',
+      unit: t.type === 'crypto' ? t.symbol.toUpperCase() : '股',
     }))
     setView('form')
   }
@@ -131,7 +131,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
             currencyCode: form.currencyCode.trim().toUpperCase() || 'TWD',
             pricingMode: DEFAULT_PRICING[pendingKind.subKind] ?? 'manual',
             symbol: form.symbol.trim() || undefined,
-            unit: pendingKind.subKind === 'precious_metal' ? form.unit : undefined,
+            unit: form.unit || undefined,
           }),
         })
       }

@@ -141,6 +141,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     setNewAssetName(t.name)
     setNewAssetSymbol(t.symbol)
     setNewAssetCurrency(t.type === 'crypto' || t.country === 'US' ? 'USD' : 'TWD')
+    setNewAssetUnit(t.type === 'crypto' ? t.symbol.toUpperCase() : '股')
     pushView('assetForm')
   }
 
@@ -158,7 +159,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
           currencyCode: newAssetCurrency.trim().toUpperCase() || 'TWD',
           pricingMode: DEFAULT_PRICING[pendingAssetKind.subKind] ?? 'manual',
           symbol: newAssetSymbol.trim() || undefined,
-          unit: pendingAssetKind.subKind === 'precious_metal' ? newAssetUnit : undefined,
+          unit: newAssetUnit || undefined,
         }),
       })
       const created: Asset = await res.json()

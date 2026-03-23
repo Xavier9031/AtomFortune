@@ -60,7 +60,7 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
               <td className="px-4 py-3 whitespace-nowrap">
                 {parseFloat(String(h.quantity)).toLocaleString()}
                 <span className="ml-1 text-xs text-[var(--color-muted)]">
-                  {h.subKind === 'precious_metal' && h.unit ? h.unit : h.currencyCode}
+                  {h.unit ?? h.currencyCode}
                 </span>
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">
