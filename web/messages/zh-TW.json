@@ -1,7 +1,7 @@
 {
   "nav": {
-    "dashboard": "Dashboard",
-    "holdings": "Holdings",
+    "dashboard": "總覽",
+    "holdings": "持倉",
     "assets": "資產管理",
     "accounts": "帳戶管理",
     "snapshots": "快照",
@@ -234,7 +234,7 @@
     }
   },
   "dashboard": {
-    "netWorth": "Net Worth",
+    "netWorth": "資產淨值",
     "realtime": "即時",
     "asOf": "資料截至",
     "assets": "資產",
