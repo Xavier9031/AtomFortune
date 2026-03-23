@@ -72,6 +72,38 @@
       "other": "其他"
     }
   },
+  "assets": {
+    "title": "資產設定",
+    "addButton": "+ 新增資產",
+    "columns": {
+      "name": "名稱",
+      "type": "類型",
+      "symbol": "代號",
+      "currency": "幣別",
+      "pricing": "報價"
+    },
+    "detail": {
+      "settingsTitle": "資產設定",
+      "nameLabel": "名稱",
+      "symbolLabel": "代號",
+      "symbolPlaceholder": "例：0050.TW",
+      "currencyLabel": "幣別",
+      "typeLabel": "類型",
+      "pricingLabel": "報價",
+      "editNameSymbol": "編輯名稱 / 代號",
+      "updatePrice": "更新今日價格",
+      "holdingDistribution": "持倉分布",
+      "noHoldings": "尚無持倉",
+      "valueTrend": "價值趨勢",
+      "range30d": "30天",
+      "range1y": "1年",
+      "rangeAll": "全部",
+      "valueLabel": "估值",
+      "noHistory": "尚無歷史資料",
+      "transactions": "交易紀錄",
+      "noTransactions": "尚無交易紀錄"
+    }
+  },
   "asset": {
     "subKinds": {
       "bank_account": "銀行存款",

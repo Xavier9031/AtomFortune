@@ -72,6 +72,38 @@
       "other": "Other"
     }
   },
+  "assets": {
+    "title": "Assets",
+    "addButton": "+ Add Asset",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "symbol": "Symbol",
+      "currency": "Currency",
+      "pricing": "Pricing"
+    },
+    "detail": {
+      "settingsTitle": "Asset Settings",
+      "nameLabel": "Name",
+      "symbolLabel": "Symbol",
+      "symbolPlaceholder": "e.g. AAPL",
+      "currencyLabel": "Currency",
+      "typeLabel": "Type",
+      "pricingLabel": "Pricing",
+      "editNameSymbol": "Edit Name / Symbol",
+      "updatePrice": "Update Today's Price",
+      "holdingDistribution": "Holdings Distribution",
+      "noHoldings": "No holdings",
+      "valueTrend": "Value Trend",
+      "range30d": "30D",
+      "range1y": "1Y",
+      "rangeAll": "All",
+      "valueLabel": "Value",
+      "noHistory": "No historical data",
+      "transactions": "Transaction History",
+      "noTransactions": "No transactions"
+    }
+  },
   "asset": {
     "subKinds": {
       "bank_account": "Bank Account",
