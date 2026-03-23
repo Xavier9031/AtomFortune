@@ -1,10 +1,11 @@
 /**
- * Demo data seed script
- * Run from the api/ directory:  node scripts/seed-demo.mjs
+ * Demo data seed script — Real Market Data Edition
+ * Run from the api/ directory: node scripts/seed-demo.mjs
  *
- * Clears all user data then inserts a realistic demo portfolio:
- *   5 accounts · 11 assets · 11 holdings · 15 transactions
- *   365 days of market prices · 365 snapshot dates
+ * Fetches 1 year of real prices from Yahoo Finance, then simulates
+ * a user who makes daily portfolio snapshots for one full year.
+ *
+ * 5 accounts · 12 assets · 365 daily snapshots · real market prices
  */
 
 import postgres from 'postgres'
@@ -14,96 +15,161 @@ const DB_URL = process.env.DATABASE_URL
 
 const sql = postgres(DB_URL)
 
-// ─── Fixed IDs (deterministic so script is idempotent) ───────────────────────
+// ─── Fixed IDs ────────────────────────────────────────────────────────────────
 
 const ACC = {
-  bank1:   '11111111-0000-4000-0000-000000000001', // 台灣銀行
-  bank2:   '11111111-0000-4000-0000-000000000002', // 國泰世華銀行
-  broker:  '11111111-0000-4000-0000-000000000003', // 永豐金證券
-  crypto:  '11111111-0000-4000-0000-000000000004', // Binance
-  misc:    '11111111-0000-4000-0000-000000000005', // 個人帳戶
+  bank1:   '11111111-0000-4000-0000-000000000001',
+  bank2:   '11111111-0000-4000-0000-000000000002',
+  broker:  '11111111-0000-4000-0000-000000000003',
+  crypto:  '11111111-0000-4000-0000-000000000004',
+  misc:    '11111111-0000-4000-0000-000000000005',
 }
 
 const ASS = {
-  twd:     '22222222-0000-4000-0000-000000000001', // 台幣活存
-  usd:     '22222222-0000-4000-0000-000000000002', // 美元活存
-  jpy:     '22222222-0000-4000-0000-000000000003', // 日幣活存
-  cash:    '22222222-0000-4000-0000-000000000004', // 現金
-  e0050:   '22222222-0000-4000-0000-000000000005', // 元大台灣50
-  tsmc:    '22222222-0000-4000-0000-000000000006', // 台積電
-  nvda:    '22222222-0000-4000-0000-000000000007', // NVIDIA
-  btc:     '22222222-0000-4000-0000-000000000008', // 比特幣
-  eth:     '22222222-0000-4000-0000-000000000009', // 以太幣
-  realty:  '22222222-0000-4000-0000-000000000010', // 台北市公寓
-  mortgage:'22222222-0000-4000-0000-000000000011', // 房屋貸款
-  gold:    '22222222-0000-4000-0000-000000000012', // 黃金
+  twd:     '22222222-0000-4000-0000-000000000001',
+  usd:     '22222222-0000-4000-0000-000000000002',
+  jpy:     '22222222-0000-4000-0000-000000000003',
+  cash:    '22222222-0000-4000-0000-000000000004',
+  e0050:   '22222222-0000-4000-0000-000000000005',
+  tsmc:    '22222222-0000-4000-0000-000000000006',
+  nvda:    '22222222-0000-4000-0000-000000000007',
+  btc:     '22222222-0000-4000-0000-000000000008',
+  eth:     '22222222-0000-4000-0000-000000000009',
+  realty:  '22222222-0000-4000-0000-000000000010',
+  mortgage:'22222222-0000-4000-0000-000000000011',
+  gold:    '22222222-0000-4000-0000-000000000012',
 }
 
-// ─── Seeded price generation ──────────────────────────────────────────────────
+// Account for each asset
+const ACCT = {
+  [ASS.twd]:      ACC.bank1,
+  [ASS.usd]:      ACC.bank2,
+  [ASS.jpy]:      ACC.bank2,
+  [ASS.cash]:     ACC.misc,
+  [ASS.e0050]:    ACC.broker,
+  [ASS.tsmc]:     ACC.broker,
+  [ASS.nvda]:     ACC.broker,
+  [ASS.btc]:      ACC.crypto,
+  [ASS.eth]:      ACC.crypto,
+  [ASS.realty]:   ACC.misc,
+  [ASS.mortgage]: ACC.misc,
+  [ASS.gold]:     ACC.misc,
+}
 
-// Linear Congruential Generator for deterministic "randomness"
-function makeLCG(seed) {
-  let s = seed >>> 0
-  return function () {
-    s = (Math.imul(1664525, s) + 1013904223) >>> 0
-    return s / 0x100000000
+// ─── Date range ────────────────────────────────────────────────────────────────
+
+const START_DATE = '2025-03-24'
+const END_DATE   = '2026-03-24'
+
+function dateRange(start, end) {
+  const dates = []
+  const d = new Date(start + 'T00:00:00Z')
+  const e = new Date(end + 'T00:00:00Z')
+  while (d <= e) {
+    dates.push(d.toISOString().slice(0, 10))
+    d.setUTCDate(d.getUTCDate() + 1)
   }
+  return dates
 }
 
-/**
- * Generate `n` daily prices using geometric Brownian motion.
- * Prices drift from `start` toward `end` over the period, with daily
- * volatility `vol` (fraction, e.g. 0.015 = 1.5%).
- */
-function genSeries(start, end, n, vol, seed) {
-  const rand = makeLCG(seed)
-  const logDrift = Math.log(end / start) / n
-  const prices = [start]
-  for (let i = 1; i < n; i++) {
-    const noise = (rand() - 0.5) * 2 * vol
-    prices.push(+(prices[i - 1] * Math.exp(logDrift + noise)).toFixed(2))
+const ALL_DATES = dateRange(START_DATE, END_DATE)
+
+// ─── Yahoo Finance fetch ──────────────────────────────────────────────────────
+
+async function fetchYahoo(symbol) {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=1y`
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      'Accept': 'application/json',
+    },
+  })
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  const json = await res.json()
+  const result = json?.chart?.result?.[0]
+  if (!result) throw new Error(JSON.stringify(json?.chart?.error ?? 'no result'))
+
+  const timestamps = result.timestamp ?? []
+  const closes = result.indicators?.quote?.[0]?.close ?? []
+
+  const map = new Map()
+  for (let i = 0; i < timestamps.length; i++) {
+    if (closes[i] != null) {
+      const date = new Date(timestamps[i] * 1000).toISOString().slice(0, 10)
+      map.set(date, closes[i])
+    }
   }
-  return prices
+  return map
 }
 
-// ─── 365 days: 2025-03-25 → 2026-03-24 ──────────────────────────────────────
-
-const N = 365
-const START_DATE = '2025-03-25'
-
-function addDays(base, n) {
-  const d = new Date(base)
-  d.setDate(d.getDate() + n)
-  return d.toISOString().slice(0, 10)
+// Forward-fill: for each calendar date, use the most recent known price
+function forwardFill(priceMap) {
+  const result = new Map()
+  let last = null
+  for (const date of ALL_DATES) {
+    if (priceMap.has(date)) last = priceMap.get(date)
+    if (last != null) result.set(date, last)
+  }
+  return result
 }
-const DATES = Array.from({ length: N }, (_, i) => addDays(START_DATE, i))
 
-// Market story: strong bull run 2025, slight correction 2026 Q1
-const PRICES_0050 = genSeries(130,  175,  N, 0.013, 1001)  // TWD ETF
-const PRICES_TSMC = genSeries(695,  850,  N, 0.015, 1002)  // TWD stock
-const PRICES_NVDA = genSeries(65,   116,  N, 0.022, 1003)  // USD — AI boom
-const PRICES_BTC  = genSeries(55000,88000,N, 0.028, 1004)  // USD — crypto bull
-const PRICES_ETH  = genSeries(1800, 2800, N, 0.025, 1005)  // USD
-const PRICES_GOLD = genSeries(2700, 3100, N, 0.006, 1006)  // TWD/gram — gold (low vol)
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)) }
 
-const USD_TWD = 32.1
-const JPY_TWD = 0.212
+// ─── Quantity step functions ──────────────────────────────────────────────────
+//
+// Portfolio story (same human, same DCA plan as before):
+//   - Starts with 1.05M TWD savings + 12M property + 6.8M mortgage
+//   - Gradually builds investments by shifting cash → securities
+//   - Mortgage pays down ~25K/month automatically
+//
+// Each entry: [date_from_inclusive, cumulative_quantity]
 
-// ─── Holdings (current quantities) ───────────────────────────────────────────
+const STEPS = {
+  [ASS.twd]: [
+    ['2025-03-24', 1050000],
+    ['2025-06-10',  930000],  // bought 0050 #1
+    ['2025-08-18',  850000],  // bought TSMC #2
+    ['2025-09-12',  810000],  // bought 0050 #2
+    ['2025-12-05',  710000],  // bought 0050 #3
+    ['2026-01-08',  680000],  // bought TSMC #3
+    ['2026-02-15',  620000],  // bought 0050 #4
+  ],
+  [ASS.usd]:   [['2025-03-24', 15000]],
+  [ASS.jpy]:   [['2025-03-24', 450000]],
+  [ASS.cash]:  [['2025-03-24', 12000]],
+  [ASS.e0050]: [
+    ['2025-03-24',    0],
+    ['2025-06-10',  500],
+    ['2025-09-12', 1000],
+    ['2025-12-05', 2000],
+    ['2026-02-15', 3000],
+  ],
+  [ASS.tsmc]:  [
+    ['2025-03-24', 200],
+    ['2025-08-18', 400],
+    ['2026-01-08', 500],
+  ],
+  [ASS.nvda]:  [['2025-03-24', 0], ['2025-05-15', 10], ['2025-11-20', 20]],
+  [ASS.btc]:   [['2025-03-24', 0], ['2025-04-10', 0.05], ['2025-08-22', 0.10], ['2025-12-01', 0.15]],
+  [ASS.eth]:   [['2025-03-24', 0], ['2025-04-15', 2.0], ['2025-09-30', 4.0], ['2026-02-01', 5.0]],
+  [ASS.realty]:[['2025-03-24', 15800000]],
+  [ASS.gold]:  [['2025-03-24', 0], ['2025-05-20', 30], ['2025-09-15', 60], ['2026-01-10', 100]],
+}
 
-const HOLD_QTY = {
-  [ASS.twd]:      620000,
-  [ASS.usd]:       15000,
-  [ASS.jpy]:      450000,
-  [ASS.cash]:      12000,
-  [ASS.e0050]:      3000,
-  [ASS.tsmc]:        500,
-  [ASS.nvda]:         20,
-  [ASS.btc]:        0.15,
-  [ASS.eth]:         5.0,
-  [ASS.realty]:  15800000,
-  [ASS.mortgage]: 6500000,
-  [ASS.gold]:        100,   // 100 grams
+function qtyOn(assetId, date) {
+  if (assetId === ASS.mortgage) {
+    // Linear paydown: 6,800,000 → 6,500,000 over the year
+    const t = (new Date(date) - new Date(START_DATE)) / (new Date(END_DATE) - new Date(START_DATE))
+    return Math.round(6800000 - t * 300000)
+  }
+  const steps = STEPS[assetId]
+  if (!steps) return 0
+  let qty = 0
+  for (const [d, q] of steps) {
+    if (d <= date) qty = q
+    else break
+  }
+  return qty
 }
 
 function txId(n) {
@@ -113,7 +179,76 @@ function txId(n) {
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
-  console.log('🗑  Clearing existing user data…')
+  // ── Fetch market data ───────────────────────────────────────────────────────
+  console.log('📡 Fetching real market data from Yahoo Finance…')
+
+  const fetches = [
+    ['0050',    '0050.TW'],
+    ['TSMC',    '2330.TW'],
+    ['NVDA',    'NVDA'],
+    ['BTC',     'BTC-USD'],
+    ['ETH',     'ETH-USD'],
+    ['GOLD_OZ', 'GC=F'],       // USD per troy oz
+    ['USDTWD',  'USDTWD=X'],   // TWD per 1 USD
+    ['JPYTWD',  'JPYTWD=X'],   // TWD per 1 JPY
+  ]
+
+  const raw = {}
+  for (const [key, symbol] of fetches) {
+    try {
+      const map = await fetchYahoo(symbol)
+      raw[key] = forwardFill(map)
+      const last = [...raw[key].values()].at(-1)
+      console.log(`   ${symbol.padEnd(12)} ${raw[key].size} days  latest: ${last?.toFixed(2)}`)
+    } catch (e) {
+      console.warn(`   ⚠️  ${symbol}: ${e.message} — will use fallback`)
+      raw[key] = new Map()
+    }
+    await sleep(250)
+  }
+
+  // Fallbacks
+  if (raw['USDTWD'].size < 10) {
+    console.log('   Using fallback USD/TWD = 32.1')
+    for (const d of ALL_DATES) raw['USDTWD'].set(d, 32.1)
+  }
+  if (raw['JPYTWD'].size < 10) {
+    console.log('   Using fallback JPY/TWD = 0.212')
+    for (const d of ALL_DATES) raw['JPYTWD'].set(d, 0.212)
+  }
+
+  // Compute gold price in TWD/gram = GC(USD/oz) × USDTWD / 31.1035
+  raw['GOLD_TWD_G'] = new Map()
+  for (const date of ALL_DATES) {
+    const oz   = raw['GOLD_OZ'].get(date)
+    const fx   = raw['USDTWD'].get(date)
+    if (oz && fx) raw['GOLD_TWD_G'].set(date, +(oz * fx / 31.1035).toFixed(2))
+  }
+
+  // Lookup helpers
+  const PRICE_MAP = {
+    [ASS.e0050]: raw['0050'],
+    [ASS.tsmc]:  raw['TSMC'],
+    [ASS.nvda]:  raw['NVDA'],
+    [ASS.btc]:   raw['BTC'],
+    [ASS.eth]:   raw['ETH'],
+    [ASS.gold]:  raw['GOLD_TWD_G'],
+  }
+
+  function priceOn(assetId, date) {
+    return PRICE_MAP[assetId]?.get(date) ?? 1  // liquid/fixed/manual → price = 1 (quantity is the amount)
+  }
+
+  function fxOn(assetId, date) {
+    if ([ASS.usd, ASS.nvda, ASS.btc, ASS.eth].includes(assetId))
+      return raw['USDTWD'].get(date) ?? 32.1
+    if (assetId === ASS.jpy)
+      return raw['JPYTWD'].get(date) ?? 0.212
+    return 1
+  }
+
+  // ── Clear ───────────────────────────────────────────────────────────────────
+  console.log('\n🗑  Clearing existing data…')
   await sql`DELETE FROM "snapshotItems"`
   await sql`DELETE FROM "prices"`
   await sql`DELETE FROM "transactions"`
@@ -123,16 +258,16 @@ async function main() {
   await sql`DELETE FROM "accounts"`
   console.log('   Done.')
 
-  // ── Accounts ───────────────────────────────────────────────────────────────
+  // ── Accounts ────────────────────────────────────────────────────────────────
   console.log('🏦 Inserting accounts…')
   await sql`INSERT INTO "accounts" (id, name, institution, "accountType", note) VALUES
     (${ACC.bank1},  '台銀活存',   '台灣銀行',    'bank',            '主要往來帳戶'),
     (${ACC.bank2},  '國泰活存',   '國泰世華銀行', 'bank',            '儲蓄帳戶'),
     (${ACC.broker}, '永豐金證券', '永豐金證券',   'broker',          '台股交割帳戶'),
     (${ACC.crypto}, 'Binance',    'Binance',      'crypto_exchange', '加密貨幣交易所'),
-    (${ACC.misc},   '個人帳戶',   null,           'other',           '現金與不動產')`
+    (${ACC.misc},   '個人帳戶',   null,           'other',           '現金・不動產・黃金')`
 
-  // ── Assets ─────────────────────────────────────────────────────────────────
+  // ── Assets ──────────────────────────────────────────────────────────────────
   console.log('📦 Inserting assets…')
   await sql`INSERT INTO "assets"
     (id, name, "assetClass", category, "subKind", symbol, "currencyCode", "pricingMode", unit)
@@ -150,129 +285,134 @@ async function main() {
     (${ASS.mortgage}, '房屋貸款',    'liability', 'debt',       'mortgage',      null,     'TWD', 'fixed',  null),
     (${ASS.gold},     '黃金',        'asset',     'investment', 'precious_metal',null,     'TWD', 'manual', 'gram')`
 
-  // ── Holdings ───────────────────────────────────────────────────────────────
+  // ── Holdings (final state at END_DATE) ─────────────────────────────────────
   console.log('💼 Inserting holdings…')
-  await sql`INSERT INTO "holdings" ("assetId", "accountId", quantity) VALUES
-    (${ASS.twd},      ${ACC.bank1},  ${HOLD_QTY[ASS.twd]}),
-    (${ASS.usd},      ${ACC.bank2},  ${HOLD_QTY[ASS.usd]}),
-    (${ASS.jpy},      ${ACC.bank2},  ${HOLD_QTY[ASS.jpy]}),
-    (${ASS.cash},     ${ACC.misc},   ${HOLD_QTY[ASS.cash]}),
-    (${ASS.e0050},    ${ACC.broker}, ${HOLD_QTY[ASS.e0050]}),
-    (${ASS.tsmc},     ${ACC.broker}, ${HOLD_QTY[ASS.tsmc]}),
-    (${ASS.nvda},     ${ACC.broker}, ${HOLD_QTY[ASS.nvda]}),
-    (${ASS.btc},      ${ACC.crypto}, ${HOLD_QTY[ASS.btc]}),
-    (${ASS.eth},      ${ACC.crypto}, ${HOLD_QTY[ASS.eth]}),
-    (${ASS.realty},   ${ACC.misc},   ${HOLD_QTY[ASS.realty]}),
-    (${ASS.mortgage}, ${ACC.misc},   ${HOLD_QTY[ASS.mortgage]}),
-    (${ASS.gold},     ${ACC.misc},   ${HOLD_QTY[ASS.gold]})`
+  for (const assetId of Object.values(ASS)) {
+    const qty = qtyOn(assetId, END_DATE)
+    await sql`INSERT INTO "holdings" ("assetId", "accountId", quantity)
+      VALUES (${assetId}, ${ACCT[assetId]}, ${qty})`
+  }
 
-  // ── Transactions ───────────────────────────────────────────────────────────
+  // ── Transactions ────────────────────────────────────────────────────────────
   console.log('🧾 Inserting transactions…')
   const txns = [
-    [txId(1),  ASS.e0050, ACC.broker, 'buy',   500,  '2025-06-10', '定期定額 #1'],
-    [txId(2),  ASS.e0050, ACC.broker, 'buy',   500,  '2025-09-12', '定期定額 #2'],
-    [txId(3),  ASS.e0050, ACC.broker, 'buy',  1000,  '2025-12-05', '年終加碼'],
-    [txId(4),  ASS.e0050, ACC.broker, 'buy',  1000,  '2026-02-15', '定期定額 #3'],
-    [txId(5),  ASS.tsmc,  ACC.broker, 'buy',   200,  '2025-03-20', '初始建倉'],
-    [txId(6),  ASS.tsmc,  ACC.broker, 'buy',   200,  '2025-08-18', '逢低加碼'],
-    [txId(7),  ASS.tsmc,  ACC.broker, 'buy',   100,  '2026-01-08', '新年加碼'],
-    [txId(8),  ASS.nvda,  ACC.broker, 'buy',    10,  '2025-05-15', 'AI theme buy'],
-    [txId(9),  ASS.nvda,  ACC.broker, 'buy',    10,  '2025-11-20', 'Add position'],
-    [txId(10), ASS.btc,   ACC.crypto, 'buy',  0.05,  '2025-04-10', 'First purchase'],
+    [txId(1),  ASS.tsmc,  ACC.broker, 'buy',   200,  '2025-03-20', '初始建倉'],
+    [txId(2),  ASS.tsmc,  ACC.broker, 'buy',   200,  '2025-08-18', '逢低加碼'],
+    [txId(3),  ASS.tsmc,  ACC.broker, 'buy',   100,  '2026-01-08', '新年加碼'],
+    [txId(4),  ASS.e0050, ACC.broker, 'buy',   500,  '2025-06-10', '定期定額 #1'],
+    [txId(5),  ASS.e0050, ACC.broker, 'buy',   500,  '2025-09-12', '定期定額 #2'],
+    [txId(6),  ASS.e0050, ACC.broker, 'buy',  1000,  '2025-12-05', '年終加碼'],
+    [txId(7),  ASS.e0050, ACC.broker, 'buy',  1000,  '2026-02-15', '定期定額 #3'],
+    [txId(8),  ASS.nvda,  ACC.broker, 'buy',    10,  '2025-05-15', 'AI 主題建倉'],
+    [txId(9),  ASS.nvda,  ACC.broker, 'buy',    10,  '2025-11-20', '加碼'],
+    [txId(10), ASS.btc,   ACC.crypto, 'buy',  0.05,  '2025-04-10', '首次購入'],
     [txId(11), ASS.btc,   ACC.crypto, 'buy',  0.05,  '2025-08-22', 'DCA'],
     [txId(12), ASS.btc,   ACC.crypto, 'buy',  0.05,  '2025-12-01', 'DCA'],
-    [txId(13), ASS.eth,   ACC.crypto, 'buy',   2.0,  '2025-04-15', 'Initial ETH'],
-    [txId(14), ASS.eth,   ACC.crypto, 'buy',   2.0,  '2025-09-30', 'Add ETH'],
-    [txId(15), ASS.eth,   ACC.crypto, 'buy',   1.0,  '2026-02-01', 'ETH dip buy'],
+    [txId(13), ASS.eth,   ACC.crypto, 'buy',   2.0,  '2025-04-15', '首次購入'],
+    [txId(14), ASS.eth,   ACC.crypto, 'buy',   2.0,  '2025-09-30', '加碼'],
+    [txId(15), ASS.eth,   ACC.crypto, 'buy',   1.0,  '2026-02-01', '逢低買進'],
+    [txId(16), ASS.gold,  ACC.misc,   'buy',    30,  '2025-05-20', '購入實體金條 30g'],
+    [txId(17), ASS.gold,  ACC.misc,   'buy',    30,  '2025-09-15', '加碼黃金 30g'],
+    [txId(18), ASS.gold,  ACC.misc,   'buy',    40,  '2026-01-10', '新年增持 40g'],
   ]
   for (const [id, assetId, accountId, txnType, quantity, txnDate, note] of txns) {
     await sql`INSERT INTO "transactions" (id, "assetId", "accountId", "txnType", quantity, "txnDate", note)
       VALUES (${id}, ${assetId}, ${accountId}, ${txnType}, ${quantity}, ${txnDate}, ${note})`
   }
 
-  // ── Market prices ──────────────────────────────────────────────────────────
-  console.log('📈 Inserting 365 days of market prices…')
-  const priceData = [
-    [ASS.e0050, PRICES_0050, 'seed'],
-    [ASS.tsmc,  PRICES_TSMC, 'seed'],
-    [ASS.nvda,  PRICES_NVDA, 'seed'],
-    [ASS.btc,   PRICES_BTC,  'seed'],
-    [ASS.eth,   PRICES_ETH,  'seed'],
-    [ASS.gold,  PRICES_GOLD, 'seed'],
-  ]
-  for (const [assetId, series, source] of priceData) {
-    for (let i = 0; i < DATES.length; i++) {
-      await sql`
-        INSERT INTO "prices" ("assetId", "priceDate", price, source)
-        VALUES (${assetId}, ${DATES[i]}, ${series[i]}, ${source})
-        ON CONFLICT ("assetId", "priceDate") DO UPDATE SET price = EXCLUDED.price`
+  // ── Daily market prices ─────────────────────────────────────────────────────
+  console.log('📈 Inserting daily market prices…')
+  for (const [assetId, priceMap] of Object.entries(PRICE_MAP)) {
+    const rows = []
+    for (const [date, price] of priceMap) {
+      if (price > 0) rows.push({ assetId, date, price })
     }
+    if (rows.length === 0) continue
+    // Batch insert in chunks of 200
+    for (let i = 0; i < rows.length; i += 200) {
+      const chunk = rows.slice(i, i + 200)
+      for (const r of chunk) {
+        await sql`
+          INSERT INTO "prices" ("assetId", "priceDate", price, source)
+          VALUES (${r.assetId}, ${r.date}, ${r.price}, 'yahoo_finance')
+          ON CONFLICT ("assetId", "priceDate") DO UPDATE SET price = EXCLUDED.price`
+      }
+    }
+    console.log(`   ${assetId.slice(-4)}: ${rows.length} rows`)
   }
 
-  // ── FX rates ───────────────────────────────────────────────────────────────
-  console.log('💱 Inserting FX rates…')
-  for (const date of DATES) {
-    for (const [from, rate] of [['USD', USD_TWD], ['JPY', JPY_TWD]]) {
+  // ── Daily FX rates ──────────────────────────────────────────────────────────
+  console.log('💱 Inserting daily FX rates…')
+  for (const date of ALL_DATES) {
+    const usdTwd = raw['USDTWD'].get(date)
+    const jpyTwd = raw['JPYTWD'].get(date)
+    if (usdTwd) {
       await sql`
         INSERT INTO "fxRates" ("fromCurrency", "toCurrency", "rateDate", rate, source)
-        VALUES (${from}, 'TWD', ${date}, ${rate}, 'seed')
+        VALUES ('USD', 'TWD', ${date}, ${usdTwd}, 'yahoo_finance')
+        ON CONFLICT ("fromCurrency", "toCurrency", "rateDate") DO NOTHING`
+    }
+    if (jpyTwd) {
+      await sql`
+        INSERT INTO "fxRates" ("fromCurrency", "toCurrency", "rateDate", rate, source)
+        VALUES ('JPY', 'TWD', ${date}, ${jpyTwd}, 'yahoo_finance')
         ON CONFLICT ("fromCurrency", "toCurrency", "rateDate") DO NOTHING`
     }
   }
 
-  // ── Snapshot items (365 dates × 11 holdings) ───────────────────────────────
-  console.log('📸 Inserting 365 days of snapshots…')
+  // ── Daily snapshots ─────────────────────────────────────────────────────────
+  console.log(`📸 Inserting ${ALL_DATES.length} daily snapshots…`)
+  const allAssets = Object.values(ASS)
+  let snapshotCount = 0
 
-  const snapHoldings = [
-    { assetId: ASS.twd,      accountId: ACC.bank1,  qty: HOLD_QTY[ASS.twd],      priceFn: () => 1,         fx: 1 },
-    { assetId: ASS.usd,      accountId: ACC.bank2,  qty: HOLD_QTY[ASS.usd],      priceFn: () => 1,         fx: USD_TWD },
-    { assetId: ASS.jpy,      accountId: ACC.bank2,  qty: HOLD_QTY[ASS.jpy],      priceFn: () => 1,         fx: JPY_TWD },
-    { assetId: ASS.cash,     accountId: ACC.misc,   qty: HOLD_QTY[ASS.cash],     priceFn: () => 1,         fx: 1 },
-    { assetId: ASS.e0050,    accountId: ACC.broker, qty: HOLD_QTY[ASS.e0050],    priceFn: i => PRICES_0050[i], fx: 1 },
-    { assetId: ASS.tsmc,     accountId: ACC.broker, qty: HOLD_QTY[ASS.tsmc],     priceFn: i => PRICES_TSMC[i], fx: 1 },
-    { assetId: ASS.nvda,     accountId: ACC.broker, qty: HOLD_QTY[ASS.nvda],     priceFn: i => PRICES_NVDA[i], fx: USD_TWD },
-    { assetId: ASS.btc,      accountId: ACC.crypto, qty: HOLD_QTY[ASS.btc],      priceFn: i => PRICES_BTC[i],  fx: USD_TWD },
-    { assetId: ASS.eth,      accountId: ACC.crypto, qty: HOLD_QTY[ASS.eth],      priceFn: i => PRICES_ETH[i],  fx: USD_TWD },
-    { assetId: ASS.realty,   accountId: ACC.misc,   qty: HOLD_QTY[ASS.realty],   priceFn: () => 1,             fx: 1 },
-    { assetId: ASS.mortgage, accountId: ACC.misc,   qty: HOLD_QTY[ASS.mortgage], priceFn: () => 1,             fx: 1 },
-    { assetId: ASS.gold,     accountId: ACC.misc,   qty: HOLD_QTY[ASS.gold],     priceFn: i => PRICES_GOLD[i], fx: 1 },
-  ]
+  for (let di = 0; di < ALL_DATES.length; di++) {
+    const date = ALL_DATES[di]
+    const rows = []
 
-  // Batch inserts in chunks of 50 dates to avoid overwhelming the connection
-  const CHUNK = 50
-  for (let chunk = 0; chunk < DATES.length; chunk += CHUNK) {
-    const slice = DATES.slice(chunk, chunk + CHUNK)
-    for (let j = 0; j < slice.length; j++) {
-      const i = chunk + j
-      const date = slice[j]
-      for (const h of snapHoldings) {
-        const price = h.priceFn(i)
-        const valueInBase = h.qty * price * h.fx
-        await sql`
-          INSERT INTO "snapshotItems"
-            ("snapshotDate", "assetId", "accountId", quantity, price, "fxRate", "valueInBase")
-          VALUES (${date}, ${h.assetId}, ${h.accountId},
-                  ${h.qty}, ${price}, ${h.fx}, ${valueInBase})
-          ON CONFLICT ("snapshotDate", "assetId", "accountId")
-          DO UPDATE SET quantity = EXCLUDED.quantity, price = EXCLUDED.price,
-                        "fxRate" = EXCLUDED."fxRate", "valueInBase" = EXCLUDED."valueInBase"`
-      }
+    for (const assetId of allAssets) {
+      const qty = qtyOn(assetId, date)
+      if (qty === 0) continue
+      const price = priceOn(assetId, date)
+      if (price === 0) continue
+      const fx    = fxOn(assetId, date)
+      const value = qty * price * fx
+      rows.push({ date, assetId, accountId: ACCT[assetId], qty, price, fx, value })
     }
-    console.log(`   Snapshots: ${Math.min(chunk + CHUNK, DATES.length)}/${DATES.length}`)
+
+    for (const r of rows) {
+      await sql`
+        INSERT INTO "snapshotItems"
+          ("snapshotDate", "assetId", "accountId", quantity, price, "fxRate", "valueInBase")
+        VALUES (${r.date}, ${r.assetId}, ${r.accountId}, ${r.qty}, ${r.price}, ${r.fx}, ${r.value})
+        ON CONFLICT ("snapshotDate", "assetId", "accountId")
+        DO UPDATE SET quantity = EXCLUDED.quantity, price = EXCLUDED.price,
+                      "fxRate" = EXCLUDED."fxRate", "valueInBase" = EXCLUDED."valueInBase"`
+    }
+    snapshotCount += rows.length
+
+    if (di % 30 === 0 || di === ALL_DATES.length - 1) {
+      process.stdout.write(`   ${date}  (${di + 1}/${ALL_DATES.length})\n`)
+    }
   }
 
-  // ── Summary ────────────────────────────────────────────────────────────────
-  const lastIdx = N - 1
-  const totalAssets = snapHoldings
-    .filter(h => h.assetId !== ASS.mortgage)
-    .reduce((s, h) => s + h.qty * h.priceFn(lastIdx) * h.fx, 0)
-  const totalLiab = HOLD_QTY[ASS.mortgage]
+  // ── Summary ─────────────────────────────────────────────────────────────────
+  const lastDate = ALL_DATES.at(-1)
+  const totalAssets = allAssets
+    .filter(id => id !== ASS.mortgage)
+    .reduce((s, id) => {
+      const qty = qtyOn(id, lastDate)
+      const price = priceOn(id, lastDate)
+      const fx = fxOn(id, lastDate)
+      return s + qty * price * fx
+    }, 0)
+  const totalLiab = qtyOn(ASS.mortgage, lastDate)
 
   console.log('\n✅ Seed complete!')
-  console.log(`   Date range:      ${DATES[0]} → ${DATES[lastIdx]}`)
-  console.log(`   Total assets:    ${Math.round(totalAssets).toLocaleString()} TWD`)
-  console.log(`   Liabilities:     ${totalLiab.toLocaleString()} TWD`)
-  console.log(`   Net worth:       ${Math.round(totalAssets - totalLiab).toLocaleString()} TWD`)
+  console.log(`   Date range:    ${ALL_DATES[0]} → ${lastDate} (${ALL_DATES.length} days)`)
+  console.log(`   Snapshot rows: ${snapshotCount.toLocaleString()}`)
+  console.log(`   Total assets:  ${Math.round(totalAssets).toLocaleString()} TWD`)
+  console.log(`   Liabilities:   ${totalLiab.toLocaleString()} TWD`)
+  console.log(`   Net worth:     ${Math.round(totalAssets - totalLiab).toLocaleString()} TWD`)
 
   await sql.end()
 }
