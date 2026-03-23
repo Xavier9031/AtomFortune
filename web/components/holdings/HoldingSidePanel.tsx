@@ -90,6 +90,9 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   const [newAccInstitution, setNewAccInstitution] = useState('')
   const [savingAccount, setSavingAccount] = useState(false)
 
+  // Asset picker expand state
+  const [expandNewAsset, setExpandNewAsset] = useState(false)
+
   // Asset creation state
   const [pendingAssetKind, setPendingAssetKind] = useState<AssetKindItem | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null)
@@ -206,6 +209,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     setSelectedAccount(''); setSelectedAsset('')
     setQuantity(''); setNote(''); setLiquidCurrency('TWD')
     setSelectedTicker(null)
+    setExpandNewAsset(false)
     onClose()
   }
 
@@ -494,76 +498,81 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
 
         {/* ── ASSET PICKER ── */}
         {currentView === 'assetPicker' && (
-          <div className="p-4 space-y-2">
-            {(assets ?? []).length === 0 && (
-              <p className="text-sm text-center text-[var(--color-muted)] py-8">
-                尚無資產，點下方建立第一個資產
-              </p>
-            )}
-            {(assets ?? []).map(a => (
-              <button key={a.id} onClick={() => { setSelectedAsset(a.id); popView() }}
-                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-sm
-                  transition-colors
-                  ${selectedAsset === a.id
-                    ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10 font-medium'
-                    : 'border-[var(--color-border)] bg-[var(--color-bg)] hover:border-[var(--color-accent)]'}`}>
-                <span>{a.name}</span>
-                <div className="flex items-center gap-2">
-                  {a.symbol && (
-                    <span className="px-2 py-0.5 bg-[var(--color-text)] text-[var(--color-surface)]
-                      rounded-full text-xs font-bold">
-                      {a.symbol}
-                    </span>
-                  )}
-                  <span className="text-[var(--color-muted)] text-xs">{a.currencyCode}</span>
-                  {selectedAsset === a.id && (
-                    <span className="text-[var(--color-accent)] text-xs">✓</span>
-                  )}
-                </div>
-              </button>
-            ))}
-            <button onClick={() => pushView('assetKindPicker')}
-              className="w-full flex items-center justify-center gap-2 px-4 py-3.5 mt-2 rounded-xl
-                border border-dashed border-[var(--color-border)] text-[var(--color-accent)] text-sm
-                hover:border-[var(--color-accent)] transition-colors">
-              ＋ 新增資產
-            </button>
-          </div>
-        )}
-
-        {/* ── ASSET KIND PICKER (Percento style) ── */}
-        {currentView === 'assetKindPicker' && (
           <div>
-            {ASSET_GROUPS.map(group => (
-              <div key={group.label}>
-                <div className={`px-4 py-3 ${group.colorClass} text-white font-semibold text-sm`}>
-                  {group.label}
-                </div>
-                {group.items.map((item, idx) => (
-                  <button key={`${item.subKind}-${idx}`}
-                    onClick={() => {
-                      setPendingAssetKind(item)
-                      setSelectedTicker(null)
-                      setNewAssetName(item.label)
-                      setNewAssetSymbol(''); setNewAssetCurrency('TWD')
-                      if (item.useTicker) {
-                        pushView('assetTickerSearch')
-                      } else {
-                        pushView('assetForm')
-                      }
-                    }}
-                    className="w-full flex items-center gap-4 px-4 py-4 bg-[var(--color-surface)]
-                      hover:bg-[var(--color-bg)] border-b border-[var(--color-border)] transition-colors">
-                    <span className="text-xl w-8 text-center">{item.icon}</span>
-                    <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
-                    {item.useTicker && (
-                      <span className="text-xs text-[var(--color-muted)] mr-1">搜尋</span>
-                    )}
-                    <span className="text-[var(--color-muted)]">›</span>
-                  </button>
+            {/* ＋ 新增資產 — inline expand */}
+            <button onClick={() => setExpandNewAsset(p => !p)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3.5
+                border-b border-[var(--color-border)] text-[var(--color-accent)] text-sm
+                hover:bg-[var(--color-bg)] transition-colors font-medium">
+              {expandNewAsset ? '－ 收起' : '＋ 新增資產'}
+            </button>
+
+            {expandNewAsset && (
+              <div className="border-b border-[var(--color-border)]">
+                {ASSET_GROUPS.map(group => (
+                  <div key={group.label}>
+                    <div className={`px-4 py-2 ${group.colorClass} text-white font-semibold text-xs`}>
+                      {group.label}
+                    </div>
+                    {group.items.map((item, idx) => (
+                      <button key={`${item.subKind}-${idx}`}
+                        onClick={() => {
+                          setExpandNewAsset(false)
+                          setPendingAssetKind(item)
+                          setSelectedTicker(null)
+                          setNewAssetName(item.label)
+                          setNewAssetSymbol(''); setNewAssetCurrency('TWD'); setNewAssetUnit('公克')
+                          if (item.useTicker) {
+                            pushView('assetTickerSearch')
+                          } else {
+                            pushView('assetForm')
+                          }
+                        }}
+                        className="w-full flex items-center gap-4 px-4 py-3.5 bg-[var(--color-surface)]
+                          hover:bg-[var(--color-bg)] border-b border-[var(--color-border)] transition-colors">
+                        <span className="text-lg w-7 text-center">{item.icon}</span>
+                        <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                        {item.useTicker && (
+                          <span className="text-xs text-[var(--color-muted)] mr-1">搜尋</span>
+                        )}
+                        <span className="text-[var(--color-muted)]">›</span>
+                      </button>
+                    ))}
+                  </div>
                 ))}
               </div>
-            ))}
+            )}
+
+            {/* Existing assets */}
+            <div className="p-4 space-y-2">
+              {(assets ?? []).length === 0 && !expandNewAsset && (
+                <p className="text-sm text-center text-[var(--color-muted)] py-8">
+                  尚無資產，點上方「＋ 新增資產」建立
+                </p>
+              )}
+              {(assets ?? []).map(a => (
+                <button key={a.id} onClick={() => { setSelectedAsset(a.id); popView() }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border text-sm
+                    transition-colors
+                    ${selectedAsset === a.id
+                      ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/10 font-medium'
+                      : 'border-[var(--color-border)] bg-[var(--color-bg)] hover:border-[var(--color-accent)]'}`}>
+                  <span>{a.name}</span>
+                  <div className="flex items-center gap-2">
+                    {a.symbol && (
+                      <span className="px-2 py-0.5 bg-[var(--color-text)] text-[var(--color-surface)]
+                        rounded-full text-xs font-bold">
+                        {a.symbol}
+                      </span>
+                    )}
+                    <span className="text-[var(--color-muted)] text-xs">{a.currencyCode}</span>
+                    {selectedAsset === a.id && (
+                      <span className="text-[var(--color-accent)] text-xs">✓</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
