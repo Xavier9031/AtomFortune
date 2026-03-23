@@ -182,6 +182,19 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ balance: bal, currencyCode: liquidCurrency }),
       })
+      const delta = bal - Number(holding!.quantity)
+      if (delta !== 0) {
+        await fetch(`${BASE}/transactions`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            assetId: holding!.assetId, accountId: holding!.accountId,
+            txnType: delta > 0 ? 'buy' : 'sell',
+            quantity: Math.abs(delta),
+            txnDate: new Date().toISOString().slice(0, 10),
+            note: note.trim() || undefined,
+          }),
+        })
+      }
     } else {
       const assetId = selectedAsset || holding!.assetId
       const accountId = selectedAccount || holding!.accountId
