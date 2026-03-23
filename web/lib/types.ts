@@ -57,6 +57,14 @@ export interface Holding {
   accountName: string; accountType: AccountType; institution?: string | null
   latestValueInBase: number | null; updatedAt: string
 }
+export interface Ticker {
+  symbol: string
+  name: string
+  type: 'stock' | 'etf'
+  exchange: string | null
+  country: string | null
+}
+
 export interface Transaction {
   id: string; assetId: string; accountId: string
   txnType: TxnType; quantity: number; txnDate: string; note?: string

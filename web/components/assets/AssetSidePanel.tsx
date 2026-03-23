@@ -1,11 +1,19 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { BASE } from '@/lib/api'
-import type { Asset, AssetClass, Category, PricingMode, SubKind } from '@/lib/types'
+import type { Asset, AssetClass, Category, PricingMode, SubKind, Ticker } from '@/lib/types'
+import { TickerSearch } from './TickerSearch'
 
-type View = 'kindPicker' | 'form'
+type View = 'kindPicker' | 'tickerSearch' | 'form'
 
-interface AssetKindItem { subKind: SubKind; label: string; icon: string; assetClass: AssetClass; category: Category }
+interface AssetKindItem {
+  subKind: SubKind
+  label: string
+  icon: string
+  assetClass: AssetClass
+  category: Category
+  useTicker?: boolean  // true → goes to tickerSearch view
+}
 interface AssetGroup { label: string; colorClass: string; items: AssetKindItem[] }
 
 const ASSET_GROUPS: AssetGroup[] = [
@@ -16,8 +24,7 @@ const ASSET_GROUPS: AssetGroup[] = [
     { subKind: 'stablecoin', label: '穩定幣', icon: '💲', assetClass: 'asset', category: 'liquid' },
   ]},
   { label: '投資', colorClass: 'bg-indigo-500', items: [
-    { subKind: 'stock', label: '股票', icon: '📊', assetClass: 'asset', category: 'investment' },
-    { subKind: 'etf', label: 'ETF', icon: '📈', assetClass: 'asset', category: 'investment' },
+    { subKind: 'stock', label: '股票/ETF', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
     { subKind: 'fund', label: '基金', icon: '💰', assetClass: 'asset', category: 'investment' },
     { subKind: 'crypto', label: '加密貨幣', icon: '₿', assetClass: 'asset', category: 'investment' },
     { subKind: 'precious_metal', label: '貴金屬', icon: '🥇', assetClass: 'asset', category: 'investment' },
@@ -56,6 +63,7 @@ interface Props { open: boolean; asset?: Asset; onClose: () => void }
 export function AssetSidePanel({ open, asset, onClose }: Props) {
   const [view, setView] = useState<View>('kindPicker')
   const [pendingKind, setPendingKind] = useState<AssetKindItem | null>(null)
+  const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null)
   const [form, setForm] = useState({ name: '', symbol: '', currencyCode: 'TWD' })
   const [saving, setSaving] = useState(false)
 
@@ -67,9 +75,41 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
     } else {
       setView('kindPicker')
       setPendingKind(null)
+      setSelectedTicker(null)
       setForm({ name: '', symbol: '', currencyCode: 'TWD' })
     }
   }, [open, asset])
+
+  function handleKindSelect(item: AssetKindItem) {
+    setPendingKind(item)
+    if (item.useTicker) {
+      setSelectedTicker(null)
+      setView('tickerSearch')
+    } else {
+      setForm(p => ({ ...p, name: item.label }))
+      setView('form')
+    }
+  }
+
+  function handleTickerSelect(t: Ticker) {
+    setSelectedTicker(t)
+    // update pendingKind subKind to the actual type from ticker
+    setPendingKind(prev => prev ? { ...prev, subKind: t.type as SubKind } : prev)
+    setForm({
+      name: t.name,
+      symbol: t.symbol,
+      currencyCode: t.country === 'US' ? 'USD' : 'TWD',
+    })
+    setView('form')
+  }
+
+  function goBack() {
+    if (view === 'tickerSearch') { setView('kindPicker'); return }
+    if (view === 'form') {
+      if (selectedTicker) { setView('tickerSearch'); return }
+      setView('kindPicker')
+    }
+  }
 
   async function handleSave() {
     setSaving(true)
@@ -84,7 +124,8 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: form.name.trim(),
-            assetClass: pendingKind.assetClass, category: pendingKind.category,
+            assetClass: pendingKind.assetClass,
+            category: pendingKind.category,
             subKind: pendingKind.subKind,
             currencyCode: form.currencyCode.trim().toUpperCase() || 'TWD',
             pricingMode: DEFAULT_PRICING[pendingKind.subKind] ?? 'manual',
@@ -103,10 +144,15 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
     else onClose()
   }
 
-  const canGoBack = !asset && view === 'form'
-  const isMarket = asset ? asset.pricingMode === 'market' : (pendingKind ? DEFAULT_PRICING[pendingKind.subKind] === 'market' : false)
+  const canGoBack = !asset && (view === 'tickerSearch' || view === 'form')
+  const isMarket = asset
+    ? asset.pricingMode === 'market'
+    : pendingKind ? DEFAULT_PRICING[pendingKind.subKind] === 'market' : false
+
   const title = asset ? '編輯資產'
     : view === 'kindPicker' ? '選擇資產類型'
+    : view === 'tickerSearch' ? '搜尋股票/ETF'
+    : selectedTicker ? selectedTicker.name
     : (pendingKind?.label ?? '新增資產')
 
   return (
@@ -115,7 +161,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
       ${open ? 'translate-x-0' : 'translate-x-full'}`}>
 
       <div className="flex items-center h-14 px-4 border-b border-[var(--color-border)] shrink-0">
-        <button onClick={canGoBack ? () => setView('kindPicker') : onClose}
+        <button onClick={canGoBack ? goBack : onClose}
           className="w-8 h-8 flex items-center justify-center rounded-full
             text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)]">
           {canGoBack ? '‹' : '✕'}
@@ -125,6 +171,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {/* ─── Kind picker ─── */}
         {view === 'kindPicker' && (
           <div>
             {ASSET_GROUPS.map(group => (
@@ -133,12 +180,14 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                   {group.label}
                 </div>
                 {group.items.map((item, idx) => (
-                  <button key={`${item.subKind}-${idx}`}
-                    onClick={() => { setPendingKind(item); setForm(p => ({ ...p, name: item.label })); setView('form') }}
+                  <button key={`${item.subKind}-${idx}`} onClick={() => handleKindSelect(item)}
                     className="w-full flex items-center gap-4 px-4 py-4 bg-[var(--color-surface)]
                       hover:bg-[var(--color-bg)] border-b border-[var(--color-border)] transition-colors">
                     <span className="text-xl w-8 text-center">{item.icon}</span>
                     <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                    {item.useTicker && (
+                      <span className="text-xs text-[var(--color-muted)] mr-1">搜尋</span>
+                    )}
                     <span className="text-[var(--color-muted)]">›</span>
                   </button>
                 ))}
@@ -147,36 +196,66 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
           </div>
         )}
 
+        {/* ─── Ticker search ─── */}
+        {view === 'tickerSearch' && (
+          <TickerSearch onSelect={handleTickerSelect} onBack={goBack} />
+        )}
+
+        {/* ─── Form ─── */}
         {view === 'form' && (
           <div className="p-4 space-y-4">
-            {pendingKind && !asset && (
+            {/* Selected ticker badge */}
+            {selectedTicker && !asset && (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
+                <span className="text-2xl">{pendingKind?.icon}</span>
+                <div>
+                  <div className="text-xs text-[var(--color-muted)]">{selectedTicker.symbol} · {selectedTicker.exchange}</div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium
+                    ${selectedTicker.type === 'etf' ? 'bg-indigo-100 text-indigo-700' : 'bg-green-100 text-green-700'}`}>
+                    {selectedTicker.type === 'etf' ? 'ETF' : '股票'}
+                  </span>
+                </div>
+              </div>
+            )}
+            {/* Non-ticker kind badge */}
+            {pendingKind && !asset && !selectedTicker && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
                 <span className="text-2xl">{pendingKind.icon}</span>
                 <span className="font-medium text-sm">{pendingKind.label}</span>
               </div>
             )}
+
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+              {/* Name */}
               <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
                 <span className="text-sm text-[var(--color-muted)]">名稱</span>
                 <input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                  autoFocus placeholder="例：台積電"
+                  autoFocus={!selectedTicker} placeholder="例：台積電"
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
+              {/* Symbol — editable only if not from ticker search */}
               {isMarket && (
                 <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
                   <span className="text-sm text-[var(--color-muted)]">代號</span>
-                  <input value={form.symbol} onChange={e => setForm(p => ({ ...p, symbol: e.target.value }))}
-                    placeholder="例：2330.TW"
-                    className="text-right bg-transparent text-sm outline-none w-full" />
+                  {selectedTicker
+                    ? <span className="text-right text-sm text-[var(--color-muted)]">{form.symbol}</span>
+                    : <input value={form.symbol} onChange={e => setForm(p => ({ ...p, symbol: e.target.value }))}
+                        placeholder="例：2330.TW"
+                        className="text-right bg-transparent text-sm outline-none w-full" />
+                  }
                 </div>
               )}
+              {/* Currency */}
               {!asset ? (
                 <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
                   <span className="text-sm text-[var(--color-muted)]">幣別</span>
-                  <input value={form.currencyCode}
-                    onChange={e => setForm(p => ({ ...p, currencyCode: e.target.value.toUpperCase() }))}
-                    placeholder="TWD"
-                    className="text-right bg-transparent text-sm outline-none w-full" />
+                  {selectedTicker
+                    ? <span className="text-right text-sm text-[var(--color-muted)]">{form.currencyCode}</span>
+                    : <input value={form.currencyCode}
+                        onChange={e => setForm(p => ({ ...p, currencyCode: e.target.value.toUpperCase() }))}
+                        placeholder="TWD"
+                        className="text-right bg-transparent text-sm outline-none w-full" />
+                  }
                 </div>
               ) : (
                 <>
@@ -193,6 +272,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                 </>
               )}
             </div>
+
             <button onClick={handleSave} disabled={!form.name.trim() || saving}
               className="w-full py-3.5 bg-[var(--color-accent)] text-white rounded-xl font-medium disabled:opacity-40">
               {saving ? '儲存中…' : asset ? '儲存' : '建立資產'}

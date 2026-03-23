@@ -1,5 +1,14 @@
 import { pgTable, uuid, text, numeric, date, timestamp, primaryKey } from 'drizzle-orm/pg-core'
 
+export const tickers = pgTable('tickers', {
+  symbol: text('symbol').primaryKey(),
+  name: text('name').notNull(),
+  type: text('type').notNull(),      // 'stock' | 'etf'
+  exchange: text('exchange'),        // 'TWSE' | 'TPEX' | 'NASDAQ' | 'NYSE' ...
+  country: text('country'),          // 'TW' | 'US'
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+})
+
 export const assets = pgTable('assets', {
   id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull(),

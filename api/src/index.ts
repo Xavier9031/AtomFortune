@@ -14,6 +14,7 @@ import { db } from './db/client'
 import { dailySnapshotJob, refreshFxRates } from './jobs/snapshot.job'
 import { snapshotsRouter } from './modules/snapshots/snapshots.controller'
 import { dashboardRouter } from './modules/dashboard/dashboard.controller'
+import { tickersRouter, tickersService } from './modules/tickers/tickers.controller'
 import path from 'path'
 
 const app = new Hono()
@@ -30,6 +31,7 @@ app.route('/api/v1/prices', pricesController)
 app.route('/api/v1/fx-rates', fxRatesController)
 app.route('/api/v1/snapshots', snapshotsRouter)
 app.route('/api/v1/dashboard', dashboardRouter)
+app.route('/api/v1/tickers', tickersRouter)
 
 // Manual trigger endpoint for dev/debug
 app.post('/snapshots/trigger', async (c) => {
@@ -57,6 +59,9 @@ if (process.env.NODE_ENV !== 'test') {
       } catch (err) {
         console.warn('FX rate refresh failed (continuing without rates):', err)
       }
+      tickersService.seedTaiwanStocks().catch(err =>
+        console.warn('TW ticker seed failed:', err)
+      )
     })
     .catch(err => console.error('Migration failed:', err))
 

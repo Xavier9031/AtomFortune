@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react'
 import useSWR from 'swr'
 import { BASE, fetcher } from '@/lib/api'
-import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind } from '@/lib/types'
+import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker } from '@/lib/types'
+import { TickerSearch } from '@/components/assets/TickerSearch'
 
-type View = 'main' | 'acctPicker' | 'acctTypePicker' | 'acctForm' | 'assetPicker' | 'assetKindPicker' | 'assetForm'
+type View = 'main' | 'acctPicker' | 'acctTypePicker' | 'acctForm' | 'assetPicker' | 'assetKindPicker' | 'assetTickerSearch' | 'assetForm'
 type Mode = 'add' | 'edit'
 interface Props { mode: Mode; open: boolean; onClose: () => void; holding?: Holding }
 
@@ -28,7 +29,7 @@ const ACC_GROUPS: AccGroup[] = [
   ]},
 ]
 
-interface AssetKindItem { subKind: SubKind; label: string; icon: string; assetClass: AssetClass; category: Category }
+interface AssetKindItem { subKind: SubKind; label: string; icon: string; assetClass: AssetClass; category: Category; useTicker?: boolean }
 interface AssetGroup { label: string; colorClass: string; items: AssetKindItem[] }
 const ASSET_GROUPS: AssetGroup[] = [
   { label: '流動資金', colorClass: 'bg-green-500', items: [
@@ -38,8 +39,7 @@ const ASSET_GROUPS: AssetGroup[] = [
     { subKind: 'stablecoin', label: '穩定幣', icon: '💲', assetClass: 'asset', category: 'liquid' },
   ]},
   { label: '投資', colorClass: 'bg-indigo-500', items: [
-    { subKind: 'stock', label: '股票', icon: '📊', assetClass: 'asset', category: 'investment' },
-    { subKind: 'etf', label: 'ETF', icon: '📈', assetClass: 'asset', category: 'investment' },
+    { subKind: 'stock', label: '股票/ETF', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
     { subKind: 'fund', label: '基金', icon: '💰', assetClass: 'asset', category: 'investment' },
     { subKind: 'crypto', label: '加密貨幣', icon: '₿', assetClass: 'asset', category: 'investment' },
     { subKind: 'precious_metal', label: '貴金屬', icon: '🥇', assetClass: 'asset', category: 'investment' },
@@ -92,6 +92,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
 
   // Asset creation state
   const [pendingAssetKind, setPendingAssetKind] = useState<AssetKindItem | null>(null)
+  const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null)
   const [newAssetName, setNewAssetName] = useState('')
   const [newAssetSymbol, setNewAssetSymbol] = useState('')
   const [newAssetCurrency, setNewAssetCurrency] = useState('TWD')
@@ -130,6 +131,15 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     } finally { setSavingAccount(false) }
   }
 
+  function handleTickerSelect(t: Ticker) {
+    setSelectedTicker(t)
+    setPendingAssetKind(prev => prev ? { ...prev, subKind: t.type as SubKind } : prev)
+    setNewAssetName(t.name)
+    setNewAssetSymbol(t.symbol)
+    setNewAssetCurrency(t.country === 'US' ? 'USD' : 'TWD')
+    pushView('assetForm')
+  }
+
   async function handleCreateAsset() {
     if (!newAssetName.trim() || !pendingAssetKind) return
     setSavingAsset(true)
@@ -149,7 +159,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
       const created: Asset = await res.json()
       await mutateAssets()
       setSelectedAsset(created.id)
-      setNewAssetName(''); setNewAssetSymbol('')
+      setNewAssetName(''); setNewAssetSymbol(''); setSelectedTicker(null)
       resetViews()
     } finally { setSavingAsset(false) }
   }
@@ -193,6 +203,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     resetViews()
     setSelectedAccount(''); setSelectedAsset('')
     setQuantity(''); setNote(''); setLiquidCurrency('TWD')
+    setSelectedTicker(null)
     onClose()
   }
 
@@ -213,7 +224,8 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     acctForm: pendingAccType?.label ?? '帳戶資訊',
     assetPicker: '選擇資產',
     assetKindPicker: '新增資產',
-    assetForm: pendingAssetKind?.label ?? '資產資訊',
+    assetTickerSearch: '搜尋股票/ETF',
+    assetForm: selectedTicker ? selectedTicker.name : (pendingAssetKind?.label ?? '資產資訊'),
   }
 
   return (
@@ -529,14 +541,22 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   <button key={`${item.subKind}-${idx}`}
                     onClick={() => {
                       setPendingAssetKind(item)
+                      setSelectedTicker(null)
                       setNewAssetName(item.label)
                       setNewAssetSymbol(''); setNewAssetCurrency('TWD')
-                      pushView('assetForm')
+                      if (item.useTicker) {
+                        pushView('assetTickerSearch')
+                      } else {
+                        pushView('assetForm')
+                      }
                     }}
                     className="w-full flex items-center gap-4 px-4 py-4 bg-[var(--color-surface)]
                       hover:bg-[var(--color-bg)] border-b border-[var(--color-border)] transition-colors">
                     <span className="text-xl w-8 text-center">{item.icon}</span>
                     <span className="text-sm font-medium flex-1 text-left">{item.label}</span>
+                    {item.useTicker && (
+                      <span className="text-xs text-[var(--color-muted)] mr-1">搜尋</span>
+                    )}
                     <span className="text-[var(--color-muted)]">›</span>
                   </button>
                 ))}
@@ -545,34 +565,58 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
           </div>
         )}
 
+        {/* ── ASSET TICKER SEARCH ── */}
+        {currentView === 'assetTickerSearch' && (
+          <TickerSearch onSelect={handleTickerSelect} onBack={popView} />
+        )}
+
         {/* ── ASSET FORM ── */}
         {currentView === 'assetForm' && pendingAssetKind && (
           <div className="p-4 space-y-4">
-            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
-              <span className="text-2xl">{pendingAssetKind.icon}</span>
-              <span className="font-medium text-sm">{pendingAssetKind.label}</span>
-            </div>
+            {selectedTicker ? (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
+                <span className="text-2xl">{pendingAssetKind.icon}</span>
+                <div>
+                  <div className="text-xs text-[var(--color-muted)]">{selectedTicker.symbol} · {selectedTicker.exchange}</div>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium
+                    ${selectedTicker.type === 'etf' ? 'bg-indigo-100 text-indigo-700' : 'bg-green-100 text-green-700'}`}>
+                    {selectedTicker.type === 'etf' ? 'ETF' : '股票'}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
+                <span className="text-2xl">{pendingAssetKind.icon}</span>
+                <span className="font-medium text-sm">{pendingAssetKind.label}</span>
+              </div>
+            )}
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
               <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
                 <span className="text-sm text-[var(--color-muted)]">名稱</span>
                 <input value={newAssetName} onChange={e => setNewAssetName(e.target.value)}
-                  placeholder="例：台積電" autoFocus
+                  placeholder="例：台積電" autoFocus={!selectedTicker}
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
               {DEFAULT_PRICING[pendingAssetKind.subKind] === 'market' && (
                 <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
                   <span className="text-sm text-[var(--color-muted)]">代號</span>
-                  <input value={newAssetSymbol} onChange={e => setNewAssetSymbol(e.target.value)}
-                    placeholder="例：2330.TW"
-                    className="text-right bg-transparent text-sm outline-none w-full" />
+                  {selectedTicker
+                    ? <span className="text-right text-sm text-[var(--color-muted)]">{newAssetSymbol}</span>
+                    : <input value={newAssetSymbol} onChange={e => setNewAssetSymbol(e.target.value)}
+                        placeholder="例：2330.TW"
+                        className="text-right bg-transparent text-sm outline-none w-full" />
+                  }
                 </div>
               )}
               <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5">
                 <span className="text-sm text-[var(--color-muted)]">幣別</span>
-                <input value={newAssetCurrency}
-                  onChange={e => setNewAssetCurrency(e.target.value.toUpperCase())}
-                  placeholder="TWD"
-                  className="text-right bg-transparent text-sm outline-none w-full" />
+                {selectedTicker
+                  ? <span className="text-right text-sm text-[var(--color-muted)]">{newAssetCurrency}</span>
+                  : <input value={newAssetCurrency}
+                      onChange={e => setNewAssetCurrency(e.target.value.toUpperCase())}
+                      placeholder="TWD"
+                      className="text-right bg-transparent text-sm outline-none w-full" />
+                }
               </div>
             </div>
             <button onClick={handleCreateAsset} disabled={!newAssetName.trim() || savingAsset}
