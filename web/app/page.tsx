@@ -5,6 +5,7 @@ import { useLiveDashboard } from '@/lib/api'
 import NetWorthHeader from '@/components/dashboard/NetWorthHeader'
 import AllocationBreakdown from '@/components/dashboard/AllocationBreakdown'
 import NetWorthChart from '@/components/dashboard/NetWorthChart'
+import ExperimentalWidgets from '@/components/dashboard/ExperimentalWidgets'
 import type { DashboardSummary } from '@/lib/types'
 
 export default function DashboardPage() {
@@ -82,6 +83,7 @@ export default function DashboardPage() {
           <NetWorthChart currency={currency} />
         </div>
       </div>
+      <ExperimentalWidgets currency={currency} />
     </div>
   )
 }
