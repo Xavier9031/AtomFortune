@@ -21,11 +21,15 @@ function fmt(v: number, cur: string, locale: string) {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(v) + '\u00a0' + cur
 }
 
-// Compact: 1580萬 TWD
+// Compact: 1.2M TWD
 function fmtShort(v: number, cur: string, locale: string) {
   const abs = Math.abs(v)
-  if (abs >= 1e8) return (v / 1e8).toFixed(1) + (locale === 'zh-TW' ? '億' : 'B') + '\u00a0' + cur
-  if (abs >= 1e4) return (v / 1e4).toFixed(0) + (locale === 'zh-TW' ? '萬' : 'W') + '\u00a0' + cur
+  const suffix =
+    abs >= 1e12 ? [(v / 1e12).toFixed(1), 'T'] :
+    abs >= 1e9  ? [(v / 1e9).toFixed(1),  'B'] :
+    abs >= 1e6  ? [(v / 1e6).toFixed(1),  'M'] :
+    abs >= 1e3  ? [(v / 1e3).toFixed(0),  'K'] : null
+  if (suffix) return suffix[0] + suffix[1] + '\u00a0' + cur
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(v) + '\u00a0' + cur
 }
 
@@ -42,7 +46,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
   const locale = useLocale()
   const { data: holdings } = useSWR<Holding[]>(`${BASE}/holdings`, fetcher)
   const [selectedCat, setSelectedCat] = useState<Category | null>(null)
-  const [expandedCat, setExpandedCat] = useState<string | null>(null)
+  const [hoveredCat, setHoveredCat] = useState<string | null>(null)
   const [groupBy, setGroupBy] = useState<GroupBy>('account')
 
   const netWorth = totalAssets - totalLiabilities
@@ -101,11 +105,12 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
           <div className="flex-1 space-y-1.5 min-w-0">
             {donutData.map(c => {
               const pct = gross > 0 ? (c.value / gross) * 100 : 0
-              const isExpanded = expandedCat === c.category
               const catItems = categories.find(cat => cat.category === c.category)?.items ?? []
               return (
-                <div key={c.category}>
-                  <button onClick={() => setExpandedCat(isExpanded ? null : c.category)}
+                <div key={c.category} className="relative"
+                  onMouseEnter={() => setHoveredCat(c.category)}
+                  onMouseLeave={() => setHoveredCat(null)}>
+                  <button onClick={() => setSelectedCat(c.category as Category)}
                     className="w-full text-left group">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="w-2.5 h-2.5 rounded-sm shrink-0 mt-px"
@@ -115,8 +120,6 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
                         {tAsset(`categories.${c.category}`)}
                       </span>
                       <span className="text-xs font-medium tabular-nums">{pct.toFixed(1)}%</span>
-                      <span className={`text-[var(--color-muted)] text-xs transition-transform duration-200
-                        ${isExpanded ? 'rotate-90' : ''}`}>›</span>
                     </div>
                     <div className="h-1.5 rounded-full bg-[var(--color-bg)] overflow-hidden ml-4">
                       <div className="h-full rounded-full transition-all duration-300"
@@ -124,12 +127,14 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
                     </div>
                   </button>
 
-                  {isExpanded && catItems.length > 0 && (
-                    <div className="ml-4 mt-1 space-y-0.5 pb-1">
+                  {hoveredCat === c.category && catItems.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full z-20 mt-1 rounded-xl
+                      border border-[var(--color-border)] bg-[var(--color-surface)]
+                      shadow-lg p-3 space-y-1.5">
                       {catItems.slice(0, 5).map(item => (
-                        <div key={item.assetId} className="flex justify-between items-center text-xs py-0.5">
+                        <div key={item.assetId} className="flex justify-between items-center text-xs">
                           <span className="text-[var(--color-muted)] truncate pr-2">{item.name}</span>
-                          <span className="tabular-nums shrink-0 text-[var(--color-text)]">
+                          <span className="tabular-nums shrink-0 font-medium">
                             {fmtShort(item.value, displayCurrency, locale)}
                           </span>
                         </div>
@@ -141,7 +146,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
                       )}
                       <button
                         onClick={() => setSelectedCat(c.category as Category)}
-                        className="text-xs mt-1"
+                        className="text-xs pt-1 border-t border-[var(--color-border)] w-full text-left"
                         style={{ color: c.color }}>
                         {t('viewDetail')} →
                       </button>
@@ -322,7 +327,7 @@ function HoldingRow({ h, value, groupTotal, displayCurrency, locale, label, isLa
           <div className="text-sm font-medium tabular-nums">{fmt(value, displayCurrency, locale)}</div>
           {h.currencyCode !== displayCurrency && (
             <div className="text-xs text-[var(--color-muted)]">
-              {new Intl.NumberFormat(locale, { maximumFractionDigits: 6 }).format(h.quantity)}\u00a0{getHoldingUnit(h)}
+              {`${new Intl.NumberFormat(locale, { maximumFractionDigits: 6 }).format(h.quantity)}\u00a0${getHoldingUnit(h)}`}
             </div>
           )}
         </div>

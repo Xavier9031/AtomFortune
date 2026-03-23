@@ -4,7 +4,7 @@
  *
  * Clears all user data then inserts a realistic demo portfolio:
  *   5 accounts · 11 assets · 11 holdings · 15 transactions
- *   30 days of market prices · 30 snapshot dates
+ *   365 days of market prices · 365 snapshot dates
  */
 
 import postgres from 'postgres'
@@ -38,62 +38,70 @@ const ASS = {
   mortgage:'22222222-0000-4000-0000-000000000011', // 房屋貸款
 }
 
-// ─── Price series (30 days: 2026-02-23 → 2026-03-24) ────────────────────────
+// ─── Seeded price generation ──────────────────────────────────────────────────
 
-const PRICES_0050 = [
-  166.2, 167.5, 165.8, 168.0, 170.2, 169.5, 171.0, 170.8, 172.5, 173.0,
-  171.8, 174.2, 172.0, 173.5, 175.0, 174.5, 176.0, 175.5, 177.2, 176.0,
-  175.0, 174.5, 176.5, 177.0, 175.8, 176.2, 174.8, 175.5, 176.0, 175.5,
-]
-const PRICES_TSMC = [
-  822, 835, 828, 840, 845, 838, 852, 848, 858, 855,
-  842, 860, 855, 862, 870, 858, 865, 872, 860, 868,
-  875, 862, 870, 878, 865, 872, 855, 862, 855, 850,
-]
-const PRICES_NVDA = [
-  100.5, 103.2, 101.8, 105.5, 108.0, 106.5, 110.2, 109.0, 112.5, 111.0,
-  108.5, 113.0, 111.5, 114.0, 116.5, 115.0, 118.0, 116.5, 120.0, 118.5,
-  115.0, 117.5, 119.0, 116.5, 118.0, 115.5, 117.0, 118.5, 115.5, 116.0,
-]
-const PRICES_BTC = [
-  75000, 76500, 74800, 78000, 80500, 79000, 82000, 80500, 83500, 81000,
-  78500, 84000, 82000, 85000, 87500, 85500, 88000, 86000, 90000, 87500,
-  84000, 87000, 89500, 86000, 88500, 85000, 87000, 89500, 87000, 88000,
-]
-const PRICES_ETH = [
-  2420, 2480, 2440, 2520, 2580, 2550, 2620, 2590, 2660, 2630,
-  2580, 2700, 2660, 2720, 2780, 2740, 2800, 2770, 2860, 2820,
-  2760, 2800, 2840, 2780, 2820, 2760, 2800, 2840, 2780, 2800,
-]
-
-const USD_TWD = 32.1   // 1 USD = 32.1 TWD
-const JPY_TWD = 0.212  // 1 JPY = 0.212 TWD
-
-// Snapshot holding quantities (constant across all dates for simplicity)
-const HOLD_QTY = {
-  [ASS.twd]:      620000,      // TWD cash
-  [ASS.usd]:       15000,      // USD cash
-  [ASS.jpy]:      450000,      // JPY cash
-  [ASS.cash]:      12000,      // TWD physical cash
-  [ASS.e0050]:      3000,      // shares
-  [ASS.tsmc]:        500,      // shares
-  [ASS.nvda]:         20,      // shares
-  [ASS.btc]:        0.15,      // BTC
-  [ASS.eth]:         5.0,      // ETH
-  [ASS.realty]:  15800000,     // TWD property value
-  [ASS.mortgage]: 6500000,     // TWD remaining loan
+// Linear Congruential Generator for deterministic "randomness"
+function makeLCG(seed) {
+  let s = seed >>> 0
+  return function () {
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0
+    return s / 0x100000000
+  }
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+/**
+ * Generate `n` daily prices using geometric Brownian motion.
+ * Prices drift from `start` toward `end` over the period, with daily
+ * volatility `vol` (fraction, e.g. 0.015 = 1.5%).
+ */
+function genSeries(start, end, n, vol, seed) {
+  const rand = makeLCG(seed)
+  const logDrift = Math.log(end / start) / n
+  const prices = [start]
+  for (let i = 1; i < n; i++) {
+    const noise = (rand() - 0.5) * 2 * vol
+    prices.push(+(prices[i - 1] * Math.exp(logDrift + noise)).toFixed(2))
+  }
+  return prices
+}
+
+// ─── 365 days: 2025-03-25 → 2026-03-24 ──────────────────────────────────────
+
+const N = 365
+const START_DATE = '2025-03-25'
 
 function addDays(base, n) {
   const d = new Date(base)
   d.setDate(d.getDate() + n)
   return d.toISOString().slice(0, 10)
 }
+const DATES = Array.from({ length: N }, (_, i) => addDays(START_DATE, i))
 
-const START_DATE = '2026-02-23'
-const DATES = Array.from({ length: 30 }, (_, i) => addDays(START_DATE, i))
+// Market story: strong bull run 2025, slight correction 2026 Q1
+const PRICES_0050 = genSeries(130,  175,  N, 0.013, 1001)  // TWD ETF
+const PRICES_TSMC = genSeries(695,  850,  N, 0.015, 1002)  // TWD stock
+const PRICES_NVDA = genSeries(65,   116,  N, 0.022, 1003)  // USD — AI boom
+const PRICES_BTC  = genSeries(55000,88000,N, 0.028, 1004)  // USD — crypto bull
+const PRICES_ETH  = genSeries(1800, 2800, N, 0.025, 1005)  // USD
+
+const USD_TWD = 32.1
+const JPY_TWD = 0.212
+
+// ─── Holdings (current quantities) ───────────────────────────────────────────
+
+const HOLD_QTY = {
+  [ASS.twd]:      620000,
+  [ASS.usd]:       15000,
+  [ASS.jpy]:      450000,
+  [ASS.cash]:      12000,
+  [ASS.e0050]:      3000,
+  [ASS.tsmc]:        500,
+  [ASS.nvda]:         20,
+  [ASS.btc]:        0.15,
+  [ASS.eth]:         5.0,
+  [ASS.realty]:  15800000,
+  [ASS.mortgage]: 6500000,
+}
 
 function txId(n) {
   return `33333333-0000-4000-0000-${String(n).padStart(12, '0')}`
@@ -107,6 +115,7 @@ async function main() {
   await sql`DELETE FROM "prices"`
   await sql`DELETE FROM "transactions"`
   await sql`DELETE FROM "holdings"`
+  await sql`DELETE FROM "fxRates"`
   await sql`DELETE FROM "assets"`
   await sql`DELETE FROM "accounts"`
   console.log('   Done.')
@@ -114,11 +123,11 @@ async function main() {
   // ── Accounts ───────────────────────────────────────────────────────────────
   console.log('🏦 Inserting accounts…')
   await sql`INSERT INTO "accounts" (id, name, institution, "accountType", note) VALUES
-    (${ACC.bank1},  '台銀活存',   '台灣銀行',   'bank',            '主要往來帳戶'),
-    (${ACC.bank2},  '國泰活存',   '國泰世華銀行','bank',            '儲蓄帳戶'),
-    (${ACC.broker}, '永豐金證券', '永豐金證券',  'broker',          '台股交割帳戶'),
-    (${ACC.crypto}, 'Binance',    'Binance',     'crypto_exchange', '加密貨幣交易所'),
-    (${ACC.misc},   '個人帳戶',   null,          'other',           '現金與不動產')`
+    (${ACC.bank1},  '台銀活存',   '台灣銀行',    'bank',            '主要往來帳戶'),
+    (${ACC.bank2},  '國泰活存',   '國泰世華銀行', 'bank',            '儲蓄帳戶'),
+    (${ACC.broker}, '永豐金證券', '永豐金證券',   'broker',          '台股交割帳戶'),
+    (${ACC.crypto}, 'Binance',    'Binance',      'crypto_exchange', '加密貨幣交易所'),
+    (${ACC.misc},   '個人帳戶',   null,           'other',           '現金與不動產')`
 
   // ── Assets ─────────────────────────────────────────────────────────────────
   console.log('📦 Inserting assets…')
@@ -155,26 +164,21 @@ async function main() {
   // ── Transactions ───────────────────────────────────────────────────────────
   console.log('🧾 Inserting transactions…')
   const txns = [
-    // 元大台灣50 accumulation
-    [txId(1),  ASS.e0050, ACC.broker, 'buy',          500,  '2025-06-10', '定期定額 #1'],
-    [txId(2),  ASS.e0050, ACC.broker, 'buy',          500,  '2025-09-12', '定期定額 #2'],
-    [txId(3),  ASS.e0050, ACC.broker, 'buy',         1000,  '2025-12-05', '年終加碼'],
-    [txId(4),  ASS.e0050, ACC.broker, 'buy',         1000,  '2026-02-15', '定期定額 #3'],
-    // 台積電
-    [txId(5),  ASS.tsmc,  ACC.broker, 'buy',          200,  '2025-03-20', '初始建倉'],
-    [txId(6),  ASS.tsmc,  ACC.broker, 'buy',          200,  '2025-08-18', '逢低加碼'],
-    [txId(7),  ASS.tsmc,  ACC.broker, 'buy',          100,  '2026-01-08', '新年加碼'],
-    // NVDA
-    [txId(8),  ASS.nvda,  ACC.broker, 'buy',           10,  '2025-05-15', 'AI theme buy'],
-    [txId(9),  ASS.nvda,  ACC.broker, 'buy',           10,  '2025-11-20', 'Add position'],
-    // BTC
-    [txId(10), ASS.btc,   ACC.crypto, 'buy',          0.05, '2024-12-01', 'First purchase'],
-    [txId(11), ASS.btc,   ACC.crypto, 'buy',          0.05, '2025-04-10', 'DCA'],
-    [txId(12), ASS.btc,   ACC.crypto, 'buy',          0.05, '2025-10-22', 'DCA'],
-    // ETH
-    [txId(13), ASS.eth,   ACC.crypto, 'buy',           2.0, '2025-01-15', 'Initial ETH'],
-    [txId(14), ASS.eth,   ACC.crypto, 'buy',           2.0, '2025-07-30', 'Add ETH'],
-    [txId(15), ASS.eth,   ACC.crypto, 'buy',           1.0, '2026-02-01', 'ETH dip buy'],
+    [txId(1),  ASS.e0050, ACC.broker, 'buy',   500,  '2025-06-10', '定期定額 #1'],
+    [txId(2),  ASS.e0050, ACC.broker, 'buy',   500,  '2025-09-12', '定期定額 #2'],
+    [txId(3),  ASS.e0050, ACC.broker, 'buy',  1000,  '2025-12-05', '年終加碼'],
+    [txId(4),  ASS.e0050, ACC.broker, 'buy',  1000,  '2026-02-15', '定期定額 #3'],
+    [txId(5),  ASS.tsmc,  ACC.broker, 'buy',   200,  '2025-03-20', '初始建倉'],
+    [txId(6),  ASS.tsmc,  ACC.broker, 'buy',   200,  '2025-08-18', '逢低加碼'],
+    [txId(7),  ASS.tsmc,  ACC.broker, 'buy',   100,  '2026-01-08', '新年加碼'],
+    [txId(8),  ASS.nvda,  ACC.broker, 'buy',    10,  '2025-05-15', 'AI theme buy'],
+    [txId(9),  ASS.nvda,  ACC.broker, 'buy',    10,  '2025-11-20', 'Add position'],
+    [txId(10), ASS.btc,   ACC.crypto, 'buy',  0.05,  '2025-04-10', 'First purchase'],
+    [txId(11), ASS.btc,   ACC.crypto, 'buy',  0.05,  '2025-08-22', 'DCA'],
+    [txId(12), ASS.btc,   ACC.crypto, 'buy',  0.05,  '2025-12-01', 'DCA'],
+    [txId(13), ASS.eth,   ACC.crypto, 'buy',   2.0,  '2025-04-15', 'Initial ETH'],
+    [txId(14), ASS.eth,   ACC.crypto, 'buy',   2.0,  '2025-09-30', 'Add ETH'],
+    [txId(15), ASS.eth,   ACC.crypto, 'buy',   1.0,  '2026-02-01', 'ETH dip buy'],
   ]
   for (const [id, assetId, accountId, txnType, quantity, txnDate, note] of txns) {
     await sql`INSERT INTO "transactions" (id, "assetId", "accountId", "txnType", quantity, "txnDate", note)
@@ -182,13 +186,13 @@ async function main() {
   }
 
   // ── Market prices ──────────────────────────────────────────────────────────
-  console.log('📈 Inserting 30 days of market prices…')
+  console.log('📈 Inserting 365 days of market prices…')
   const priceData = [
-    [ASS.e0050, PRICES_0050, 'yahoo-finance2'],
-    [ASS.tsmc,  PRICES_TSMC, 'yahoo-finance2'],
-    [ASS.nvda,  PRICES_NVDA, 'yahoo-finance2'],
-    [ASS.btc,   PRICES_BTC,  'yahoo-finance2'],
-    [ASS.eth,   PRICES_ETH,  'yahoo-finance2'],
+    [ASS.e0050, PRICES_0050, 'seed'],
+    [ASS.tsmc,  PRICES_TSMC, 'seed'],
+    [ASS.nvda,  PRICES_NVDA, 'seed'],
+    [ASS.btc,   PRICES_BTC,  'seed'],
+    [ASS.eth,   PRICES_ETH,  'seed'],
   ]
   for (const [assetId, series, source] of priceData) {
     for (let i = 0; i < DATES.length; i++) {
@@ -199,7 +203,7 @@ async function main() {
     }
   }
 
-  // ── FX rates (supplement existing with 30 days) ────────────────────────────
+  // ── FX rates ───────────────────────────────────────────────────────────────
   console.log('💱 Inserting FX rates…')
   for (const date of DATES) {
     for (const [from, rate] of [['USD', USD_TWD], ['JPY', JPY_TWD]]) {
@@ -210,49 +214,55 @@ async function main() {
     }
   }
 
-  // ── Snapshot items (30 dates × 11 holdings) ────────────────────────────────
-  console.log('📸 Inserting 30 days of snapshots…')
+  // ── Snapshot items (365 dates × 11 holdings) ───────────────────────────────
+  console.log('📸 Inserting 365 days of snapshots…')
 
-  // Account → Asset → (qty, price-fn, fxRate)
   const snapHoldings = [
-    { assetId: ASS.twd,      accountId: ACC.bank1,  qty: HOLD_QTY[ASS.twd],      priceFn: () => 1,    fx: 1 },
-    { assetId: ASS.usd,      accountId: ACC.bank2,  qty: HOLD_QTY[ASS.usd],      priceFn: () => 1,    fx: USD_TWD },
-    { assetId: ASS.jpy,      accountId: ACC.bank2,  qty: HOLD_QTY[ASS.jpy],      priceFn: () => 1,    fx: JPY_TWD },
-    { assetId: ASS.cash,     accountId: ACC.misc,   qty: HOLD_QTY[ASS.cash],     priceFn: () => 1,    fx: 1 },
+    { assetId: ASS.twd,      accountId: ACC.bank1,  qty: HOLD_QTY[ASS.twd],      priceFn: () => 1,         fx: 1 },
+    { assetId: ASS.usd,      accountId: ACC.bank2,  qty: HOLD_QTY[ASS.usd],      priceFn: () => 1,         fx: USD_TWD },
+    { assetId: ASS.jpy,      accountId: ACC.bank2,  qty: HOLD_QTY[ASS.jpy],      priceFn: () => 1,         fx: JPY_TWD },
+    { assetId: ASS.cash,     accountId: ACC.misc,   qty: HOLD_QTY[ASS.cash],     priceFn: () => 1,         fx: 1 },
     { assetId: ASS.e0050,    accountId: ACC.broker, qty: HOLD_QTY[ASS.e0050],    priceFn: i => PRICES_0050[i], fx: 1 },
     { assetId: ASS.tsmc,     accountId: ACC.broker, qty: HOLD_QTY[ASS.tsmc],     priceFn: i => PRICES_TSMC[i], fx: 1 },
     { assetId: ASS.nvda,     accountId: ACC.broker, qty: HOLD_QTY[ASS.nvda],     priceFn: i => PRICES_NVDA[i], fx: USD_TWD },
     { assetId: ASS.btc,      accountId: ACC.crypto, qty: HOLD_QTY[ASS.btc],      priceFn: i => PRICES_BTC[i],  fx: USD_TWD },
     { assetId: ASS.eth,      accountId: ACC.crypto, qty: HOLD_QTY[ASS.eth],      priceFn: i => PRICES_ETH[i],  fx: USD_TWD },
-    { assetId: ASS.realty,   accountId: ACC.misc,   qty: HOLD_QTY[ASS.realty],   priceFn: () => 1,    fx: 1 },
-    { assetId: ASS.mortgage, accountId: ACC.misc,   qty: HOLD_QTY[ASS.mortgage], priceFn: () => 1,    fx: 1 },
+    { assetId: ASS.realty,   accountId: ACC.misc,   qty: HOLD_QTY[ASS.realty],   priceFn: () => 1,         fx: 1 },
+    { assetId: ASS.mortgage, accountId: ACC.misc,   qty: HOLD_QTY[ASS.mortgage], priceFn: () => 1,         fx: 1 },
   ]
 
-  for (let i = 0; i < DATES.length; i++) {
-    const date = DATES[i]
-    for (const h of snapHoldings) {
-      const price = h.priceFn(i)
-      const valueInBase = h.qty * price * h.fx
-      await sql`
-        INSERT INTO "snapshotItems"
-          ("snapshotDate", "assetId", "accountId", quantity, price, "fxRate", "valueInBase")
-        VALUES (${date}, ${h.assetId}, ${h.accountId},
-                ${h.qty}, ${price}, ${h.fx}, ${valueInBase})
-        ON CONFLICT ("snapshotDate", "assetId", "accountId")
-        DO UPDATE SET quantity = EXCLUDED.quantity, price = EXCLUDED.price,
-                      "fxRate" = EXCLUDED."fxRate", "valueInBase" = EXCLUDED."valueInBase"`
+  // Batch inserts in chunks of 50 dates to avoid overwhelming the connection
+  const CHUNK = 50
+  for (let chunk = 0; chunk < DATES.length; chunk += CHUNK) {
+    const slice = DATES.slice(chunk, chunk + CHUNK)
+    for (let j = 0; j < slice.length; j++) {
+      const i = chunk + j
+      const date = slice[j]
+      for (const h of snapHoldings) {
+        const price = h.priceFn(i)
+        const valueInBase = h.qty * price * h.fx
+        await sql`
+          INSERT INTO "snapshotItems"
+            ("snapshotDate", "assetId", "accountId", quantity, price, "fxRate", "valueInBase")
+          VALUES (${date}, ${h.assetId}, ${h.accountId},
+                  ${h.qty}, ${price}, ${h.fx}, ${valueInBase})
+          ON CONFLICT ("snapshotDate", "assetId", "accountId")
+          DO UPDATE SET quantity = EXCLUDED.quantity, price = EXCLUDED.price,
+                        "fxRate" = EXCLUDED."fxRate", "valueInBase" = EXCLUDED."valueInBase"`
+      }
     }
+    console.log(`   Snapshots: ${Math.min(chunk + CHUNK, DATES.length)}/${DATES.length}`)
   }
 
   // ── Summary ────────────────────────────────────────────────────────────────
-  const latestDate = DATES[DATES.length - 1]
+  const lastIdx = N - 1
   const totalAssets = snapHoldings
     .filter(h => h.assetId !== ASS.mortgage)
-    .reduce((s, h) => s + h.qty * h.priceFn(DATES.length - 1) * h.fx, 0)
-  const totalLiab = HOLD_QTY[ASS.mortgage] * 1 * 1
+    .reduce((s, h) => s + h.qty * h.priceFn(lastIdx) * h.fx, 0)
+  const totalLiab = HOLD_QTY[ASS.mortgage]
 
   console.log('\n✅ Seed complete!')
-  console.log(`   Latest snapshot: ${latestDate}`)
+  console.log(`   Date range:      ${DATES[0]} → ${DATES[lastIdx]}`)
   console.log(`   Total assets:    ${Math.round(totalAssets).toLocaleString()} TWD`)
   console.log(`   Liabilities:     ${totalLiab.toLocaleString()} TWD`)
   console.log(`   Net worth:       ${Math.round(totalAssets - totalLiab).toLocaleString()} TWD`)
