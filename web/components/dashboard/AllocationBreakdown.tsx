@@ -1,28 +1,32 @@
 'use client'
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import useSWR from 'swr'
 import { BASE, fetcher } from '@/lib/api'
 import type { AllocationCategory, Category, Holding } from '@/lib/types'
 import { getHoldingUnit } from '@/lib/utils'
 
-const CAT_COLORS: Record<Category, string> = {
-  liquid: '#22c55e', investment: '#6366f1', fixed: '#8b5cf6',
-  receivable: '#38bdf8', debt: '#94a3b8',
+const CAT_COLOR: Record<string, string> = {
+  liquid:     '#078080',
+  investment: '#7c3aed',
+  fixed:      '#1d4ed8',
+  receivable: '#0ea5e9',
+  debt:       '#f45d48',
 }
 
 type GroupBy = 'account' | 'asset'
 
-function fmt(v: number, cur: string) {
-  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 }).format(v) + ' ' + cur
+function fmt(v: number, cur: string, locale: string) {
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(v) + '\u00a0' + cur
 }
 
-function PctBar({ pct, color }: { pct: number; color: string }) {
-  return (
-    <div className="h-1 rounded-full bg-[var(--color-bg)] overflow-hidden mt-1">
-      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, background: color }} />
-    </div>
-  )
+// Compact: 1580萬 TWD
+function fmtShort(v: number, cur: string, locale: string) {
+  const abs = Math.abs(v)
+  if (abs >= 1e8) return (v / 1e8).toFixed(1) + (locale === 'zh-TW' ? '億' : 'B') + '\u00a0' + cur
+  if (abs >= 1e4) return (v / 1e4).toFixed(0) + (locale === 'zh-TW' ? '萬' : 'W') + '\u00a0' + cur
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(v) + '\u00a0' + cur
 }
 
 interface Props {
@@ -35,159 +39,172 @@ interface Props {
 export default function AllocationBreakdown({ categories, totalAssets, totalLiabilities, displayCurrency }: Props) {
   const t = useTranslations('dashboard')
   const tAsset = useTranslations('asset')
+  const locale = useLocale()
   const { data: holdings } = useSWR<Holding[]>(`${BASE}/holdings`, fetcher)
-  const [path, setPath] = useState<string[]>([])
+  const [selectedCat, setSelectedCat] = useState<Category | null>(null)
   const [groupBy, setGroupBy] = useState<GroupBy>('account')
 
-  // ─── Level 0: 資產 vs 負債 ───
-  if (path.length === 0) {
-    const assetCats = categories.filter(c => c.category !== 'debt')
-    const liabCats = categories.filter(c => c.category === 'debt')
-    const classes = [
-      { key: 'asset', label: t('assets'), value: totalAssets, cats: assetCats },
-      { key: 'liability', label: t('liabilities'), value: totalLiabilities, cats: liabCats },
-    ].filter(g => g.value > 0)
+  const netWorth = totalAssets - totalLiabilities
+  const gross = categories.reduce((s, c) => s + c.value, 0)
+
+  // ─── Overview (donut + legend) ───────────────────────────────────────────
+  if (!selectedCat) {
+    const donutData = categories.map(c => ({
+      ...c, color: CAT_COLOR[c.category] ?? '#888',
+    }))
 
     return (
-      <div className="space-y-3">
-        {classes.map(g => (
-          <button key={g.key} onClick={() => setPath([g.key])}
-            className="w-full text-left rounded-xl border border-[var(--color-border)] p-4
-              hover:bg-[var(--color-bg)] transition-colors group">
-            <div className="flex justify-between items-baseline mb-3">
-              <span className="font-semibold text-sm">{g.label}</span>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">{fmt(g.value, displayCurrency)}</span>
-                <span className="text-xs text-[var(--color-muted)] group-hover:text-[var(--color-text)]">›</span>
-              </div>
+      <div className="space-y-4">
+        {/* Donut + category list */}
+        <div className="flex items-center gap-5">
+
+          {/* Donut */}
+          <div className="relative shrink-0" style={{ width: 140, height: 140 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={donutData} dataKey="value"
+                  innerRadius={46} outerRadius={64}
+                  paddingAngle={2} startAngle={90} endAngle={-270}
+                  strokeWidth={0}>
+                  {donutData.map((entry, i) => (
+                    <Cell key={i} fill={entry.color}
+                      style={{ cursor: 'pointer', outline: 'none' }}
+                      onClick={() => setSelectedCat(entry.category as Category)} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  formatter={(v: any) => fmtShort(Number(v), displayCurrency, locale)}
+                  contentStyle={{
+                    background: 'var(--color-surface)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 8,
+                    fontSize: 12,
+                  }}
+                  itemStyle={{ color: 'var(--color-text)' }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+
+            {/* Center text */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span className="text-[10px] text-[var(--color-muted)] leading-none mb-0.5">
+                {t('netWorth')}
+              </span>
+              <span className="text-sm font-bold leading-tight text-center px-2">
+                {fmtShort(netWorth, displayCurrency, locale)}
+              </span>
             </div>
-            <div className="space-y-2">
-              {g.cats.map(c => {
-                const pct = g.value > 0 ? (c.value / g.value) * 100 : 0
-                return (
-                  <div key={c.category}>
-                    <div className="flex justify-between text-xs text-[var(--color-muted)]">
-                      <span style={{ color: CAT_COLORS[c.category] }}>{tAsset(`categories.${c.category}`)}</span>
-                      <span>{fmt(c.value, displayCurrency)} · {pct.toFixed(1)}%</span>
-                    </div>
-                    <PctBar pct={pct} color={CAT_COLORS[c.category]} />
+          </div>
+
+          {/* Category legend */}
+          <div className="flex-1 space-y-2 min-w-0">
+            {donutData.map(c => {
+              const pct = gross > 0 ? (c.value / gross) * 100 : 0
+              return (
+                <button key={c.category} onClick={() => setSelectedCat(c.category as Category)}
+                  className="w-full text-left group">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="w-2.5 h-2.5 rounded-sm shrink-0 mt-px"
+                      style={{ background: c.color }} />
+                    <span className="text-xs flex-1 truncate text-[var(--color-muted)]
+                      group-hover:text-[var(--color-text)] transition-colors">
+                      {tAsset(`categories.${c.category}`)}
+                    </span>
+                    <span className="text-xs font-medium tabular-nums">{pct.toFixed(1)}%</span>
                   </div>
-                )
-              })}
+                  <div className="h-1.5 rounded-full bg-[var(--color-bg)] overflow-hidden ml-4">
+                    <div className="h-full rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(pct, 100)}%`, background: c.color }} />
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Asset / Liability summary pills */}
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { label: t('assets'), value: totalAssets, muted: false },
+            { label: t('liabilities'), value: totalLiabilities, red: true },
+          ].map(({ label, value, red }) => (
+            <div key={label} className="rounded-xl border border-[var(--color-border)]
+              bg-[var(--color-bg)] px-3 py-2.5">
+              <p className="text-xs text-[var(--color-muted)] mb-0.5">{label}</p>
+              <p className={`text-sm font-semibold tabular-nums ${red ? 'text-red-400' : ''}`}>
+                {fmtShort(value, displayCurrency, locale)}
+              </p>
             </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // ─── Detail (by account / by asset) ──────────────────────────────────────
+  const catData = categories.find(c => c.category === selectedCat)
+  const catHoldings = (holdings ?? []).filter(h => h.category === selectedCat)
+
+  const assetTotalQty = new Map<string, number>()
+  for (const h of catHoldings) {
+    assetTotalQty.set(h.assetId, (assetTotalQty.get(h.assetId) ?? 0) + Number(h.quantity))
+  }
+  const liveValues = new Map<string, number>()
+  for (const h of catHoldings) {
+    const item = catData?.items.find(i => i.assetId === h.assetId)
+    const totalQty = assetTotalQty.get(h.assetId) ?? 1
+    const ratio = totalQty > 0 ? Number(h.quantity) / totalQty : 0
+    liveValues.set(h.assetId + h.accountId, item ? item.value * ratio : (h.latestValueInBase ?? 0))
+  }
+
+  const color = CAT_COLOR[selectedCat] ?? '#888'
+
+  return (
+    <div className="space-y-3">
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-2">
+        <button onClick={() => setSelectedCat(null)}
+          className="text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors">
+          {t('allocationOverview')}
+        </button>
+        <span className="text-[var(--color-muted)] text-xs">›</span>
+        <span className="text-xs font-semibold" style={{ color }}>
+          {tAsset(`categories.${selectedCat}`)}
+        </span>
+        {catData && (
+          <span className="ml-auto text-xs font-semibold tabular-nums">
+            {fmt(catData.value, displayCurrency, locale)}
+          </span>
+        )}
+      </div>
+
+      {/* Group-by toggle */}
+      <div className="flex gap-1 p-0.5 bg-[var(--color-bg)] rounded-lg w-fit">
+        {(['account', 'asset'] as GroupBy[]).map(g => (
+          <button key={g} onClick={() => setGroupBy(g)}
+            className={`px-3 py-1 text-xs rounded-md transition-colors
+              ${groupBy === g
+                ? 'bg-[var(--color-surface)] shadow-sm font-semibold'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
+            {g === 'account' ? t('byAccount') : t('byAsset')}
           </button>
         ))}
       </div>
-    )
-  }
 
-  const isAsset = path[0] === 'asset'
-  const classLabel = isAsset ? t('assets') : t('liabilities')
-  const classTotal = isAsset ? totalAssets : totalLiabilities
-
-  // ─── Level 1: 類別 ───
-  if (path.length === 1) {
-    const cats = isAsset
-      ? categories.filter(c => c.category !== 'debt')
-      : categories.filter(c => c.category === 'debt')
-
-    return (
-      <div className="space-y-3">
-        <Breadcrumb path={path} setPath={setPath} classLabel={classLabel} />
-        <div className="grid grid-cols-2 gap-3">
-          {cats.map(c => {
-            const pct = classTotal > 0 ? (c.value / classTotal) * 100 : 0
-            return (
-              <button key={c.category} onClick={() => setPath([path[0], c.category])}
-                className="text-left rounded-xl border border-[var(--color-border)] p-4
-                  hover:bg-[var(--color-bg)] transition-colors group">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold" style={{ color: CAT_COLORS[c.category] }}>
-                    {tAsset(`categories.${c.category}`)}
-                  </span>
-                  <span className="text-xs text-[var(--color-muted)] group-hover:text-[var(--color-text)]">›</span>
-                </div>
-                <div className="text-sm font-semibold mt-1.5">{fmt(c.value, displayCurrency)}</div>
-                <div className="text-xs text-[var(--color-muted)]">{pct.toFixed(1)}%</div>
-                <PctBar pct={pct} color={CAT_COLORS[c.category]} />
-              </button>
-            )
-          })}
-        </div>
-      </div>
-    )
-  }
-
-  // ─── Level 2: 明細 (by account / by asset) ───
-  if (path.length === 2) {
-    const cat = path[1] as Category
-    const catData = categories.find(c => c.category === cat)
-    const catHoldings = (holdings ?? []).filter(h => h.category === cat)
-
-    const assetTotalQty = new Map<string, number>()
-    for (const h of catHoldings) {
-      assetTotalQty.set(h.assetId, (assetTotalQty.get(h.assetId) ?? 0) + Number(h.quantity))
-    }
-    const liveValues = new Map<string, number>()
-    for (const h of catHoldings) {
-      const item = catData?.items.find(i => i.assetId === h.assetId)
-      const totalQty = assetTotalQty.get(h.assetId) ?? 1
-      const ratio = totalQty > 0 ? Number(h.quantity) / totalQty : 0
-      liveValues.set(h.assetId + h.accountId, item ? item.value * ratio : (h.latestValueInBase ?? 0))
-    }
-
-    return (
-      <div className="space-y-3">
-        <Breadcrumb path={path} setPath={setPath} classLabel={classLabel}
-          catLabel={tAsset(`categories.${cat}`)}
-          total={catData ? fmt(catData.value, displayCurrency) : undefined} />
-
-        <div className="flex gap-1 p-0.5 bg-[var(--color-bg)] rounded-lg w-fit">
-          {(['account', 'asset'] as GroupBy[]).map(g => (
-            <button key={g} onClick={() => setGroupBy(g)}
-              className={`px-3 py-1 text-xs rounded-md transition-colors
-                ${groupBy === g
-                  ? 'bg-[var(--color-surface)] shadow-sm font-semibold'
-                  : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
-              {g === 'account' ? t('byAccount') : t('byAsset')}
-            </button>
-          ))}
-        </div>
-
-        {groupBy === 'account'
-          ? <ByAccount holdings={catHoldings} liveValues={liveValues} displayCurrency={displayCurrency} />
-          : <ByAsset holdings={catHoldings} liveValues={liveValues} displayCurrency={displayCurrency} />}
-      </div>
-    )
-  }
-
-  return null
-}
-
-function Breadcrumb({ path, setPath, classLabel, catLabel, total }: {
-  path: string[]; setPath: (p: string[]) => void; classLabel: string; catLabel?: string; total?: string
-}) {
-  const t = useTranslations('dashboard')
-  return (
-    <div className="flex items-center gap-1 text-sm flex-wrap">
-      <button onClick={() => setPath([])} className="text-[var(--color-muted)] hover:text-[var(--color-text)]">{t('allocationOverview')}</button>
-      <span className="text-[var(--color-muted)]">›</span>
-      {path.length === 1
-        ? <span className="font-medium">{classLabel}</span>
-        : <>
-            <button onClick={() => setPath([path[0]])} className="text-[var(--color-muted)] hover:text-[var(--color-text)]">
-              {classLabel}
-            </button>
-            <span className="text-[var(--color-muted)]">›</span>
-            <span className="font-medium">{catLabel}</span>
-          </>}
-      {total && <span className="ml-auto text-sm font-semibold">{total}</span>}
+      {groupBy === 'account'
+        ? <ByAccount holdings={catHoldings} liveValues={liveValues}
+            displayCurrency={displayCurrency} locale={locale} />
+        : <ByAsset holdings={catHoldings} liveValues={liveValues}
+            displayCurrency={displayCurrency} locale={locale} />}
     </div>
   )
 }
 
-function ByAccount({ holdings, liveValues, displayCurrency }: { holdings: Holding[]; liveValues: Map<string, number>; displayCurrency: string }) {
-  const t = useTranslations('dashboard')
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function ByAccount({ holdings, liveValues, displayCurrency, locale }: {
+  holdings: Holding[]; liveValues: Map<string, number>; displayCurrency: string; locale: string
+}) {
   const groups = new Map<string, { name: string; institution: string | null; total: number; rows: Holding[] }>()
   for (const h of holdings) {
     if (!groups.has(h.accountId)) groups.set(h.accountId, {
@@ -208,14 +225,15 @@ function ByAccount({ holdings, liveValues, displayCurrency }: { holdings: Holdin
               <span className="font-medium text-sm">{g.name}</span>
               {g.institution && <span className="text-xs text-[var(--color-muted)] ml-2">{g.institution}</span>}
             </div>
-            <span className="text-sm font-semibold">{fmt(g.total, displayCurrency)}</span>
+            <span className="text-sm font-semibold tabular-nums">{fmt(g.total, displayCurrency, locale)}</span>
           </div>
           {g.rows.map((h, i) => (
             <HoldingRow key={h.assetId + h.accountId} h={h}
               value={liveValues.get(h.assetId + h.accountId) ?? 0}
-              accountTotal={g.total}
+              groupTotal={g.total}
               displayCurrency={displayCurrency}
-              showLabel={h.assetName}
+              locale={locale}
+              label={h.assetName}
               isLast={i === g.rows.length - 1} />
           ))}
         </div>
@@ -224,17 +242,15 @@ function ByAccount({ holdings, liveValues, displayCurrency }: { holdings: Holdin
   )
 }
 
-function ByAsset({ holdings, liveValues, displayCurrency }: { holdings: Holding[]; liveValues: Map<string, number>; displayCurrency: string }) {
+function ByAsset({ holdings, liveValues, displayCurrency, locale }: {
+  holdings: Holding[]; liveValues: Map<string, number>; displayCurrency: string; locale: string
+}) {
   if (holdings.length === 0) return <Empty />
 
-  const groups = new Map<string, {
-    representative: Holding; total: number; rows: { h: Holding; value: number }[]
-  }>()
+  const groups = new Map<string, { rep: Holding; total: number; rows: { h: Holding; value: number }[] }>()
   for (const h of holdings) {
     const val = liveValues.get(h.assetId + h.accountId) ?? 0
-    if (!groups.has(h.assetId)) {
-      groups.set(h.assetId, { representative: h, total: 0, rows: [] })
-    }
+    if (!groups.has(h.assetId)) groups.set(h.assetId, { rep: h, total: 0, rows: [] })
     const g = groups.get(h.assetId)!
     g.total += val
     g.rows.push({ h, value: val })
@@ -242,67 +258,51 @@ function ByAsset({ holdings, liveValues, displayCurrency }: { holdings: Holding[
 
   return (
     <div className="space-y-2">
-      {[...groups.values()].sort((a, b) => b.total - a.total).map(({ representative: h, total, rows }) => (
-        <div key={h.assetId} className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+      {[...groups.values()].sort((a, b) => b.total - a.total).map(({ rep, total, rows }) => (
+        <div key={rep.assetId} className="rounded-xl border border-[var(--color-border)] overflow-hidden">
           <div className="px-4 py-3 bg-[var(--color-bg)] flex justify-between items-center">
-            <span className="font-medium text-sm">{h.assetName}</span>
-            <span className="text-sm font-semibold">{fmt(total, displayCurrency)}</span>
+            <span className="font-medium text-sm">{rep.assetName}</span>
+            <span className="text-sm font-semibold tabular-nums">{fmt(total, displayCurrency, locale)}</span>
           </div>
-          {rows.map(({ h: rh, value }, i) => {
-            const pct = total > 0 ? (value / total) * 100 : 0
-            return (
-              <div key={rh.accountId}
-                className={`px-4 py-2.5 text-sm ${i < rows.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
-                <div className="flex justify-between items-center">
-                  <span className="text-[var(--color-muted)]">
-                    {rh.accountName}{rh.institution ? ` · ${rh.institution}` : ''}
-                  </span>
-                  <ValueBlock h={rh} value={value} displayCurrency={displayCurrency} />
-                </div>
-                <div className="mt-1.5 flex items-center gap-2">
-                  <div className="flex-1 h-1 rounded-full bg-[var(--color-bg)] overflow-hidden">
-                    <div className="h-full rounded-full bg-indigo-400 transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
-                  </div>
-                  <span className="text-xs text-[var(--color-muted)] w-10 text-right">{pct.toFixed(1)}%</span>
-                </div>
-              </div>
-            )
-          })}
+          {rows.map(({ h, value }, i) => (
+            <HoldingRow key={h.accountId} h={h}
+              value={value} groupTotal={total}
+              displayCurrency={displayCurrency}
+              locale={locale}
+              label={`${h.accountName}${h.institution ? ' · ' + h.institution : ''}`}
+              isLast={i === rows.length - 1} />
+          ))}
         </div>
       ))}
     </div>
   )
 }
 
-function HoldingRow({ h, value, accountTotal, displayCurrency, showLabel, isLast }: {
-  h: Holding; value: number; accountTotal: number; displayCurrency: string; showLabel: string; isLast: boolean
+function HoldingRow({ h, value, groupTotal, displayCurrency, locale, label, isLast }: {
+  h: Holding; value: number; groupTotal: number; displayCurrency: string
+  locale: string; label: string; isLast: boolean
 }) {
-  const pct = accountTotal > 0 ? (value / accountTotal) * 100 : 0
+  const pct = groupTotal > 0 ? (value / groupTotal) * 100 : 0
   return (
     <div className={`px-4 py-2.5 text-sm ${!isLast ? 'border-b border-[var(--color-border)]' : ''}`}>
       <div className="flex justify-between items-center">
-        <span className="text-[var(--color-muted)]">{showLabel}</span>
-        <ValueBlock h={h} value={value} displayCurrency={displayCurrency} />
+        <span className="text-[var(--color-muted)]">{label}</span>
+        <div className="text-right">
+          <div className="text-sm font-medium tabular-nums">{fmt(value, displayCurrency, locale)}</div>
+          {h.currencyCode !== displayCurrency && (
+            <div className="text-xs text-[var(--color-muted)]">
+              {new Intl.NumberFormat(locale, { maximumFractionDigits: 6 }).format(h.quantity)}\u00a0{getHoldingUnit(h)}
+            </div>
+          )}
+        </div>
       </div>
       <div className="mt-1.5 flex items-center gap-2">
-        <div className="flex-1 h-1 rounded-full bg-[var(--color-bg)] overflow-hidden">
-          <div className="h-full rounded-full bg-green-400 transition-all" style={{ width: `${Math.min(pct, 100)}%` }} />
+        <div className="flex-1 h-1.5 rounded-full bg-[var(--color-bg)] overflow-hidden">
+          <div className="h-full rounded-full bg-[var(--color-accent)] transition-all"
+            style={{ width: `${Math.min(pct, 100)}%` }} />
         </div>
-        <span className="text-xs text-[var(--color-muted)] w-10 text-right">{pct.toFixed(1)}%</span>
+        <span className="text-xs text-[var(--color-muted)] w-10 text-right tabular-nums">{pct.toFixed(1)}%</span>
       </div>
-    </div>
-  )
-}
-
-function ValueBlock({ h, value, displayCurrency }: { h: Holding; value: number; displayCurrency: string }) {
-  return (
-    <div className="text-right">
-      <div className="text-sm font-medium">{fmt(value, displayCurrency)}</div>
-      {h.currencyCode !== displayCurrency && (
-        <div className="text-xs text-[var(--color-muted)]">
-          {new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 6 }).format(h.quantity)} {getHoldingUnit(h)}
-        </div>
-      )}
     </div>
   )
 }
