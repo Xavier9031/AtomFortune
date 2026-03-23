@@ -297,6 +297,7 @@
     "fxRate": "匯率",
     "snapshotItems": "快照 {count} 筆",
     "priceFetchFailed": "無法取得",
-    "rebuildTitle": "重建快照"
+    "rebuildTitle": "重建快照",
+    "showMore": "顯示更多（{count} 筆）"
   }
 }

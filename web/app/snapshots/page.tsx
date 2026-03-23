@@ -6,14 +6,19 @@ import { RefreshCw, CheckCircle, XCircle, Database } from 'lucide-react'
 import { BASE, fetcher } from '@/lib/api'
 import { SnapshotsList } from '@/components/snapshots/SnapshotsList'
 
+const PAGE_SIZE = 6
+
 type PriceResult = { assetId: string; name: string; symbol: string; price: number | null; status: 'ok' | 'failed' }
 type TriggerResult = { date: string; prices: PriceResult[]; fxStatus: 'ok' | 'failed'; snapshotItemsWritten: number }
 
 export default function SnapshotsPage() {
   const t = useTranslations()
+  const [showAll, setShowAll] = useState(false)
   const { data, mutate } = useSWR<{ snapshotDate: string; netWorth: number }[]>(
     `${BASE}/snapshots/history?range=all`, fetcher)
-  const dates = (data ?? []).map(d => d.snapshotDate).sort().reverse()
+  const allDates = (data ?? []).map(d => d.snapshotDate).sort().reverse()
+  const dates = showAll ? allDates : allDates.slice(0, PAGE_SIZE)
+  const hiddenCount = allDates.length - PAGE_SIZE
 
   const [triggering, setTriggering] = useState(false)
   const [result, setResult] = useState<TriggerResult | null>(null)
@@ -116,6 +121,14 @@ export default function SnapshotsPage() {
       )}
 
       <SnapshotsList dates={dates} onRebuild={handleRebuild} onExpand={() => {}} />
+
+      {!showAll && hiddenCount > 0 && (
+        <button onClick={() => setShowAll(true)}
+          className="w-full py-2.5 text-sm text-[var(--color-muted)] hover:text-[var(--color-text)]
+            border border-[var(--color-border)] rounded-lg hover:border-[var(--color-accent)] transition-colors">
+          {t('snapshots.showMore', { count: hiddenCount })}
+        </button>
+      )}
     </main>
   )
 }

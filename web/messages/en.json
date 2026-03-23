@@ -297,6 +297,7 @@
     "fxRate": "FX Rate",
     "snapshotItems": "{count} Snapshots",
     "priceFetchFailed": "N/A",
-    "rebuildTitle": "Rebuild Snapshot"
+    "rebuildTitle": "Rebuild Snapshot",
+    "showMore": "Show more ({count})"
   }
 }
