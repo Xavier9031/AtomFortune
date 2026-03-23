@@ -350,8 +350,29 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
         {/* ── ADD MODE: MAIN ── */}
         {mode === 'add' && currentView === 'main' && (
           <div className="p-4 space-y-3">
-            {/* Asset selector — hidden for liquid accounts */}
-            {!isLiquidAccount && (
+            {/* Account selector — always first */}
+            <button onClick={() => pushView('acctPicker')}
+              className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl
+                bg-[var(--color-bg)] border border-[var(--color-border)]
+                hover:border-[var(--color-accent)] transition-colors text-left">
+              <span className="text-sm text-[var(--color-muted)]">帳戶</span>
+              <div className="flex items-center gap-2 text-sm">
+                {selectedAccountObj ? (
+                  <div className="text-right">
+                    <div className="font-medium">{selectedAccountObj.name}</div>
+                    {selectedAccountObj.institution && (
+                      <div className="text-xs text-[var(--color-muted)]">{selectedAccountObj.institution}</div>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-[var(--color-muted)]">選擇帳戶</span>
+                )}
+                <span className="text-[var(--color-muted)] text-lg leading-none">›</span>
+              </div>
+            </button>
+
+            {/* Asset selector — shown after account is chosen, only for non-liquid accounts */}
+            {selectedAccount && !isLiquidAccount && (
               <button onClick={() => pushView('assetPicker')}
                 className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl
                   bg-[var(--color-bg)] border border-[var(--color-border)]
@@ -375,27 +396,6 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                 </div>
               </button>
             )}
-
-            {/* Account selector */}
-            <button onClick={() => pushView('acctPicker')}
-              className="w-full flex items-center justify-between px-4 py-3.5 rounded-xl
-                bg-[var(--color-bg)] border border-[var(--color-border)]
-                hover:border-[var(--color-accent)] transition-colors text-left">
-              <span className="text-sm text-[var(--color-muted)]">帳戶</span>
-              <div className="flex items-center gap-2 text-sm">
-                {selectedAccountObj ? (
-                  <div className="text-right">
-                    <div className="font-medium">{selectedAccountObj.name}</div>
-                    {selectedAccountObj.institution && (
-                      <div className="text-xs text-[var(--color-muted)]">{selectedAccountObj.institution}</div>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-[var(--color-muted)]">選擇帳戶</span>
-                )}
-                <span className="text-[var(--color-muted)] text-lg leading-none">›</span>
-              </div>
-            </button>
 
             {/* Amount card */}
             <div className="rounded-xl border border-[var(--color-border)] overflow-hidden bg-[var(--color-bg)]">
