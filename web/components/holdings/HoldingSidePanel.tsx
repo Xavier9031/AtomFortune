@@ -226,11 +226,14 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     if (holding) {
       globalMutate(`${BASE}/transactions?assetId=${holding.assetId}&accountId=${holding.accountId}`)
     }
+    globalMutate(`${BASE}/holdings`)
     onClose()
   }
 
   async function handleDelete() {
+    if (!confirm(`確認刪除「${holding!.assetName}」的持倉？此操作無法復原。`)) return
     await fetch(`${BASE}/holdings/${holding!.assetId}/${holding!.accountId}`, { method: 'DELETE' })
+    globalMutate(`${BASE}/holdings`)
     onClose()
   }
 
@@ -324,7 +327,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
             <div className="flex gap-3">
               <button onClick={handleSave} disabled={!canSubmit}
                 className="flex-1 bg-[var(--color-accent)] text-white rounded-xl py-3 font-medium disabled:opacity-40">
-                儲存
+                更新
               </button>
               <button onClick={handleDelete}
                 className="flex-1 border border-red-400 text-red-500 rounded-xl py-3">
