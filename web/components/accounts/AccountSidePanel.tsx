@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react'
-import useSWR from 'swr'
 import { BASE, fetcher } from '@/lib/api'
 import type { Account, AccountType } from '@/lib/types'
 
@@ -36,11 +35,6 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
   const [pendingType, setPendingType] = useState<AccTypeItem | null>(null)
   const [form, setForm] = useState({ name: '', institution: '', note: '' })
   const [saving, setSaving] = useState(false)
-
-  const { data: accounts } = useSWR<Account[]>(`${BASE}/accounts`, fetcher)
-  const knownInstitutions = Array.from(
-    new Set((accounts ?? []).map(a => a.institution).filter(Boolean) as string[])
-  )
 
   useEffect(() => {
     if (!open) return
@@ -127,10 +121,6 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
 
         {view === 'form' && (
           <div className="p-4 space-y-4">
-            <datalist id="acct-panel-institutions">
-              {knownInstitutions.map(i => <option key={i} value={i} />)}
-            </datalist>
-
             {pendingType && !account && (
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[var(--color-bg)]">
                 <span className="text-2xl">{pendingIcon}</span>
@@ -153,7 +143,7 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
               </div>
               <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
                 <span className="text-sm text-[var(--color-muted)]">機構</span>
-                <input list="acct-panel-institutions" value={form.institution}
+                <input value={form.institution}
                   onChange={e => setForm(p => ({ ...p, institution: e.target.value }))}
                   placeholder="選填（例：玉山銀行）"
                   className="text-right bg-transparent text-sm outline-none w-full" />
