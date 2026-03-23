@@ -267,7 +267,14 @@
     "languages": {
       "zh-TW": "繁體中文",
       "en": "English"
-    }
+    },
+    "backup": "Data Backup",
+    "backupDesc": "Export all assets, accounts, holdings, transactions, and snapshots as a JSON file. Import it later to restore.",
+    "exportButton": "Export Backup",
+    "importButton": "Import Backup",
+    "importing": "Importing…",
+    "importSuccess": "Import complete: {assets} assets, {accounts} accounts, {holdings} holdings, {transactions} transactions, {snapshotItems} snapshots",
+    "importError": "Import failed"
   },
   "snapshots": {
     "title": "Snapshots",

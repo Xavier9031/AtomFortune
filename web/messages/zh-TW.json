@@ -267,7 +267,14 @@
     "languages": {
       "zh-TW": "繁體中文",
       "en": "English"
-    }
+    },
+    "backup": "資料備份",
+    "backupDesc": "將所有資產、帳戶、持倉、交易、快照記錄匯出為 JSON 檔案，可於需要時匯回還原。",
+    "exportButton": "匯出備份",
+    "importButton": "匯入備份",
+    "importing": "匯入中…",
+    "importSuccess": "匯入完成：資產 {assets} 筆、帳戶 {accounts} 筆、持倉 {holdings} 筆、交易 {transactions} 筆、快照 {snapshotItems} 筆",
+    "importError": "匯入失敗"
   },
   "snapshots": {
     "title": "快照紀錄",
