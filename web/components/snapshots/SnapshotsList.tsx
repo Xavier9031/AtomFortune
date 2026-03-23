@@ -6,6 +6,15 @@ import type { SnapshotItem } from '@/lib/types'
 
 interface SnapshotGrouped { category: string; items: SnapshotItem[] }
 
+const CAT_LABELS: Record<string, string> = {
+  liquid: '流動資金', investment: '投資', fixed: '固定資產',
+  receivable: '應收款', debt: '負債',
+}
+
+function fmtTWD(v: number) {
+  return new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 0 }).format(v) + ' TWD'
+}
+
 interface Props {
   dates: string[]
   onRebuild: (date: string) => void
@@ -53,12 +62,14 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
             <div className="border-t px-4 py-3 space-y-4">
               {details[date].map(({ category, items }) => (
                 <div key={category}>
-                  <p className="text-xs font-semibold uppercase text-[var(--color-muted)] mb-1">{category}</p>
+                  <p className="text-xs font-semibold text-[var(--color-muted)] mb-1">
+                    {CAT_LABELS[category] ?? category}
+                  </p>
                   {items.map(item => (
                     <div key={`${item.assetId}-${item.accountId}`}
                       className="flex justify-between text-sm py-1">
-                      <span>{item.assetName} / {item.accountName}</span>
-                      <span>{item.valueInBase.toLocaleString()}</span>
+                      <span>{item.assetName} · {item.accountName}</span>
+                      <span className="font-mono">{fmtTWD(item.valueInBase)}</span>
                     </div>
                   ))}
                 </div>
