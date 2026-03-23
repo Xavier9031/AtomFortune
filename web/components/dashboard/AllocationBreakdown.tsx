@@ -134,14 +134,22 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
                       {catItems.slice(0, 5).map(item => {
                         const itemPct = c.value > 0 ? (item.value / c.value) * 100 : 0
                         return (
-                          <div key={item.assetId} className="flex items-center text-xs gap-2">
-                            <span className="text-[var(--color-muted)] flex-1 truncate">{item.name}</span>
-                            <span className="text-[var(--color-muted)] tabular-nums shrink-0 w-10 text-right">
-                              {itemPct.toFixed(1)}%
-                            </span>
-                            <span className="tabular-nums shrink-0 font-medium">
-                              {fmt(item.value, displayCurrency, locale)}
-                            </span>
+                          <div key={item.assetId} className="space-y-1">
+                            <div className="flex justify-between items-baseline text-xs gap-2">
+                              <span className="text-[var(--color-muted)] truncate">{item.name}</span>
+                              <span className="tabular-nums shrink-0 font-medium">
+                                {fmt(item.value, displayCurrency, locale)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex-1 h-1 rounded-full bg-[var(--color-bg)] overflow-hidden">
+                                <div className="h-full rounded-full transition-all"
+                                  style={{ width: `${Math.min(itemPct, 100)}%`, background: c.color, opacity: 0.7 }} />
+                              </div>
+                              <span className="text-[10px] text-[var(--color-muted)] tabular-nums w-8 text-right shrink-0">
+                                {itemPct.toFixed(1)}%
+                              </span>
+                            </div>
                           </div>
                         )
                       })}
