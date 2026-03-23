@@ -23,6 +23,17 @@
     "add": "Add",
     "search": "Search"
   },
+  "accounts": {
+    "title": "Accounts",
+    "addButton": "+ Add Account",
+    "columns": {
+      "name": "Name",
+      "type": "Type",
+      "institution": "Institution",
+      "note": "Note",
+      "holdingsCount": "Holdings"
+    }
+  },
   "account": {
     "typePickerTitle": "Select Account Type",
     "editTitle": "Edit Account",

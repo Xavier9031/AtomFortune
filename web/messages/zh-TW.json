@@ -23,6 +23,17 @@
     "add": "新增",
     "search": "搜尋"
   },
+  "accounts": {
+    "title": "帳戶管理",
+    "addButton": "+ 新增帳戶",
+    "columns": {
+      "name": "名稱",
+      "type": "類型",
+      "institution": "機構",
+      "note": "備註",
+      "holdingsCount": "持倉數"
+    }
+  },
   "account": {
     "typePickerTitle": "選擇帳戶類型",
     "editTitle": "編輯帳戶",
