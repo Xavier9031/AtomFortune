@@ -1,0 +1,33 @@
+appId: com.atomfortune.app
+productName: AtomFortune
+copyright: Copyright © 2026 AtomFortune
+
+directories:
+  output: dist
+  buildResources: resources
+
+files:
+  - dist/**
+  - node_modules/**
+  - "!node_modules/*/{CHANGELOG.md,README.md,readme.md}"
+  - "!node_modules/**/{test,__tests__,tests,example,examples}"
+
+extraResources:
+  - from: "../api/drizzle"
+    to: "drizzle"
+  - from: "../web/.next/standalone"
+    to: "web-standalone"
+
+mac:
+  category: public.app-category.finance
+  target:
+    - target: dmg
+      arch:
+        - universal
+
+npmRebuild: true
+
+publish:
+  provider: github
+  owner: Xavier9031
+  repo: AtomFortune
