@@ -294,11 +294,13 @@ export default function SettingsPage() {
             </button>
           ) : (
             <div className="space-y-2">
+              <p className="text-xs text-[var(--color-muted)]">
+                {t('settings.resetConfirmPlaceholder')}
+              </p>
               <input
                 type="text"
                 value={resetWord}
                 onChange={e => { setResetWord(e.target.value); setResetMsg(null) }}
-                placeholder={t('settings.resetConfirmPlaceholder')}
                 autoFocus
                 className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--color-border)]
                   bg-[var(--color-bg)] placeholder:text-[var(--color-muted)] focus:outline-none
