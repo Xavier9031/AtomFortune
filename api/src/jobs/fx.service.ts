@@ -1,4 +1,3 @@
-import { config } from '../config'
 import { SUPPORTED_CURRENCIES } from '../currencies'
 
 export interface FxRateRecord {
@@ -11,20 +10,18 @@ export interface FxRateRecord {
 export async function fetchFxRates(): Promise<FxRateRecord[]> {
   const results: FxRateRecord[] = []
 
-  const exRes = await fetch(
-    `https://v6.exchangerate-api.com/v6/${config.exchangerateApiKey}/latest/TWD`
-  )
-  if (!exRes.ok) throw new Error(`exchangerate-api error: ${exRes.status}`)
+  const exRes = await fetch('https://open.er-api.com/v6/latest/TWD')
+  if (!exRes.ok) throw new Error(`open.er-api error: ${exRes.status}`)
   const exData = await exRes.json()
 
   const saveSet = new Set<string>(SUPPORTED_CURRENCIES)
-  for (const [currency, invRate] of Object.entries(exData.conversion_rates) as [string, number][]) {
+  for (const [currency, invRate] of Object.entries(exData.rates) as [string, number][]) {
     if (saveSet.has(currency) && currency !== 'TWD') {
       results.push({
         fromCurrency: currency,
         toCurrency: 'TWD',
         rate: 1 / invRate,
-        source: 'exchangerate-api',
+        source: 'open.er-api',
       })
     }
   }
