@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { BASE } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 
 interface Props { assetId: string; open: boolean; onClose: () => void }
 
@@ -10,7 +11,7 @@ export function ManualPriceModal({ assetId, open, onClose }: Props) {
   const [price, setPrice] = useState('')
 
   async function handleSubmit() {
-    await fetch(`${BASE}/prices/manual`, {
+    await fetchWithUser(`${BASE}/prices/manual`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ assetId, priceDate: date, price: parseFloat(price) }),

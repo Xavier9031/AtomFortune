@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { BASE } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 import type { Asset, AssetClass, Category, PricingMode, SubKind, Ticker } from '@/lib/types'
 import { TickerSearch } from './TickerSearch'
 import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
@@ -135,7 +136,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
     setSaving(true)
     try {
       if (asset) {
-        await fetch(`${BASE}/assets/${asset.id}`, {
+        await fetchWithUser(`${BASE}/assets/${asset.id}`, {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: form.name.trim(),
@@ -144,7 +145,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
           }),
         })
       } else if (pendingKind) {
-        await fetch(`${BASE}/assets`, {
+        await fetchWithUser(`${BASE}/assets`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: form.name.trim(),
@@ -164,7 +165,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
 
   async function handleDelete() {
     if (!asset || !confirm(t('assets.deleteConfirm'))) return
-    const res = await fetch(`${BASE}/assets/${asset.id}`, { method: 'DELETE' })
+    const res = await fetchWithUser(`${BASE}/assets/${asset.id}`, { method: 'DELETE' })
     if (!res.ok) alert(t('assets.deleteFailed'))
     else onClose()
   }

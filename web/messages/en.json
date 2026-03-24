@@ -306,6 +306,12 @@
     "resetSuccess": "All data has been cleared",
     "resetError": "Clear failed"
   },
+  "userSwitcher": {
+    "defaultUser": "Default",
+    "newProfile": "New profile",
+    "newProfilePlaceholder": "Profile name\u2026",
+    "switchConfirm": "Switch to this profile?"
+  },
   "snapshots": {
     "title": "Snapshots",
     "triggerButton": "Snapshot Now",

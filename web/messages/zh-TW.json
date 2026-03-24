@@ -306,6 +306,12 @@
     "resetSuccess": "所有資料已清空",
     "resetError": "清空失敗"
   },
+  "userSwitcher": {
+    "defaultUser": "預設使用者",
+    "newProfile": "新增個人檔案",
+    "newProfilePlaceholder": "輸入名稱\u2026",
+    "switchConfirm": "切換至此個人檔案？"
+  },
   "snapshots": {
     "title": "快照紀錄",
     "triggerButton": "立即快照",

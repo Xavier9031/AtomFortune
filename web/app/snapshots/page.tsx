@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import useSWR from 'swr'
 import { RefreshCw, CheckCircle, XCircle, Database } from 'lucide-react'
 import { BASE, fetcher } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 import { SnapshotsList } from '@/components/snapshots/SnapshotsList'
 
 const PAGE_SIZE = 6
@@ -29,7 +30,7 @@ export default function SnapshotsPage() {
     setResult(null)
     setTriggerError(null)
     try {
-      const res = await fetch(`${BASE}/snapshots/trigger`, { method: 'POST' })
+      const res = await fetchWithUser(`${BASE}/snapshots/trigger`, { method: 'POST' })
       const json = await res.json()
       if (!res.ok) {
         setTriggerError(json.error ?? `HTTP ${res.status}`)
@@ -45,7 +46,7 @@ export default function SnapshotsPage() {
   }
 
   async function handleRebuild(date: string) {
-    await fetch(`${BASE}/snapshots/rebuild/${date}`, { method: 'POST' })
+    await fetchWithUser(`${BASE}/snapshots/rebuild/${date}`, { method: 'POST' })
     mutate()
   }
 

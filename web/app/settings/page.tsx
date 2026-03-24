@@ -8,6 +8,7 @@ import { setTheme } from '@/app/actions/setTheme'
 import { setExperimental } from '@/app/actions/setExperimental'
 import { SUPPORTED_LOCALES } from '@/lib/locales'
 import { BASE } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 
 export default function SettingsPage() {
   const t = useTranslations()
@@ -58,8 +59,17 @@ export default function SettingsPage() {
     setTimeout(() => html.classList.remove('theme-changing'), 350)
   }
 
-  function handleExport() {
-    window.open(`${BASE}/backup/export`, '_blank')
+  async function handleExport() {
+    const res = await fetchWithUser(`${BASE}/backup/export`)
+    if (!res.ok) return
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const date = new Date().toISOString().slice(0, 10)
+    a.download = `atomfortune-backup-${date}.zip`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   async function handleImport(file: File) {
@@ -68,7 +78,7 @@ export default function SettingsPage() {
     try {
       const form = new FormData()
       form.append('file', file)
-      const res = await fetch(`${BASE}/backup/import`, { method: 'POST', body: form })
+      const res = await fetchWithUser(`${BASE}/backup/import`, { method: 'POST', body: form })
       const json = await res.json()
       if (!res.ok) {
         setImportMsg({ ok: false, text: `${t('settings.importError')}: ${json.error}` })
@@ -101,7 +111,7 @@ export default function SettingsPage() {
     setResetting(true)
     setResetMsg(null)
     try {
-      const res = await fetch(`${BASE}/backup/reset`, { method: 'DELETE' })
+      const res = await fetchWithUser(`${BASE}/backup/reset`, { method: 'DELETE' })
       if (res.ok) {
         setResetMsg({ ok: true, text: t('settings.resetSuccess') })
         setResetPhase('idle')
