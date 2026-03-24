@@ -21,9 +21,13 @@ export default function SettingsPage() {
   const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [importing, setImporting] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
-  const [resetConfirm, setResetConfirm] = useState('')
+  const [resetPhase, setResetPhase] = useState<'idle' | 'armed'>('idle')
+  const [resetWord, setResetWord] = useState('')
   const [resetting, setResetting] = useState(false)
   const [resetMsg, setResetMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [holdHovering, setHoldHovering] = useState(false)
+  const [holdReady, setHoldReady] = useState(false)
   const schedule = process.env.NEXT_PUBLIC_SNAPSHOT_SCHEDULE ?? '0 22 * * *'
 
   useEffect(() => {
@@ -83,6 +87,16 @@ export default function SettingsPage() {
     }
   }
 
+  function holdEnter() {
+    setHoldHovering(true)
+    holdTimer.current = setTimeout(() => setHoldReady(true), 2500)
+  }
+  function holdLeave() {
+    setHoldHovering(false)
+    setHoldReady(false)
+    if (holdTimer.current) { clearTimeout(holdTimer.current); holdTimer.current = null }
+  }
+
   async function handleReset() {
     setResetting(true)
     setResetMsg(null)
@@ -90,7 +104,8 @@ export default function SettingsPage() {
       const res = await fetch(`${BASE}/backup/reset`, { method: 'DELETE' })
       if (res.ok) {
         setResetMsg({ ok: true, text: t('settings.resetSuccess') })
-        setResetConfirm('')
+        setResetPhase('idle')
+        setResetWord('')
       } else {
         setResetMsg({ ok: false, text: t('settings.resetError') })
       }
@@ -251,24 +266,64 @@ export default function SettingsPage() {
               <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('settings.resetDesc')}</p>
             </div>
           </div>
-          <input
-            type="text"
-            value={resetConfirm}
-            onChange={e => { setResetConfirm(e.target.value); setResetMsg(null) }}
-            placeholder={t('settings.resetConfirmPlaceholder')}
-            className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--color-border)]
-              bg-[var(--color-bg)] placeholder:text-[var(--color-muted)] focus:outline-none
-              focus:border-[var(--color-coral)]"
-          />
-          <button
-            onClick={handleReset}
-            disabled={resetting || resetConfirm !== t('settings.resetConfirmWord')}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-              bg-[var(--color-coral)] text-white hover:opacity-90 transition-opacity
-              disabled:opacity-40 disabled:cursor-not-allowed">
-            <Trash2 size={14} />
-            {resetting ? t('settings.resetting') : t('settings.resetButton')}
-          </button>
+
+          {resetPhase === 'idle' ? (
+            <button
+              onMouseEnter={holdEnter}
+              onMouseLeave={holdLeave}
+              onClick={() => { if (holdReady) { setResetPhase('armed'); holdLeave() } }}
+              className={`relative flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                overflow-hidden select-none transition-colors
+                ${holdReady
+                  ? 'bg-[var(--color-coral)] text-white cursor-pointer'
+                  : 'border border-[var(--color-coral)] text-[var(--color-coral)] cursor-default'}`}>
+              <div
+                className="absolute inset-y-0 left-0 pointer-events-none"
+                style={{
+                  width: holdHovering && !holdReady ? '115%' : '0%',
+                  transition: holdHovering && !holdReady ? 'width 2.5s linear' : 'none',
+                  background: 'linear-gradient(to right, rgba(239,68,68,0.2) 0%, rgba(239,68,68,0.4) 70%, rgba(239,68,68,0.55) 87%, transparent 100%)',
+                  borderRadius: '0 0.5rem 0.5rem 0',
+                  boxShadow: holdHovering && !holdReady ? '3px 0 12px rgba(239,68,68,0.4)' : 'none',
+                }}
+              />
+              <Trash2 size={14} className="relative z-10" />
+              <span className="relative z-10">
+                {holdReady ? t('settings.resetArmedLabel') : t('settings.resetHoldLabel')}
+              </span>
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <input
+                type="text"
+                value={resetWord}
+                onChange={e => { setResetWord(e.target.value); setResetMsg(null) }}
+                placeholder={t('settings.resetConfirmPlaceholder')}
+                autoFocus
+                className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--color-border)]
+                  bg-[var(--color-bg)] placeholder:text-[var(--color-muted)] focus:outline-none
+                  focus:border-[var(--color-coral)]"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => { setResetPhase('idle'); setResetWord(''); setResetMsg(null) }}
+                  className="px-4 py-2 rounded-lg text-sm border border-[var(--color-border)]
+                    hover:border-[var(--color-accent)] transition-colors">
+                  {t('common.cancel')}
+                </button>
+                <button
+                  onClick={handleReset}
+                  disabled={resetting || resetWord !== t('settings.resetConfirmWord')}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                    bg-[var(--color-coral)] text-white hover:opacity-90 transition-opacity
+                    disabled:opacity-40 disabled:cursor-not-allowed">
+                  <Trash2 size={14} />
+                  {resetting ? t('settings.resetting') : t('settings.resetButton')}
+                </button>
+              </div>
+            </div>
+          )}
+
           {resetMsg && (
             <p className={`text-xs ${resetMsg.ok ? 'text-[var(--color-accent)]' : 'text-[var(--color-coral)]'}`}>
               {resetMsg.text}
