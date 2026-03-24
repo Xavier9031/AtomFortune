@@ -10,7 +10,10 @@ services:
     volumes:
       - dbdata:/data
   web:
-    build: ./web
+    build:
+      context: ./web
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8001/api/v1
     environment:
       NEXT_PUBLIC_API_BASE_URL: http://localhost:8001/api/v1
       API_BASE_URL: http://api:8000/api/v1
