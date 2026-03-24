@@ -95,7 +95,7 @@ function FireProgress({ currency }: { currency: Currency }) {
   const monthsFromCashflow = monthlyNet > 0 ? (target - current) / monthlyNet : null
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] p-4">
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <div className="flex items-baseline justify-between mb-3">
         <h3 className="text-sm font-semibold">財務自由進度</h3>
         <span className="text-xs text-[var(--color-muted)]">
@@ -184,7 +184,7 @@ function MonthlyDelta({ currency }: { currency: Currency }) {
   const maxAbs = Math.max(...deltas.map(d => Math.abs(d.delta)), 1)
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] p-4">
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <div className="flex items-baseline justify-between mb-4">
         <h3 className="text-sm font-semibold">近 30 天淨值變化</h3>
         <span className={`text-sm font-bold tabular-nums ${netDelta >= 0 ? 'text-green-500' : 'text-red-400'}`}>
@@ -245,7 +245,7 @@ export function AnnotatedNetWorth({ currency }: { currency: Currency }) {
   )]
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] p-4">
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold">{t('annotatedNetWorthTitle')}</h3>
         <RangeTabs value={range} onChange={setRange} />
@@ -295,7 +295,7 @@ export function StackedAssetArea({ currency }: { currency: Currency }) {
   const getCatLabel = (key: string) => tAsset(`categories.${key}` as any) ?? key
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] p-4">
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-sm font-semibold">{t('stackedAreaTitle')}</h3>
         <RangeTabs value={range} onChange={setRange} />
