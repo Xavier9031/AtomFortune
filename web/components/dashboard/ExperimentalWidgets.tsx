@@ -67,7 +67,7 @@ function RangeTabs({ value, onChange }: { value: Range; onChange: (r: Range) => 
 
 // ─── Widget 1: FIRE Progress ──────────────────────────────────────────────────
 
-function FireProgress({ currency }: { currency: Currency }) {
+export function FireProgress({ currency }: { currency: Currency }) {
   const { data } = useNetWorthHistory(currency, 'all')
   const { data: allEntries } = useRecurringEntries()
   if (!data?.data?.length) return null
@@ -165,7 +165,7 @@ function FireProgress({ currency }: { currency: Currency }) {
 
 // ─── Widget 2: Monthly delta (waterfall) ─────────────────────────────────────
 
-function MonthlyDelta({ currency }: { currency: Currency }) {
+export function MonthlyDelta({ currency }: { currency: Currency }) {
   const { data } = useCategoryHistory(currency, '30d')
   if (!data?.data?.length || data.data.length < 2) return null
 

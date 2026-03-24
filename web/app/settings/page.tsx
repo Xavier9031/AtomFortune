@@ -2,9 +2,10 @@
 import { useState, useEffect, useRef, useTransition } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Download, Upload, Clock } from 'lucide-react'
+import { Download, Upload, Clock, FlaskConical } from 'lucide-react'
 import { setLocale } from '@/app/actions/setLocale'
 import { setTheme } from '@/app/actions/setTheme'
+import { setExperimental } from '@/app/actions/setExperimental'
 import { SUPPORTED_LOCALES } from '@/lib/locales'
 import { BASE } from '@/lib/api'
 
@@ -16,6 +17,7 @@ export default function SettingsPage() {
   const wasPending = useRef(false)
   const resolveRef = useRef<(() => void) | null>(null)
   const [dark, setDark] = useState(false)
+  const [experimental, setExperimentalState] = useState(false)
   const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [importing, setImporting] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -23,6 +25,7 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setDark(document.documentElement.dataset.theme === 'dark')
+    setExperimentalState(document.documentElement.dataset.experimental === 'true')
   }, [])
 
   useEffect(() => {
@@ -32,6 +35,12 @@ export default function SettingsPage() {
       resolveRef.current = null
     }
   }, [isPending])
+
+  async function handleExperimental(checked: boolean) {
+    setExperimentalState(checked)
+    document.documentElement.dataset.experimental = checked ? 'true' : ''
+    await setExperimental(checked)
+  }
 
   async function handleDark(checked: boolean) {
     setDark(checked)
@@ -172,15 +181,35 @@ export default function SettingsPage() {
             {t('settings.sectionSystem')}
           </h2>
         </div>
-        <div className="px-5 py-4">
-          <div className="flex items-start gap-3">
-            <Clock size={14} className="mt-0.5 text-[var(--color-muted)] shrink-0" />
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium">{t('settings.snapshotSchedule')}</p>
-              <code className="block text-xs bg-[var(--color-bg)] px-2.5 py-1 rounded border border-[var(--color-border)]">
-                {schedule}
-              </code>
-              <p className="text-xs text-[var(--color-muted)]">{t('settings.snapshotScheduleDesc')}</p>
+        <div className="divide-y divide-[var(--color-border)]">
+          <div className="flex items-center justify-between px-5 py-4">
+            <div className="flex items-start gap-3">
+              <FlaskConical size={14} className="mt-0.5 text-[var(--color-muted)] shrink-0" />
+              <div>
+                <p className="text-sm font-medium">{t('settings.experimentalMode')}</p>
+                <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('settings.experimentalModeDesc')}</p>
+              </div>
+            </div>
+            <button
+              role="switch"
+              aria-checked={experimental}
+              onClick={() => handleExperimental(!experimental)}
+              className={`ml-4 relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors
+                ${experimental ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]'}`}>
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform
+                ${experimental ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+          <div className="px-5 py-4">
+            <div className="flex items-start gap-3">
+              <Clock size={14} className="mt-0.5 text-[var(--color-muted)] shrink-0" />
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium">{t('settings.snapshotSchedule')}</p>
+                <code className="block text-xs bg-[var(--color-bg)] px-2.5 py-1 rounded border border-[var(--color-border)]">
+                  {schedule}
+                </code>
+                <p className="text-xs text-[var(--color-muted)]">{t('settings.snapshotScheduleDesc')}</p>
+              </div>
             </div>
           </div>
         </div>

@@ -1,10 +1,12 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import useSWR from 'swr'
 import { RefreshCw, CheckCircle, XCircle, Database } from 'lucide-react'
 import { BASE, fetcher } from '@/lib/api'
 import { SnapshotsList } from '@/components/snapshots/SnapshotsList'
+import { FireProgress, MonthlyDelta } from '@/components/dashboard/ExperimentalWidgets'
+import { useCurrency } from '@/context/CurrencyContext'
 
 const PAGE_SIZE = 6
 
@@ -13,7 +15,13 @@ type TriggerResult = { date: string; prices: PriceResult[]; fxStatus: 'ok' | 'fa
 
 export default function SnapshotsPage() {
   const t = useTranslations()
+  const { currency } = useCurrency()
   const [showAll, setShowAll] = useState(false)
+  const [experimental, setExperimentalState] = useState(false)
+
+  useEffect(() => {
+    setExperimentalState(document.documentElement.dataset.experimental === 'true')
+  }, [])
   const { data, mutate } = useSWR<{ snapshotDate: string; netWorth: number }[]>(
     `${BASE}/snapshots/history?range=all`, fetcher)
   const allDates = (data ?? []).map(d => d.snapshotDate).sort().reverse()
@@ -128,6 +136,23 @@ export default function SnapshotsPage() {
             border border-[var(--color-border)] rounded-lg hover:border-[var(--color-accent)] transition-colors">
           {t('snapshots.showMore', { count: hiddenCount })}
         </button>
+      )}
+
+      {experimental && (
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-[var(--color-border)]" />
+            <span className="text-xs text-[var(--color-muted)] px-3 py-1
+              border border-[var(--color-border)] rounded-full shrink-0">
+              Experimental
+            </span>
+            <div className="h-px flex-1 bg-[var(--color-border)]" />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <FireProgress currency={currency} />
+            <MonthlyDelta currency={currency} />
+          </div>
+        </div>
       )}
     </main>
   )

@@ -276,6 +276,8 @@
     "sectionAppearance": "Appearance",
     "sectionBackup": "Backup & Restore",
     "sectionSystem": "System",
+    "experimentalMode": "Experimental Mode",
+    "experimentalModeDesc": "When enabled, an experimental section appears at the bottom of the Snapshots page.",
     "darkMode": "Dark Mode",
     "language": "Language",
     "snapshotSchedule": "Snapshot Schedule (read-only)",

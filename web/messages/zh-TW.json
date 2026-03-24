@@ -276,6 +276,8 @@
     "sectionAppearance": "外觀",
     "sectionBackup": "備份與還原",
     "sectionSystem": "系統資訊",
+    "experimentalMode": "實驗模式",
+    "experimentalModeDesc": "開啟後，快照頁底部將顯示實驗性功能。",
     "darkMode": "深色模式",
     "language": "語言",
     "snapshotSchedule": "快照排程（唯讀）",

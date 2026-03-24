@@ -17,9 +17,10 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const messages = await getMessages()
   const cookieStore = await cookies()
   const theme = cookieStore.get('theme')?.value === 'dark' ? 'dark' : 'light'
+  const experimental = cookieStore.get('experimental')?.value === 'true'
 
   return (
-    <html lang={locale} data-theme={theme}>
+    <html lang={locale} data-theme={theme} data-experimental={experimental ? 'true' : undefined}>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <CurrencyProvider>

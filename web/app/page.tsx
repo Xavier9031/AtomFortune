@@ -4,7 +4,7 @@ import { useCurrency } from '@/context/CurrencyContext'
 import { useLiveDashboard } from '@/lib/api'
 import NetWorthHeader from '@/components/dashboard/NetWorthHeader'
 import AllocationBreakdown from '@/components/dashboard/AllocationBreakdown'
-import ExperimentalWidgets, { AnnotatedNetWorth, StackedAssetArea } from '@/components/dashboard/ExperimentalWidgets'
+import { AnnotatedNetWorth, StackedAssetArea } from '@/components/dashboard/ExperimentalWidgets'
 import type { DashboardSummary } from '@/lib/types'
 
 export default function DashboardPage() {
@@ -80,7 +80,6 @@ export default function DashboardPage() {
         <AnnotatedNetWorth currency={currency} />
         <StackedAssetArea currency={currency} />
       </div>
-      <ExperimentalWidgets currency={currency} />
     </div>
   )
 }
