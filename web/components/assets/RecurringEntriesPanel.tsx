@@ -4,27 +4,24 @@ import useSWR, { mutate } from 'swr'
 import { BASE, fetcher } from '@/lib/api'
 import type { RecurringEntry } from '@/lib/types'
 
-function fmt(amount: string, type: 'income' | 'expense') {
-  const n = Number(amount)
-  return `${type === 'income' ? '+' : '-'}${n.toLocaleString('zh-TW', { maximumFractionDigits: 2 })}`
-}
-
 export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string; accountId?: string }) {
   const swrKey = `${BASE}/recurring-entries?assetId=${assetId}${accountId ? `&accountId=${accountId}` : ''}`
   const { data: entries, mutate: revalidate } = useSWR<RecurringEntry[]>(swrKey, fetcher)
+
   const [showForm, setShowForm] = useState(false)
   const [type, setType] = useState<'income' | 'expense'>('income')
   const [amount, setAmount] = useState('')
   const [currencyCode, setCurrencyCode] = useState('TWD')
   const [dayOfMonth, setDayOfMonth] = useState(1)
   const [label, setLabel] = useState('')
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const [effectiveFrom, setEffectiveFrom] = useState(new Date().toISOString().slice(0, 10))
   const [effectiveTo, setEffectiveTo] = useState('')
   const [saving, setSaving] = useState(false)
 
-  function resetForm() {
+  function reset() {
     setType('income'); setAmount(''); setCurrencyCode('TWD')
-    setDayOfMonth(1); setLabel('')
+    setDayOfMonth(1); setLabel(''); setShowAdvanced(false)
     setEffectiveFrom(new Date().toISOString().slice(0, 10)); setEffectiveTo('')
   }
 
@@ -41,134 +38,144 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
         effectiveFrom, effectiveTo: effectiveTo || undefined,
       }),
     })
-    setSaving(false)
-    setShowForm(false)
-    resetForm()
-    revalidate()
-    mutate(`${BASE}/recurring-entries`)  // refresh FIRE widget
+    setSaving(false); setShowForm(false); reset()
+    revalidate(); mutate(`${BASE}/recurring-entries`)
   }
 
   async function handleDelete(id: string) {
     await fetch(`${BASE}/recurring-entries/${id}`, { method: 'DELETE' })
-    revalidate()
-    mutate(`${BASE}/recurring-entries`)  // refresh FIRE widget
+    revalidate(); mutate(`${BASE}/recurring-entries`)
   }
 
   const today = new Date().toISOString().slice(0, 10)
 
   return (
-    <section>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold">自動記（定期現金流）</h2>
-        <button onClick={() => { setShowForm(!showForm); if (showForm) resetForm() }}
-          className="text-xs text-[var(--color-accent)] hover:underline">
+    <div className="pt-2">
+      {/* Section header — same style as HoldingTransactions */}
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">
+          自動記
+        </p>
+        <button
+          onClick={() => { setShowForm(!showForm); if (showForm) reset() }}
+          className={`text-xs px-2.5 py-1 rounded-full transition-colors
+            ${showForm
+              ? 'text-[var(--color-muted)]'
+              : 'text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10'}`}>
           {showForm ? '取消' : '+ 新增'}
         </button>
       </div>
 
-      {/* ── Create form ── */}
+      {/* ── Form: card style matching the quantity card ── */}
       {showForm && (
-        <div className="rounded-xl border border-[var(--color-border)] p-4 mb-3 space-y-3">
+        <div className="rounded-xl border border-[var(--color-border)] overflow-hidden mb-3">
           {/* Type toggle */}
-          <div className="flex gap-2">
+          <div className="flex border-b border-[var(--color-border)]">
             {(['income', 'expense'] as const).map(t => (
               <button key={t} onClick={() => setType(t)}
-                className={`flex-1 py-2 text-xs rounded-lg border transition-colors font-medium
+                className={`flex-1 py-2.5 text-xs font-semibold transition-colors
                   ${type === t
-                    ? t === 'income' ? 'bg-green-500 text-white border-green-500' : 'bg-red-400 text-white border-red-400'
-                    : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-text)]'}`}>
+                    ? t === 'income' ? 'bg-green-500 text-white' : 'bg-red-400 text-white'
+                    : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
                 {t === 'income' ? '固定收入' : '固定支出'}
               </button>
             ))}
           </div>
 
-          {/* Amount + Currency */}
-          <div className="flex gap-2">
-            <input type="number" placeholder="金額" value={amount}
-              onChange={e => setAmount(e.target.value)} min="0"
-              className="flex-1 bg-transparent border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-accent)]" />
-            <input value={currencyCode} onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
-              maxLength={4}
-              className="w-16 bg-transparent border border-[var(--color-border)] rounded-lg px-2 py-2 text-sm text-center focus:outline-none focus:border-[var(--color-accent)]" />
+          {/* Amount + currency */}
+          <div className="flex items-center px-4 py-3.5 border-b border-[var(--color-border)] gap-3">
+            <span className="text-sm text-[var(--color-muted)] shrink-0">金額</span>
+            <input
+              type="number" placeholder="0" value={amount} min="0" autoFocus
+              onChange={e => setAmount(e.target.value)}
+              className="flex-1 text-right bg-transparent text-xl font-semibold outline-none tabular-nums" />
+            <input
+              value={currencyCode} maxLength={4}
+              onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
+              className="w-14 bg-[var(--color-bg)] rounded-lg px-2 py-1 text-xs font-bold text-center outline-none border border-[var(--color-border)]" />
           </div>
 
-          {/* Day of month */}
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-[var(--color-muted)] text-xs shrink-0">記錄日期</span>
-            <span className="text-xs text-[var(--color-muted)]">每月</span>
-            <input type="number" min="1" max="31" value={dayOfMonth}
-              onChange={e => setDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value))))}
-              className="w-14 bg-transparent border border-[var(--color-border)] rounded-lg px-2 py-1.5 text-sm text-center focus:outline-none focus:border-[var(--color-accent)]" />
-            <span className="text-xs text-[var(--color-muted)]">日</span>
+          {/* Day of month + label */}
+          <div className="flex items-center px-4 py-3.5 border-b border-[var(--color-border)] gap-3">
+            <span className="text-sm text-[var(--color-muted)] shrink-0">記錄日期</span>
+            <div className="flex items-center gap-1.5 ml-auto">
+              <span className="text-xs text-[var(--color-muted)]">每月</span>
+              <input
+                type="number" min="1" max="31" value={dayOfMonth}
+                onChange={e => setDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value))))}
+                className="w-10 bg-transparent text-sm font-semibold text-center outline-none border-b border-[var(--color-border)]" />
+              <span className="text-xs text-[var(--color-muted)]">日</span>
+            </div>
           </div>
 
           {/* Label */}
-          <input placeholder="標籤（選填）" value={label} onChange={e => setLabel(e.target.value)}
-            className="w-full bg-transparent border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--color-accent)]" />
-
-          {/* Effective dates */}
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-xs text-[var(--color-muted)]">開始日期</label>
-              <input type="date" value={effectiveFrom} onChange={e => setEffectiveFrom(e.target.value)}
-                className="w-full bg-transparent border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:border-[var(--color-accent)]" />
-            </div>
-            <div>
-              <label className="text-xs text-[var(--color-muted)]">有效期限（空白為永遠）</label>
-              <input type="date" value={effectiveTo} onChange={e => setEffectiveTo(e.target.value)}
-                className="w-full bg-transparent border border-[var(--color-border)] rounded-lg px-3 py-2 text-sm mt-1 focus:outline-none focus:border-[var(--color-accent)]" />
-            </div>
+          <div className="flex items-center px-4 py-3.5 border-b border-[var(--color-border)]">
+            <span className="text-sm text-[var(--color-muted)]">標籤</span>
+            <input
+              placeholder="選填" value={label} onChange={e => setLabel(e.target.value)}
+              className="flex-1 text-right bg-transparent text-sm outline-none placeholder:text-[var(--color-border)]" />
           </div>
 
-          <button onClick={handleCreate} disabled={!amount || Number(amount) <= 0 || saving}
-            className="w-full bg-[var(--color-accent)] text-white rounded-lg py-2 text-sm font-medium disabled:opacity-40 transition-opacity">
+          {/* Advanced toggle */}
+          <button
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="w-full px-4 py-2.5 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] text-left flex items-center gap-1.5 transition-colors border-b border-[var(--color-border)]">
+            <span className={`inline-block transition-transform text-[10px] ${showAdvanced ? 'rotate-90' : ''}`}>▶</span>
+            有效期限
+            {!showAdvanced && <span className="opacity-50 ml-0.5">（預設即日起永遠有效）</span>}
+          </button>
+          {showAdvanced && (
+            <div className="grid grid-cols-2 divide-x divide-[var(--color-border)] border-b border-[var(--color-border)]">
+              <div className="px-4 py-3">
+                <p className="text-xs text-[var(--color-muted)] mb-1.5">開始</p>
+                <input type="date" value={effectiveFrom} onChange={e => setEffectiveFrom(e.target.value)}
+                  className="w-full bg-transparent text-sm outline-none" />
+              </div>
+              <div className="px-4 py-3">
+                <p className="text-xs text-[var(--color-muted)] mb-1.5">結束（空白=永遠）</p>
+                <input type="date" value={effectiveTo} onChange={e => setEffectiveTo(e.target.value)}
+                  className="w-full bg-transparent text-sm outline-none" />
+              </div>
+            </div>
+          )}
+
+          <button
+            onClick={handleCreate} disabled={!amount || Number(amount) <= 0 || saving}
+            className="w-full py-3 bg-[var(--color-accent)] text-white text-sm font-semibold disabled:opacity-40 transition-opacity">
             {saving ? '儲存中…' : '建立'}
           </button>
         </div>
       )}
 
       {/* ── Entry list ── */}
-      {!entries?.length && !showForm && (
-        <p className="text-sm text-[var(--color-muted)]">尚無定期現金流記錄</p>
-      )}
-      {entries && entries.length > 0 && (
+      {entries && entries.length > 0 ? (
         <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
           {entries.map((entry, i) => {
             const isActive = entry.effectiveFrom <= today && (!entry.effectiveTo || entry.effectiveTo >= today)
             return (
               <div key={entry.id}
-                className={`flex items-start justify-between px-4 py-3 text-sm
+                className={`flex items-center gap-3 px-4 py-2.5 text-sm
                   ${i < entries.length - 1 ? 'border-b border-[var(--color-border)]' : ''}
-                  ${!isActive ? 'opacity-50' : ''}`}>
-                <div className="flex items-start gap-2.5">
-                  <span className={`mt-0.5 text-xs px-2 py-0.5 rounded-full shrink-0
-                    ${entry.type === 'income' ? 'bg-green-500/10 text-green-500' : 'bg-red-400/10 text-red-400'}`}>
-                    {entry.type === 'income' ? '收入' : '支出'}
-                  </span>
-                  <div>
-                    <div className="font-medium tabular-nums">
-                      <span className={entry.type === 'income' ? 'text-green-500' : 'text-red-400'}>
-                        {fmt(entry.amount, entry.type)}
-                      </span>
-                      <span className="text-[var(--color-muted)] font-normal text-xs ml-1">{entry.currencyCode}</span>
-                      <span className="text-[var(--color-muted)] font-normal text-xs ml-2">每月 {entry.dayOfMonth} 日</span>
-                    </div>
-                    {entry.label && <div className="text-xs text-[var(--color-muted)] mt-0.5">{entry.label}</div>}
-                    <div className="text-xs text-[var(--color-muted)] mt-0.5">
-                      {entry.effectiveFrom} → {entry.effectiveTo ?? '永遠'}
-                      {!isActive && <span className="ml-2 text-yellow-500">（已失效）</span>}
-                    </div>
-                  </div>
-                </div>
+                  ${!isActive ? 'opacity-40' : ''}`}>
+                <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${entry.type === 'income' ? 'bg-green-500' : 'bg-red-400'}`} />
+                <span className={`font-semibold tabular-nums shrink-0 ${entry.type === 'income' ? 'text-green-500' : 'text-red-400'}`}>
+                  {entry.type === 'income' ? '+' : '-'}{Number(entry.amount).toLocaleString()} {entry.currencyCode}
+                </span>
+                <span className="text-xs text-[var(--color-muted)] shrink-0">每月{entry.dayOfMonth}日</span>
+                {entry.label && (
+                  <span className="text-xs text-[var(--color-muted)] truncate">{entry.label}</span>
+                )}
                 <button onClick={() => handleDelete(entry.id)}
-                  className="text-[var(--color-muted)] hover:text-red-400 transition-colors text-xs ml-3 shrink-0 mt-0.5">
-                  刪除
+                  className="ml-auto text-[var(--color-muted)] hover:text-red-400 transition-colors shrink-0 text-base leading-none">
+                  ×
                 </button>
               </div>
             )
           })}
         </div>
-      )}
-    </section>
+      ) : !showForm ? (
+        <p className="text-xs text-[var(--color-muted)] text-center py-3">尚無定期現金流</p>
+      ) : null}
+    </div>
   )
 }
