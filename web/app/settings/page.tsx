@@ -1,15 +1,12 @@
 'use client'
-import { useState, useEffect, useTransition, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
-import { useRouter } from 'next/navigation'
 import { setLocale } from '@/app/actions/setLocale'
 import { SUPPORTED_LOCALES } from '@/lib/locales'
 import { BASE } from '@/lib/api'
 
 export default function SettingsPage() {
   const t = useTranslations()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
   const [dark, setDark] = useState(false)
   const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [importing, setImporting] = useState(false)
@@ -59,11 +56,13 @@ export default function SettingsPage() {
     }
   }
 
-  function handleLocale(locale: string) {
-    startTransition(async () => {
-      await setLocale(locale)
-      router.refresh()
-    })
+  async function handleLocale(locale: string) {
+    const html = document.documentElement
+    html.classList.add('lang-exit')
+    await new Promise(r => setTimeout(r, 260))
+    localStorage.setItem('lang-anim', '1')
+    await setLocale(locale)
+    window.location.reload()
   }
 
   return (
@@ -79,10 +78,8 @@ export default function SettingsPage() {
         <p className="text-sm font-medium">{t('settings.language')}</p>
         <div className="flex gap-2">
           {SUPPORTED_LOCALES.map(locale => (
-            <button key={locale} onClick={() => handleLocale(locale)} disabled={isPending}
-              className={`px-4 py-2 rounded-lg text-sm border transition-colors
-                ${isPending ? 'opacity-50 cursor-not-allowed' : ''}
-                `}
+            <button key={locale} onClick={() => handleLocale(locale)}
+              className="px-4 py-2 rounded-lg text-sm border transition-colors"
               style={{
                 background: 'var(--color-surface)',
                 borderColor: 'var(--color-border)',
