@@ -230,7 +230,7 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
                 <div
                   onClick={() => !isEditing && openEdit(entry)}
                   className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors
-                    ${!isEditing ? 'cursor-pointer hover:bg-[var(--color-bg)]' : 'bg-[var(--color-bg)]'}
+                    ${!isEditing ? 'cursor-pointer hover:bg-[var(--color-bg)]' : ''}
                     ${!isActive ? 'opacity-40' : ''}`}>
                   <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${entry.type === 'income' ? 'bg-green-500' : 'bg-red-400'}`} />
                   <span className={`font-semibold tabular-nums shrink-0 ${entry.type === 'income' ? 'text-green-500' : 'text-red-400'}`}>
@@ -249,7 +249,7 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
                 {isEditing && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setEditingId(null)} />
-                    <div className="relative z-20 mx-2 mt-0 mb-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl overflow-hidden"
+                    <div className="relative z-20 mx-2 mt-2 mb-2.5 rounded-2xl border border-[var(--color-accent)]/40 bg-[var(--color-surface)] shadow-xl overflow-hidden"
                       style={{ animation: 'bubbleIn 0.2s cubic-bezier(0.34,1.4,0.64,1) both' }}>
 
                       {/* Type toggle — slim segmented at top */}
