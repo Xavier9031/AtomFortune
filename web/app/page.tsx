@@ -66,7 +66,7 @@ export default function DashboardPage() {
 
   return (
     <div data-testid="dashboard-root">
-      <NetWorthHeader summary={liveSummary} />
+      <NetWorthHeader summary={liveSummary} currency={currency} />
       <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)]">
         <h2 className="text-sm font-semibold mb-3">{t('allocation')}</h2>
         <AllocationBreakdown
