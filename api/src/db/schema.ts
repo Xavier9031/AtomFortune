@@ -1,16 +1,17 @@
-import { pgTable, uuid, text, numeric, date, timestamp, primaryKey, integer } from 'drizzle-orm/pg-core'
+import { sqliteTable, text, numeric, integer, primaryKey } from 'drizzle-orm/sqlite-core'
+import { sql } from 'drizzle-orm'
 
-export const tickers = pgTable('tickers', {
+export const tickers = sqliteTable('tickers', {
   symbol: text('symbol').primaryKey(),
   name: text('name').notNull(),
   type: text('type').notNull(),      // 'stock' | 'etf'
   exchange: text('exchange'),        // 'TWSE' | 'TPEX' | 'NASDAQ' | 'NYSE' ...
   country: text('country'),          // 'TW' | 'US'
-  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
-export const assets = pgTable('assets', {
-  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+export const assets = sqliteTable('assets', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull(),
   assetClass: text('assetClass').notNull(),
   category: text('category').notNull(),
@@ -20,82 +21,82 @@ export const assets = pgTable('assets', {
   currencyCode: text('currencyCode').notNull(),
   pricingMode: text('pricingMode').notNull(),
   unit: text('unit'),
-  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
-export const accounts = pgTable('accounts', {
-  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+export const accounts = sqliteTable('accounts', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull(),
   institution: text('institution'),
   accountType: text('accountType').notNull(),
   note: text('note'),
-  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
-export const holdings = pgTable('holdings', {
-  assetId: uuid('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
-  accountId: uuid('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
-  quantity: numeric('quantity', { precision: 24, scale: 8 }).notNull(),
-  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+export const holdings = sqliteTable('holdings', {
+  assetId: text('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  accountId: text('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+  quantity: numeric('quantity').notNull(),
+  createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (t) => ({ pk: primaryKey({ columns: [t.assetId, t.accountId] }) }))
 
-export const transactions = pgTable('transactions', {
-  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  assetId: uuid('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
-  accountId: uuid('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+export const transactions = sqliteTable('transactions', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  assetId: text('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  accountId: text('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
   txnType: text('txnType').notNull(),
-  quantity: numeric('quantity', { precision: 24, scale: 8 }).notNull(),
-  txnDate: date('txnDate').notNull(),
+  quantity: numeric('quantity').notNull(),
+  txnDate: text('txnDate').notNull(),
   note: text('note'),
-  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
-export const prices = pgTable('prices', {
-  assetId: uuid('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
-  priceDate: date('priceDate').notNull(),
-  price: numeric('price', { precision: 24, scale: 8 }).notNull(),
+export const prices = sqliteTable('prices', {
+  assetId: text('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  priceDate: text('priceDate').notNull(),
+  price: numeric('price').notNull(),
   source: text('source').notNull(),
-  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (t) => ({ pk: primaryKey({ columns: [t.assetId, t.priceDate] }) }))
 
-export const fxRates = pgTable('fxRates', {
+export const fxRates = sqliteTable('fxRates', {
   fromCurrency: text('fromCurrency').notNull(),
   toCurrency: text('toCurrency').notNull(),
-  rateDate: date('rateDate').notNull(),
-  rate: numeric('rate', { precision: 24, scale: 10 }).notNull(),
+  rateDate: text('rateDate').notNull(),
+  rate: numeric('rate').notNull(),
   source: text('source').notNull(),
-  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (t) => ({ pk: primaryKey({ columns: [t.fromCurrency, t.toCurrency, t.rateDate] }) }))
 
-export const snapshotItems = pgTable('snapshotItems', {
-  snapshotDate: date('snapshotDate').notNull(),
-  assetId: uuid('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
-  accountId: uuid('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
-  quantity: numeric('quantity', { precision: 24, scale: 8 }).notNull(),
-  price: numeric('price', { precision: 24, scale: 8 }).notNull(),
-  fxRate: numeric('fxRate', { precision: 24, scale: 10 }).notNull(),
-  valueInBase: numeric('valueInBase', { precision: 24, scale: 8 }).notNull(),
-  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+export const snapshotItems = sqliteTable('snapshotItems', {
+  snapshotDate: text('snapshotDate').notNull(),
+  assetId: text('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
+  accountId: text('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+  quantity: numeric('quantity').notNull(),
+  price: numeric('price').notNull(),
+  fxRate: numeric('fxRate').notNull(),
+  valueInBase: numeric('valueInBase').notNull(),
+  createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 }, (t) => ({ pk: primaryKey({ columns: [t.snapshotDate, t.assetId, t.accountId] }) }))
 
-export const recurringEntries = pgTable('recurringEntries', {
-  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
-  assetId: uuid('assetId').references(() => assets.id, { onDelete: 'cascade' }),
-  accountId: uuid('accountId').references(() => accounts.id, { onDelete: 'cascade' }),
+export const recurringEntries = sqliteTable('recurringEntries', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  assetId: text('assetId').references(() => assets.id, { onDelete: 'cascade' }),
+  accountId: text('accountId').references(() => accounts.id, { onDelete: 'cascade' }),
   type: text('type').notNull(),  // 'income' | 'expense'
-  amount: numeric('amount', { precision: 24, scale: 8 }).notNull(),
+  amount: numeric('amount').notNull(),
   currencyCode: text('currencyCode').notNull().default('TWD'),
   dayOfMonth: integer('dayOfMonth').notNull().default(1),
   label: text('label'),
-  effectiveFrom: date('effectiveFrom').notNull(),
-  effectiveTo: date('effectiveTo'),
-  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+  effectiveFrom: text('effectiveFrom').notNull(),
+  effectiveTo: text('effectiveTo'),
+  createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 })

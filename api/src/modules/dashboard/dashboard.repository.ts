@@ -85,13 +85,13 @@ export async function getLiveHoldings(db: DrizzleDB) {
     unit: assets.unit,
     quantity: holdings.quantity,
     price: sql<string>`COALESCE(
-      (SELECT p.price FROM prices p WHERE p."assetId" = ${assets.id}
-       ORDER BY p."priceDate" DESC LIMIT 1), '1')`,
+      (SELECT p.price FROM prices p WHERE p.assetId = ${assets.id}
+       ORDER BY p.priceDate DESC LIMIT 1), '1')`,
     fxToBase: sql<string>`CASE WHEN ${assets.currencyCode} = 'TWD' THEN '1'
       ELSE COALESCE(
-        (SELECT fx.rate FROM "fxRates" fx
-         WHERE fx."fromCurrency" = ${assets.currencyCode} AND fx."toCurrency" = 'TWD'
-         ORDER BY fx."rateDate" DESC LIMIT 1), '1')
+        (SELECT fx.rate FROM fxRates fx
+         WHERE fx.fromCurrency = ${assets.currencyCode} AND fx.toCurrency = 'TWD'
+         ORDER BY fx.rateDate DESC LIMIT 1), '1')
       END`,
   })
   .from(holdings)

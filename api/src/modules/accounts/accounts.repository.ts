@@ -31,7 +31,7 @@ export class AccountsRepository {
     return this.db.insert(accounts).values(data).returning().then(r => r[0])
   }
   update(id: string, data: Partial<typeof accounts.$inferInsert>) {
-    return this.db.update(accounts).set({ ...data, updatedAt: new Date() })
+    return this.db.update(accounts).set({ ...data, updatedAt: new Date().toISOString() })
       .where(eq(accounts.id, id)).returning().then(r => r[0] ?? null)
   }
   delete(id: string) {

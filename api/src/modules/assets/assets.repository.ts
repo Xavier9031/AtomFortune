@@ -16,7 +16,7 @@ export class AssetsRepository {
   }
 
   update(id: string, data: Partial<typeof assets.$inferInsert>) {
-    return this.db.update(assets).set({ ...data, updatedAt: new Date() })
+    return this.db.update(assets).set({ ...data, updatedAt: new Date().toISOString() })
       .where(eq(assets.id, id)).returning().then(r => r[0] ?? null)
   }
 

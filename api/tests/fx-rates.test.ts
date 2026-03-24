@@ -15,7 +15,7 @@ describe('POST /api/v1/fx-rates/manual', () => {
     expect(res.status).toBe(201)
     const body = await res.json()
     expect(body.fromCurrency).toBe('USD')
-    expect(body.rate).toBe('32.6700000000')
+    expect(Number(body.rate)).toBeCloseTo(32.67)
   })
 
   it('upserts on conflict (same currency pair + date)', async () => {
@@ -29,7 +29,7 @@ describe('POST /api/v1/fx-rates/manual', () => {
       body: JSON.stringify({ ...payload, rate: 32.50 }),
     })
     expect(res.status).toBe(201)
-    expect((await res.json()).rate).toBe('32.5000000000')
+    expect(Number((await res.json()).rate)).toBeCloseTo(32.5)
   })
 
   it('returns 422 if rate is zero or negative', async () => {

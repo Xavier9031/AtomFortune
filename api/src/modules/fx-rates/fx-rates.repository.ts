@@ -20,7 +20,7 @@ export class FxRatesRepository {
       .values({ fromCurrency: from, toCurrency: to, rateDate, rate, source })
       .onConflictDoUpdate({
         target: [fxRates.fromCurrency, fxRates.toCurrency, fxRates.rateDate],
-        set: { rate, source, updatedAt: new Date() },
+        set: { rate, source, updatedAt: new Date().toISOString() },
       })
       .returning().then(r => r[0])
   }

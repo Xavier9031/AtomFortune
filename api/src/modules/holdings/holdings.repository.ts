@@ -24,9 +24,9 @@ export class HoldingsRepository {
         institution: accounts.institution,
         updatedAt: holdings.updatedAt,
         latestValueInBase: sql<string | null>`(
-          SELECT si."valueInBase" FROM "snapshotItems" si
-          WHERE si."assetId" = ${holdings.assetId} AND si."accountId" = ${holdings.accountId}
-          ORDER BY si."snapshotDate" DESC LIMIT 1
+          SELECT si.valueInBase FROM snapshotItems si
+          WHERE si.assetId = ${holdings.assetId} AND si.accountId = ${holdings.accountId}
+          ORDER BY si.snapshotDate DESC LIMIT 1
         )`,
       })
       .from(holdings)
@@ -48,7 +48,7 @@ export class HoldingsRepository {
       .values({ assetId, accountId, quantity })
       .onConflictDoUpdate({
         target: [holdings.assetId, holdings.accountId],
-        set: { quantity, updatedAt: new Date() },
+        set: { quantity, updatedAt: new Date().toISOString() },
       })
       .returning().then(r => r[0])
   }

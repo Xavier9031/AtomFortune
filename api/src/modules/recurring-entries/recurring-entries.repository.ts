@@ -44,7 +44,7 @@ export class RecurringEntriesRepository {
     dayOfMonth: number; label: string | null
     effectiveFrom: string; effectiveTo: string | null
   }>) {
-    const set: Record<string, unknown> = { updatedAt: new Date() }
+    const set: Record<string, unknown> = { updatedAt: new Date().toISOString() }
     if (data.type !== undefined) set.type = data.type
     if (data.amount !== undefined) set.amount = String(data.amount)
     if (data.currencyCode !== undefined) set.currencyCode = data.currencyCode

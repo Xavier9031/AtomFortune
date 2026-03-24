@@ -23,7 +23,7 @@ describe('PUT /api/v1/holdings/:assetId/:accountId', () => {
       body: JSON.stringify({ quantity: 0.5 }),
     })
     expect(res.status).toBe(200)
-    expect((await res.json()).quantity).toBe('0.50000000')
+    expect(Number((await res.json()).quantity)).toBeCloseTo(0.5)
   })
 
   it('returns 404 if asset does not exist', async () => {

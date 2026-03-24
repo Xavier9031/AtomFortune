@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
-import { migrate } from 'drizzle-orm/postgres-js/migrator'
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import assetsController from './modules/assets/assets.controller'
 import accountsController from './modules/accounts/accounts.controller'
 import holdingsController from './modules/holdings/holdings.controller'
@@ -52,37 +52,24 @@ app.onError((err, c) => {
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
 
-async function migrateWithRetry(migrationsFolder: string, retries = 10, delayMs = 3000) {
-  for (let i = 1; i <= retries; i++) {
-    try {
-      await migrate(db, { migrationsFolder })
-      return
-    } catch (err) {
-      if (i === retries) throw err
-      console.log(`DB not ready, retrying in ${delayMs / 1000}s... (${i}/${retries})`)
-      await new Promise(r => setTimeout(r, delayMs))
-    }
-  }
-}
-
 if (process.env.NODE_ENV !== 'test') {
   const migrationsFolder = path.join(__dirname, '..', 'drizzle')
-  migrateWithRetry(migrationsFolder)
-    .then(async () => {
-      console.log('DB migrations applied')
-      try {
-        await refreshFxRates(db)
-        console.log('FX rates refreshed')
-      } catch (err) {
-        console.warn('FX rate refresh failed (continuing without rates):', err)
-      }
-      tickersService.seedTaiwanStocks().catch(err =>
-        console.warn('TW ticker seed failed:', err)
-      )
-    })
-    .catch(err => console.error('Migration failed after retries:', err))
+  migrate(db, { migrationsFolder })
+  console.log('DB migrations applied')
 
   serve({ fetch: app.fetch, port: config.port })
+
+  ;(async () => {
+    try {
+      await refreshFxRates(db)
+      console.log('FX rates refreshed')
+    } catch (err) {
+      console.warn('FX rate refresh failed (continuing without rates):', err)
+    }
+    tickersService.seedTaiwanStocks().catch(err =>
+      console.warn('TW ticker seed failed:', err)
+    )
+  })()
 
   // Register daily snapshot cron only outside test environment
   cron.schedule(config.snapshotSchedule, () => {

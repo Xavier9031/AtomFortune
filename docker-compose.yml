@@ -1,23 +1,14 @@
 services:
-  db:
-    image: postgres:16
-    environment:
-      POSTGRES_DB: atomfortune
-      POSTGRES_USER: atomfortune
-      POSTGRES_PASSWORD: atomfortune
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
   api:
     build: ./api
     environment:
-      DATABASE_URL: postgres://atomfortune:atomfortune@db:5432/atomfortune
+      DATABASE_PATH: /data/atomfortune.db
       BASE_CURRENCY: TWD
       SNAPSHOT_SCHEDULE: "0 22 * * *"
     ports:
       - "8000:8000"
-    depends_on: [db]
+    volumes:
+      - dbdata:/data
   web:
     build: ./web
     environment:
@@ -27,4 +18,4 @@ services:
       - "3000:3000"
     depends_on: [api]
 volumes:
-  pgdata:
+  dbdata:

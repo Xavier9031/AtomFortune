@@ -23,7 +23,7 @@ export class TransactionsRepository {
   }
 
   updateNote(id: string, note: string | null) {
-    return this.db.update(transactions).set({ note, updatedAt: new Date() })
+    return this.db.update(transactions).set({ note, updatedAt: new Date().toISOString() })
       .where(eq(transactions.id, id)).returning().then(r => r[0] ?? null)
   }
 

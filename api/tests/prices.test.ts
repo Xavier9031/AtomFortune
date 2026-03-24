@@ -19,7 +19,7 @@ describe('POST /api/v1/prices/manual', () => {
     })
     expect(res.status).toBe(201)
     const body = await res.json()
-    expect(body.price).toBe('7900000.00000000')
+    expect(Number(body.price)).toBe(7900000)
     expect(body.source).toBe('manual')
   })
 

@@ -18,7 +18,7 @@ export class PricesRepository {
       .values({ assetId, priceDate, price, source })
       .onConflictDoUpdate({
         target: [prices.assetId, prices.priceDate],
-        set: { price, source, updatedAt: new Date() },
+        set: { price, source, updatedAt: new Date().toISOString() },
       })
       .returning().then(r => r[0])
   }

@@ -72,7 +72,7 @@ async function upsertPrices(db: DrizzleDB, pricesMap: Map<string, number>, today
     await db.insert(prices)
       .values({ assetId, priceDate: today, price: String(price), source: 'yahoo-finance2' })
       .onConflictDoUpdate({ target: [prices.assetId, prices.priceDate],
-                            set: { price: String(price), source: 'yahoo-finance2', updatedAt: new Date() } })
+                            set: { price: String(price), source: 'yahoo-finance2', updatedAt: new Date().toISOString() } })
   }
 }
 
@@ -82,7 +82,7 @@ async function upsertFxRates(db: DrizzleDB, rates: Awaited<ReturnType<typeof fet
       .values({ fromCurrency: r.fromCurrency, toCurrency: r.toCurrency,
                 rateDate: today, rate: String(r.rate), source: r.source })
       .onConflictDoUpdate({ target: [fxRates.fromCurrency, fxRates.toCurrency, fxRates.rateDate],
-                            set: { rate: String(r.rate), source: r.source, updatedAt: new Date() } })
+                            set: { rate: String(r.rate), source: r.source, updatedAt: new Date().toISOString() } })
   }
 }
 

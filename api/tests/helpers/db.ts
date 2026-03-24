@@ -1,20 +1,25 @@
-import postgres from 'postgres'
-import { drizzle } from 'drizzle-orm/postgres-js'
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { sql } from 'drizzle-orm'
-import * as schema from '../../src/db/schema'
+import path from 'path'
+import { db } from '../../src/db/client'
 
-const TEST_DB_URL = process.env.TEST_DATABASE_URL
-  ?? 'postgres://atomfortune:atomfortune@localhost:5432/test_atomfortune'
+// Run migrations once when test suite loads
+migrate(db, { migrationsFolder: path.join(__dirname, '../../drizzle') })
 
-const client = postgres(TEST_DB_URL)
-export const testDb = drizzle(client, { schema })
+export const testDb = db
 
-export async function cleanDb() {
-  await testDb.execute(
-    sql`TRUNCATE "snapshotItems", transactions, holdings, prices, "fxRates", accounts, assets RESTART IDENTITY CASCADE`
-  )
+export function cleanDb() {
+  db.run(sql`DELETE FROM snapshotItems`)
+  db.run(sql`DELETE FROM transactions`)
+  db.run(sql`DELETE FROM holdings`)
+  db.run(sql`DELETE FROM prices`)
+  db.run(sql`DELETE FROM fxRates`)
+  db.run(sql`DELETE FROM recurringEntries`)
+  db.run(sql`DELETE FROM accounts`)
+  db.run(sql`DELETE FROM assets`)
+  db.run(sql`DELETE FROM tickers`)
 }
 
-export async function closeDb() {
-  await client.end()
+export function closeDb() {
+  // no-op: better-sqlite3 closes on process exit
 }
