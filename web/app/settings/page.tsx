@@ -1,7 +1,8 @@
 'use client'
 import { useState, useEffect, useRef, useTransition } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
+import { Download, Upload, Clock } from 'lucide-react'
 import { setLocale } from '@/app/actions/setLocale'
 import { setTheme } from '@/app/actions/setTheme'
 import { SUPPORTED_LOCALES } from '@/lib/locales'
@@ -9,6 +10,7 @@ import { BASE } from '@/lib/api'
 
 export default function SettingsPage() {
   const t = useTranslations()
+  const locale = useLocale()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const wasPending = useRef(false)
@@ -23,7 +25,6 @@ export default function SettingsPage() {
     setDark(document.documentElement.dataset.theme === 'dark')
   }, [])
 
-  // Resolve the View Transition promise once router.refresh() has committed
   useEffect(() => {
     if (wasPending.current && !isPending) {
       wasPending.current = false
@@ -70,9 +71,9 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleLocale(locale: string) {
+  async function handleLocale(next: string) {
     if (!document.startViewTransition) {
-      await setLocale(locale)
+      await setLocale(next)
       wasPending.current = true
       startTransition(() => router.refresh())
       return
@@ -80,66 +81,111 @@ export default function SettingsPage() {
     document.startViewTransition(() => new Promise<void>((resolve) => {
       resolveRef.current = resolve
       wasPending.current = true
-      setLocale(locale).then(() => startTransition(() => router.refresh()))
+      setLocale(next).then(() => startTransition(() => router.refresh()))
     }))
   }
 
   return (
-    <main className="p-6 max-w-lg mx-auto space-y-8">
+    <main className="p-6 max-w-lg mx-auto space-y-5">
       <h1 className="text-xl font-bold">{t('settings.title')}</h1>
 
-      <section className="flex items-center gap-3">
-        <label htmlFor="darkMode" className="text-sm font-medium">{t('settings.darkMode')}</label>
-        <input id="darkMode" type="checkbox" checked={dark} onChange={e => handleDark(e.target.checked)} />
-      </section>
+      {/* Appearance */}
+      <section className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <div className="px-5 py-3 border-b border-[var(--color-border)]">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            {t('settings.sectionAppearance')}
+          </h2>
+        </div>
+        <div className="divide-y divide-[var(--color-border)]">
 
-      <section className="space-y-2">
-        <p className="text-sm font-medium">{t('settings.language')}</p>
-        <div className="flex gap-2">
-          {SUPPORTED_LOCALES.map(locale => (
-            <button key={locale} onClick={() => handleLocale(locale)}
-              className="px-4 py-2 rounded-lg text-sm border transition-colors"
-              style={{
-                background: 'var(--color-surface)',
-                borderColor: 'var(--color-border)',
-              }}>
-              {t(`settings.languages.${locale}`)}
+          <div className="flex items-center justify-between px-5 py-4">
+            <p className="text-sm font-medium">{t('settings.language')}</p>
+            <div className="flex rounded-lg overflow-hidden border border-[var(--color-border)]">
+              {SUPPORTED_LOCALES.map(loc => (
+                <button key={loc}
+                  onClick={() => handleLocale(loc)}
+                  disabled={isPending}
+                  className={`px-4 py-1.5 text-sm font-medium transition-colors disabled:opacity-50
+                    ${loc === locale
+                      ? 'bg-[var(--color-accent)] text-white'
+                      : 'hover:bg-[var(--color-bg)]'}`}>
+                  {t(`settings.languages.${loc}` as Parameters<typeof t>[0])}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between px-5 py-4">
+            <p className="text-sm font-medium">{t('settings.darkMode')}</p>
+            <button
+              role="switch"
+              aria-checked={dark}
+              onClick={() => handleDark(!dark)}
+              className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors
+                ${dark ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]'}`}>
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform
+                ${dark ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
-          ))}
+          </div>
+
         </div>
       </section>
 
-      <section className="space-y-1">
-        <p className="text-sm font-medium text-[var(--color-muted)]">{t('settings.snapshotSchedule')}</p>
-        <code className="text-sm bg-[var(--color-bg)] px-3 py-1 rounded border">{schedule}</code>
-        <p className="text-xs text-[var(--color-muted)]">{t('settings.snapshotScheduleDesc')}</p>
-      </section>
-
-      <section className="space-y-3">
-        <div>
-          <p className="text-sm font-medium">{t('settings.backup')}</p>
-          <p className="text-xs text-[var(--color-muted)] mt-1">{t('settings.backupDesc')}</p>
+      {/* Backup & Restore */}
+      <section className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <div className="px-5 py-3 border-b border-[var(--color-border)]">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            {t('settings.sectionBackup')}
+          </h2>
         </div>
-        <div className="flex gap-3">
-          <button onClick={handleExport}
-            className="px-4 py-2 rounded-lg text-sm border transition-colors"
-            style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-            {t('settings.exportButton')}
-          </button>
-          <button onClick={() => fileRef.current?.click()} disabled={importing}
-            className="px-4 py-2 rounded-lg text-sm border transition-colors disabled:opacity-50"
-            style={{ background: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-            {importing ? t('settings.importing') : t('settings.importButton')}
-          </button>
+        <div className="px-5 py-4 space-y-4">
+          <p className="text-sm text-[var(--color-muted)]">{t('settings.backupDesc')}</p>
+          <div className="flex gap-3">
+            <button onClick={handleExport}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                bg-[var(--color-accent)] text-white hover:opacity-90 transition-opacity">
+              <Download size={14} />
+              {t('settings.exportButton')}
+            </button>
+            <button onClick={() => fileRef.current?.click()} disabled={importing}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                border border-[var(--color-border)] hover:border-[var(--color-accent)]
+                hover:text-[var(--color-accent)] transition-colors disabled:opacity-50">
+              <Upload size={14} />
+              {importing ? t('settings.importing') : t('settings.importButton')}
+            </button>
+          </div>
           <input ref={fileRef} type="file" accept=".zip" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) handleImport(f) }} />
+          {importMsg && (
+            <p className={`text-xs ${importMsg.ok ? 'text-[var(--color-accent)]' : 'text-[var(--color-coral)]'}`}>
+              {importMsg.text}
+            </p>
+          )}
         </div>
-        {importMsg && (
-          <p className={`text-xs ${importMsg.ok ? 'text-green-500' : 'text-red-400'}`}>
-            {importMsg.text}
-          </p>
-        )}
       </section>
+
+      {/* System */}
+      <section className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <div className="px-5 py-3 border-b border-[var(--color-border)]">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
+            {t('settings.sectionSystem')}
+          </h2>
+        </div>
+        <div className="px-5 py-4">
+          <div className="flex items-start gap-3">
+            <Clock size={14} className="mt-0.5 text-[var(--color-muted)] shrink-0" />
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">{t('settings.snapshotSchedule')}</p>
+              <code className="block text-xs bg-[var(--color-bg)] px-2.5 py-1 rounded border border-[var(--color-border)]">
+                {schedule}
+              </code>
+              <p className="text-xs text-[var(--color-muted)]">{t('settings.snapshotScheduleDesc')}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </main>
   )
 }

@@ -273,6 +273,9 @@
   },
   "settings": {
     "title": "設定",
+    "sectionAppearance": "外觀",
+    "sectionBackup": "備份與還原",
+    "sectionSystem": "系統資訊",
     "darkMode": "深色模式",
     "language": "語言",
     "snapshotSchedule": "快照排程（唯讀）",

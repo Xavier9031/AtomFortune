@@ -273,6 +273,9 @@
   },
   "settings": {
     "title": "Settings",
+    "sectionAppearance": "Appearance",
+    "sectionBackup": "Backup & Restore",
+    "sectionSystem": "System",
     "darkMode": "Dark Mode",
     "language": "Language",
     "snapshotSchedule": "Snapshot Schedule (read-only)",
