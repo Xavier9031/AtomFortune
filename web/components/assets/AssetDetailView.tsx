@@ -207,7 +207,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
       </section>
 
       {/* ── Value trend chart ── */}
-      <section>
+      <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold">{t('assets.detail.valueTrend')}</h2>
           <div className="flex gap-1 p-0.5 bg-[var(--color-bg)] rounded-lg">
