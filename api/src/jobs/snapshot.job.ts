@@ -34,7 +34,11 @@ export async function resolvePrice(
   tx: DrizzleDB, assetId: string, pricingMode: string, today: string
 ): Promise<number | null> {
   if (pricingMode === 'fixed') return 1.0
-  const cutoff = formatDate(new Date(Date.now() - 30 * 86400_000))
+  // manual: carry the most recent price ever set (no time cutoff)
+  // market: only use prices from the last 30 days (stale quotes are misleading)
+  const cutoff = pricingMode === 'manual'
+    ? '2000-01-01'
+    : formatDate(new Date(Date.now() - 30 * 86400_000))
   const rows = await tx
     .select({ price: prices.price, priceDate: prices.priceDate })
     .from(prices)
