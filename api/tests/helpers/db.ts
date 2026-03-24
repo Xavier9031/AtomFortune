@@ -22,9 +22,12 @@ export function cleanDb() {
   db.run(sql`DELETE FROM users`)
 }
 
-export async function seedTestUser(id = 'default-user', name = 'Default') {
-  await testDb.insert(users).values({ id, name })
-  return id
+export async function seedTestUser(name?: string): Promise<{ id: string; name: string }> {
+  const values = name
+    ? { name }                       // auto-generate UUID via schema $defaultFn
+    : { id: 'default-user', name: 'Default' }  // backward-compat for existing tests
+  const [user] = await testDb.insert(users).values(values).returning()
+  return user
 }
 
 export function closeDb() {
