@@ -65,7 +65,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
     <div className="space-y-5">
 
       {/* ── Hero card ── */}
-      <section className="rounded-xl border border-[var(--color-border)] p-5 relative">
+      <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 relative">
         <button
           onClick={() => settingsOpen ? closeSettings() : setSettingsOpen(true)}
           title={t('assets.detail.settingsTitle')}
@@ -107,7 +107,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
 
       {/* ── Settings accordion ── */}
       {settingsOpen && (
-        <section className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+        <section className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
           <div className="grid grid-cols-[6rem_1fr] items-center px-4 py-3 border-b border-[var(--color-border)]">
             <span className="text-sm text-[var(--color-muted)]">{t('assets.detail.nameLabel')}</span>
             {editing
@@ -173,7 +173,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
         {holdings.length === 0 ? (
           <p className="text-sm text-[var(--color-muted)]">{t('assets.detail.noHoldings')}</p>
         ) : (
-          <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
             {holdings.map((h, i) => {
               const qty = Number(h.quantity)
               const pct = totalQty > 0 ? (qty / totalQty) * 100 : 0
@@ -251,7 +251,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
         {sortedTxns.length === 0 ? (
           <p className="text-sm text-[var(--color-muted)]">{t('assets.detail.noTransactions')}</p>
         ) : (
-          <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
             {sortedTxns.map((txn, i) => {
               const isPositive = txn.txnType === 'buy' || txn.txnType === 'transfer_in'
               const isNeutral = txn.txnType === 'adjustment'
