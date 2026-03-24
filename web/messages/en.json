@@ -5,7 +5,8 @@
     "assets": "Assets",
     "accounts": "Accounts",
     "snapshots": "Snapshots",
-    "settings": "Settings"
+    "settings": "Settings",
+    "experimental": "Experimental"
   },
   "common": {
     "save": "Save",
