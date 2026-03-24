@@ -36,90 +36,199 @@ function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: str
   )
 }
 
+// ── Shared form (bubble style) ───────────────────────────────────────────────
+
+interface EntryFormProps {
+  type: 'income' | 'expense'; setType: (v: 'income' | 'expense') => void
+  amount: string; setAmount: (v: string) => void
+  currencyCode: string; setCurrencyCode: (v: string) => void
+  dayOfMonth: number; setDayOfMonth: (v: number) => void
+  label: string; setLabel: (v: string) => void
+  showAdvanced: boolean; setShowAdvanced: (v: boolean) => void
+  effectiveFrom: string; setEffectiveFrom: (v: string) => void
+  hasEndDate: boolean; setHasEndDate: (v: boolean) => void
+  effectiveTo: string; setEffectiveTo: (v: string) => void
+  onSave: () => void
+  onCancel: () => void
+  saving: boolean
+  saveLabel?: string
+}
+
+function EntryForm({
+  type, setType, amount, setAmount, currencyCode, setCurrencyCode,
+  dayOfMonth, setDayOfMonth, label, setLabel,
+  showAdvanced, setShowAdvanced, effectiveFrom, setEffectiveFrom,
+  hasEndDate, setHasEndDate, effectiveTo, setEffectiveTo,
+  onSave, onCancel, saving, saveLabel = '儲存',
+}: EntryFormProps) {
+  return (
+    <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl overflow-hidden"
+      style={{ animation: 'bubbleIn 0.2s cubic-bezier(0.34,1.4,0.64,1) both' }}>
+
+      {/* Type toggle */}
+      <div className="flex border-b border-[var(--color-border)]">
+        {(['income', 'expense'] as const).map(t => (
+          <button key={t} onClick={() => setType(t)}
+            className={`flex-1 py-2 text-xs font-semibold transition-colors
+              ${type === t
+                ? t === 'income' ? 'bg-green-500/15 text-green-400' : 'bg-red-400/15 text-red-400'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
+            {t === 'income' ? '固定收入' : '固定支出'}
+          </button>
+        ))}
+      </div>
+
+      {/* Amount */}
+      <div className="flex items-baseline gap-2 px-4 pt-3 pb-2">
+        <input type="number" value={amount} min="0" autoFocus
+          onFocus={e => e.target.select()}
+          onChange={e => setAmount(e.target.value)}
+          placeholder="0"
+          className="flex-1 text-right bg-transparent text-2xl font-bold outline-none tabular-nums
+            [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+        <input value={currencyCode} maxLength={4}
+          onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
+          className="w-11 bg-transparent text-sm font-semibold text-[var(--color-muted)] text-center outline-none pb-0.5" />
+      </div>
+
+      {/* Day + label */}
+      <div className="flex items-center gap-3 px-4 pb-3 border-b border-[var(--color-border)]">
+        <div className="flex items-center gap-1 text-xs text-[var(--color-muted)] shrink-0">
+          <span>每月</span>
+          <input type="number" min="1" max="31" value={dayOfMonth}
+            onFocus={e => e.target.select()}
+            onChange={e => setDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value) || 1)))}
+            className="w-7 bg-transparent text-xs font-semibold text-center outline-none border-b border-[var(--color-border)]
+              [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+          <span>日</span>
+        </div>
+        <input placeholder="標籤（選填）" value={label}
+          onChange={e => setLabel(e.target.value)}
+          className="flex-1 bg-transparent text-xs outline-none text-[var(--color-text)] placeholder:text-[var(--color-border)]" />
+      </div>
+
+      {/* Advanced */}
+      <button onClick={() => setShowAdvanced(!showAdvanced)}
+        className="w-full text-left text-xs text-[var(--color-muted)] flex items-center gap-1.5 px-4 py-2.5 hover:text-[var(--color-text)] transition-colors">
+        <span className={`inline-block transition-transform text-[10px] ${showAdvanced ? 'rotate-90' : ''}`}>▶</span>
+        有效期限
+        {!showAdvanced && <span className="opacity-40">（選填）</span>}
+      </button>
+
+      {showAdvanced && (
+        <div className="space-y-3 px-4 pb-3 border-t border-[var(--color-border)]">
+          <div className="pt-3">
+            <p className="text-xs text-[var(--color-muted)] mb-2">開始月份</p>
+            <MonthYearPicker value={effectiveFrom} onChange={setEffectiveFrom} />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-[var(--color-muted)]">結束</p>
+              <div className="flex rounded-lg overflow-hidden border border-[var(--color-border)] text-xs">
+                <button onClick={() => { setHasEndDate(false); setEffectiveTo('') }}
+                  className={`px-3 py-1 transition-colors ${!hasEndDate ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)]'}`}>永遠</button>
+                <button onClick={() => { setHasEndDate(true); if (!effectiveTo) setEffectiveTo(effectiveFrom) }}
+                  className={`px-3 py-1 transition-colors border-l border-[var(--color-border)] ${hasEndDate ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)]'}`}>自訂</button>
+              </div>
+            </div>
+            {hasEndDate && <MonthYearPicker value={effectiveTo} onChange={setEffectiveTo} />}
+          </div>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex border-t border-[var(--color-border)]">
+        <button onClick={onCancel}
+          className="flex-1 py-2.5 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors border-r border-[var(--color-border)]">
+          取消
+        </button>
+        <button onClick={onSave} disabled={!amount || Number(amount) <= 0 || saving}
+          className="flex-1 py-2.5 text-xs font-semibold text-[var(--color-accent)] disabled:opacity-40 transition-opacity">
+          {saving ? '儲存中…' : saveLabel}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
+
+function useFormState(defaults?: Partial<RecurringEntry>) {
+  const now = new Date().toISOString().slice(0, 10)
+  const [type, setType] = useState<'income' | 'expense'>((defaults?.type as 'income' | 'expense') ?? 'income')
+  const [amount, setAmount] = useState(defaults?.amount ? String(Number(defaults.amount)) : '')
+  const [currencyCode, setCurrencyCode] = useState(defaults?.currencyCode ?? 'TWD')
+  const [dayOfMonth, setDayOfMonth] = useState(defaults?.dayOfMonth ?? 1)
+  const [label, setLabel] = useState(defaults?.label ?? '')
+  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [effectiveFrom, setEffectiveFrom] = useState(defaults?.effectiveFrom ?? now)
+  const [hasEndDate, setHasEndDate] = useState(!!defaults?.effectiveTo)
+  const [effectiveTo, setEffectiveTo] = useState(defaults?.effectiveTo ?? '')
+  const [saving, setSaving] = useState(false)
+
+  function reset() {
+    setType('income'); setAmount(''); setCurrencyCode('TWD')
+    setDayOfMonth(1); setLabel(''); setShowAdvanced(false)
+    setEffectiveFrom(now); setHasEndDate(false); setEffectiveTo('')
+  }
+
+  function fill(entry: RecurringEntry) {
+    setType(entry.type as 'income' | 'expense')
+    setAmount(String(Number(entry.amount)))
+    setCurrencyCode(entry.currencyCode)
+    setDayOfMonth(entry.dayOfMonth)
+    setLabel(entry.label ?? '')
+    setShowAdvanced(false)
+    setEffectiveFrom(entry.effectiveFrom)
+    setHasEndDate(!!entry.effectiveTo)
+    setEffectiveTo(entry.effectiveTo ?? '')
+  }
+
+  return {
+    type, setType, amount, setAmount, currencyCode, setCurrencyCode,
+    dayOfMonth, setDayOfMonth, label, setLabel,
+    showAdvanced, setShowAdvanced, effectiveFrom, setEffectiveFrom,
+    hasEndDate, setHasEndDate, effectiveTo, setEffectiveTo,
+    saving, setSaving, reset, fill,
+    payload: {
+      type, amount: Number(amount), currencyCode, dayOfMonth,
+      label: label || undefined, effectiveFrom,
+      effectiveTo: hasEndDate && effectiveTo ? effectiveTo : undefined,
+    },
+  }
+}
 
 export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string; accountId?: string }) {
   const swrKey = `${BASE}/recurring-entries?assetId=${assetId}${accountId ? `&accountId=${accountId}` : ''}`
   const { data: entries, mutate: revalidate } = useSWR<RecurringEntry[]>(swrKey, fetcher)
 
-  // ── Create form ──
   const [showForm, setShowForm] = useState(false)
-  const [type, setType] = useState<'income' | 'expense'>('income')
-  const [amount, setAmount] = useState('')
-  const [currencyCode, setCurrencyCode] = useState('TWD')
-  const [dayOfMonth, setDayOfMonth] = useState(1)
-  const [label, setLabel] = useState('')
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [effectiveFrom, setEffectiveFrom] = useState(new Date().toISOString().slice(0, 10))
-  const [hasEndDate, setHasEndDate] = useState(false)
-  const [effectiveTo, setEffectiveTo] = useState('')
-  const [saving, setSaving] = useState(false)
-
-  // ── Edit bubble ──
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [eType, setEType] = useState<'income' | 'expense'>('income')
-  const [eAmount, setEAmount] = useState('')
-  const [eCurrency, setECurrency] = useState('TWD')
-  const [eDayOfMonth, setEDayOfMonth] = useState(1)
-  const [eLabel, setELabel] = useState('')
-  const [eShowAdv, setEShowAdv] = useState(false)
-  const [eFrom, setEFrom] = useState('')
-  const [eHasEndDate, setEHasEndDate] = useState(false)
-  const [eTo, setETo] = useState('')
-  const [eSaving, setESaving] = useState(false)
 
-  function reset() {
-    setType('income'); setAmount(''); setCurrencyCode('TWD')
-    setDayOfMonth(1); setLabel(''); setShowAdvanced(false)
-    setEffectiveFrom(new Date().toISOString().slice(0, 10))
-    setHasEndDate(false); setEffectiveTo('')
-  }
-
-  function openEdit(entry: RecurringEntry) {
-    setEditingId(entry.id)
-    setEType(entry.type as 'income' | 'expense')
-    setEAmount(String(Number(entry.amount)))
-    setECurrency(entry.currencyCode)
-    setEDayOfMonth(entry.dayOfMonth)
-    setELabel(entry.label ?? '')
-    setEFrom(entry.effectiveFrom)
-    setEHasEndDate(!!entry.effectiveTo)
-    setETo(entry.effectiveTo ?? '')
-    setEShowAdv(false)
-  }
+  const create = useFormState()
+  const edit = useFormState()
 
   async function handleCreate() {
-    if (!amount || Number(amount) <= 0) return
-    setSaving(true)
+    if (!create.amount || Number(create.amount) <= 0) return
+    create.setSaving(true)
     await fetch(`${BASE}/recurring-entries`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        assetId, accountId: accountId || undefined,
-        type, amount: Number(amount), currencyCode,
-        dayOfMonth, label: label || undefined,
-        effectiveFrom,
-        effectiveTo: hasEndDate && effectiveTo ? effectiveTo : undefined,
-      }),
+      body: JSON.stringify({ assetId, accountId: accountId || undefined, ...create.payload }),
     })
-    setSaving(false); setShowForm(false); reset()
+    create.setSaving(false); setShowForm(false); create.reset()
     revalidate(); mutate(`${BASE}/recurring-entries`)
   }
 
   async function handleUpdate() {
-    if (!eAmount || Number(eAmount) <= 0) return
-    setESaving(true)
+    if (!edit.amount || Number(edit.amount) <= 0) return
+    edit.setSaving(true)
     await fetch(`${BASE}/recurring-entries/${editingId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: eType, amount: Number(eAmount), currencyCode: eCurrency,
-        dayOfMonth: eDayOfMonth, label: eLabel || undefined,
-        effectiveFrom: eFrom,
-        effectiveTo: eHasEndDate && eTo ? eTo : undefined,
-      }),
+      body: JSON.stringify(edit.payload),
     })
-    setESaving(false); setEditingId(null)
+    edit.setSaving(false); setEditingId(null)
     revalidate(); mutate(`${BASE}/recurring-entries`)
   }
 
@@ -127,6 +236,11 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
     await fetch(`${BASE}/recurring-entries/${id}`, { method: 'DELETE' })
     if (editingId === id) setEditingId(null)
     revalidate(); mutate(`${BASE}/recurring-entries`)
+  }
+
+  function openEdit(entry: RecurringEntry) {
+    edit.fill(entry)
+    setEditingId(entry.id)
   }
 
   const today = new Date().toISOString().slice(0, 10)
@@ -137,7 +251,7 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
       <div className="flex items-center justify-between mb-2">
         <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">自動記</p>
         <button
-          onClick={() => { setShowForm(!showForm); if (showForm) reset() }}
+          onClick={() => { setShowForm(!showForm); if (showForm) create.reset() }}
           className={`text-xs px-2.5 py-1 rounded-full transition-colors
             ${showForm ? 'text-[var(--color-muted)]' : 'text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10'}`}>
           {showForm ? '取消' : '+ 新增'}
@@ -146,73 +260,14 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
 
       {/* ── Create form ── */}
       {showForm && (
-        <div className="rounded-xl border border-[var(--color-border)] overflow-hidden mb-3">
-          <div className="flex border-b border-[var(--color-border)]">
-            {(['income', 'expense'] as const).map(t => (
-              <button key={t} onClick={() => setType(t)}
-                className={`flex-1 py-2.5 text-xs font-semibold transition-colors
-                  ${type === t
-                    ? t === 'income' ? 'bg-green-500 text-white' : 'bg-red-400 text-white'
-                    : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
-                {t === 'income' ? '固定收入' : '固定支出'}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center px-4 py-3.5 border-b border-[var(--color-border)] gap-3">
-            <span className="text-sm text-[var(--color-muted)] shrink-0">金額</span>
-            <input type="number" placeholder="0" value={amount} min="0" autoFocus
-              onChange={e => setAmount(e.target.value)}
-              className="flex-1 text-right bg-transparent text-xl font-semibold outline-none tabular-nums" />
-            <input value={currencyCode} maxLength={4}
-              onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
-              className="w-14 bg-[var(--color-bg)] rounded-lg px-2 py-1 text-xs font-bold text-center outline-none border border-[var(--color-border)]" />
-          </div>
-          <div className="flex items-center px-4 py-3.5 border-b border-[var(--color-border)] gap-3">
-            <span className="text-sm text-[var(--color-muted)] shrink-0">記錄日期</span>
-            <div className="flex items-center gap-1.5 ml-auto">
-              <span className="text-xs text-[var(--color-muted)]">每月</span>
-              <input type="number" min="1" max="31" value={dayOfMonth}
-                onFocus={e => e.target.select()}
-                onChange={e => setDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value) || 1)))}
-                className="w-10 bg-transparent text-sm font-semibold text-center outline-none border-b border-[var(--color-border)]" />
-              <span className="text-xs text-[var(--color-muted)]">日</span>
-            </div>
-          </div>
-          <div className="flex items-center px-4 py-3.5 border-b border-[var(--color-border)]">
-            <span className="text-sm text-[var(--color-muted)]">標籤</span>
-            <input placeholder="選填" value={label} onChange={e => setLabel(e.target.value)}
-              className="flex-1 text-right bg-transparent text-sm outline-none placeholder:text-[var(--color-border)]" />
-          </div>
-          <button onClick={() => setShowAdvanced(!showAdvanced)}
-            className="w-full px-4 py-2.5 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] text-left flex items-center gap-1.5 transition-colors border-b border-[var(--color-border)]">
-            <span className={`inline-block transition-transform text-[10px] ${showAdvanced ? 'rotate-90' : ''}`}>▶</span>
-            有效期限
-            {!showAdvanced && <span className="opacity-50 ml-0.5">（預設即日起永遠有效）</span>}
-          </button>
-          {showAdvanced && (
-            <div className="px-4 py-3.5 border-b border-[var(--color-border)] space-y-3">
-              <div>
-                <p className="text-xs text-[var(--color-muted)] mb-2">開始月份</p>
-                <MonthYearPicker value={effectiveFrom} onChange={setEffectiveFrom} />
-              </div>
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs text-[var(--color-muted)]">結束</p>
-                  <div className="flex rounded-lg overflow-hidden border border-[var(--color-border)] text-xs">
-                    <button onClick={() => { setHasEndDate(false); setEffectiveTo('') }}
-                      className={`px-3 py-1 transition-colors ${!hasEndDate ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)]'}`}>永遠</button>
-                    <button onClick={() => { setHasEndDate(true); if (!effectiveTo) setEffectiveTo(effectiveFrom) }}
-                      className={`px-3 py-1 transition-colors border-l border-[var(--color-border)] ${hasEndDate ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)]'}`}>自訂</button>
-                  </div>
-                </div>
-                {hasEndDate && <MonthYearPicker value={effectiveTo} onChange={setEffectiveTo} />}
-              </div>
-            </div>
-          )}
-          <button onClick={handleCreate} disabled={!amount || Number(amount) <= 0 || saving}
-            className="w-full py-3 bg-[var(--color-accent)] text-white text-sm font-semibold disabled:opacity-40 transition-opacity">
-            {saving ? '儲存中…' : '建立'}
-          </button>
+        <div className="mb-3">
+          <EntryForm
+            {...create}
+            onSave={handleCreate}
+            onCancel={() => { setShowForm(false); create.reset() }}
+            saving={create.saving}
+            saveLabel="建立"
+          />
         </div>
       )}
 
@@ -227,7 +282,7 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
               <div key={entry.id}
                 className={i < entries.length - 1 ? 'border-b border-[var(--color-border)]' : ''}>
 
-                {/* Summary row — always visible */}
+                {/* Summary row */}
                 <div
                   onClick={() => !isEditing && openEdit(entry)}
                   className={`flex items-center gap-3 px-4 py-2.5 text-sm transition-colors
@@ -246,93 +301,18 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
                   </button>
                 </div>
 
-                {/* Edit bubble — floats below the row with a gap */}
+                {/* Edit bubble */}
                 {isEditing && (
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setEditingId(null)} />
-                    <div className="relative z-20 mx-2 mt-2 mb-2.5 rounded-2xl border border-[var(--color-accent)]/40 bg-[var(--color-surface)] shadow-xl overflow-hidden"
-                      style={{ animation: 'bubbleIn 0.2s cubic-bezier(0.34,1.4,0.64,1) both' }}>
-
-                      {/* Type toggle — slim segmented at top */}
-                      <div className="flex border-b border-[var(--color-border)]">
-                        {(['income', 'expense'] as const).map(t => (
-                          <button key={t} onClick={() => setEType(t)}
-                            className={`flex-1 py-2 text-xs font-semibold transition-colors
-                              ${eType === t
-                                ? t === 'income' ? 'bg-green-500/15 text-green-400' : 'bg-red-400/15 text-red-400'
-                                : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
-                            {t === 'income' ? '固定收入' : '固定支出'}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* Amount — prominent, no box */}
-                      <div className="flex items-baseline gap-2 px-4 pt-3 pb-2">
-                        <input type="number" value={eAmount} min="0" autoFocus
-                          onChange={e => setEAmount(e.target.value)}
-                          className="flex-1 text-right bg-transparent text-2xl font-bold outline-none tabular-nums
-                            [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-                        <input value={eCurrency} maxLength={4}
-                          onChange={e => setECurrency(e.target.value.toUpperCase())}
-                          className="w-11 bg-transparent text-sm font-semibold text-[var(--color-muted)] text-center outline-none pb-0.5" />
-                      </div>
-
-                      {/* Day + label — inline, no boxes */}
-                      <div className="flex items-center gap-3 px-4 pb-3 border-b border-[var(--color-border)]">
-                        <div className="flex items-center gap-1 text-xs text-[var(--color-muted)] shrink-0">
-                          <span>每月</span>
-                          <input type="number" min="1" max="31" value={eDayOfMonth}
-                            onFocus={e => e.target.select()}
-                            onChange={e => setEDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value) || 1)))}
-                            className="w-7 bg-transparent text-xs font-semibold text-center outline-none border-b border-[var(--color-border)]
-                              [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-                          <span>日</span>
-                        </div>
-                        <input placeholder="標籤（選填）" value={eLabel}
-                          onChange={e => setELabel(e.target.value)}
-                          className="flex-1 bg-transparent text-xs outline-none text-[var(--color-text)] placeholder:text-[var(--color-border)]" />
-                      </div>
-
-                      {/* Advanced: date range */}
-                      <button onClick={() => setEShowAdv(!eShowAdv)}
-                        className="w-full text-left text-xs text-[var(--color-muted)] flex items-center gap-1.5 px-4 py-2.5 hover:text-[var(--color-text)] transition-colors">
-                        <span className={`inline-block transition-transform text-[10px] ${eShowAdv ? 'rotate-90' : ''}`}>▶</span>
-                        有效期限
-                        {!eShowAdv && <span className="opacity-40">（選填）</span>}
-                      </button>
-
-                      {eShowAdv && (
-                        <div className="space-y-3 px-4 pb-3 border-t border-[var(--color-border)]">
-                          <div className="pt-3">
-                            <p className="text-xs text-[var(--color-muted)] mb-2">開始月份</p>
-                            <MonthYearPicker value={eFrom} onChange={setEFrom} />
-                          </div>
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-xs text-[var(--color-muted)]">結束</p>
-                              <div className="flex rounded-lg overflow-hidden border border-[var(--color-border)] text-xs">
-                                <button onClick={() => { setEHasEndDate(false); setETo('') }}
-                                  className={`px-3 py-1 transition-colors ${!eHasEndDate ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)]'}`}>永遠</button>
-                                <button onClick={() => { setEHasEndDate(true); if (!eTo) setETo(eFrom) }}
-                                  className={`px-3 py-1 transition-colors border-l border-[var(--color-border)] ${eHasEndDate ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)]'}`}>自訂</button>
-                              </div>
-                            </div>
-                            {eHasEndDate && <MonthYearPicker value={eTo} onChange={setETo} />}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Actions */}
-                      <div className="flex border-t border-[var(--color-border)]">
-                        <button onClick={() => setEditingId(null)}
-                          className="flex-1 py-2.5 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors border-r border-[var(--color-border)]">
-                          取消
-                        </button>
-                        <button onClick={handleUpdate} disabled={!eAmount || Number(eAmount) <= 0 || eSaving}
-                          className="flex-1 py-2.5 text-xs font-semibold text-[var(--color-accent)] disabled:opacity-40 transition-opacity">
-                          {eSaving ? '儲存中…' : '儲存'}
-                        </button>
-                      </div>
+                    <div className="relative z-20 mx-2 mt-2 mb-2.5">
+                      <EntryForm
+                        {...edit}
+                        onSave={handleUpdate}
+                        onCancel={() => setEditingId(null)}
+                        saving={edit.saving}
+                        saveLabel="儲存"
+                      />
                     </div>
                   </>
                 )}
