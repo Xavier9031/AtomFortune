@@ -18,8 +18,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale}>
       <head>
-        {/* Apply lang-enter animation before first paint, avoiding a flash */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){if(localStorage.getItem('lang-anim')){document.documentElement.classList.add('lang-enter');localStorage.removeItem('lang-anim');setTimeout(function(){document.documentElement.classList.remove('lang-enter')},500);}})();` }} />
+        {/* Restore theme + lang-enter animation before first paint — prevents white flash */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');if(localStorage.getItem('lang-anim')){document.documentElement.classList.add('lang-enter');localStorage.removeItem('lang-anim');setTimeout(function(){document.documentElement.classList.remove('lang-enter')},500);}})();` }} />
       </head>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
