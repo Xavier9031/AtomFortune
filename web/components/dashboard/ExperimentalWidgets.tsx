@@ -268,7 +268,8 @@ export function AnnotatedNetWorth({ currency }: { currency: Currency }) {
                 stroke="var(--color-accent)" strokeDasharray="3 3" strokeOpacity={0.45} />
             ))}
             <Line type="monotone" dataKey="netWorth" stroke="var(--color-accent)"
-              strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+              strokeWidth={2} dot={false} activeDot={{ r: 4 }}
+              animationBegin={0} animationDuration={800} />
           </LineChart>
         </ResponsiveContainer>
       </div>
@@ -316,12 +317,14 @@ export function StackedAssetArea({ currency }: { currency: Currency }) {
             {active.map(cat => (
               <Area key={cat} type="monotone" dataKey={cat} stackId="a"
                 stroke={CAT_COLOR[cat]} fill={CAT_COLOR[cat]}
-                fillOpacity={0.6} strokeWidth={1.5} dot={false} />
+                fillOpacity={0.6} strokeWidth={1.5} dot={false}
+                animationBegin={0} animationDuration={800} />
             ))}
             {hasDebt && (
               <Area type="monotone" dataKey="debt"
                 stroke={CAT_COLOR.debt} fill={CAT_COLOR.debt}
-                fillOpacity={0.5} strokeWidth={1.5} dot={false} />
+                fillOpacity={0.5} strokeWidth={1.5} dot={false}
+                animationBegin={0} animationDuration={800} />
             )}
           </AreaChart>
         </ResponsiveContainer>

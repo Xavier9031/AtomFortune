@@ -70,7 +70,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
                 <Pie data={donutData} dataKey="value"
                   innerRadius={46} outerRadius={64}
                   paddingAngle={2} startAngle={90} endAngle={-270}
-                  strokeWidth={0} animationBegin={0} animationDuration={400}>
+                  strokeWidth={0} animationBegin={0} animationDuration={800}>
                   {donutData.map((entry, i) => (
                     <Cell key={i} fill={entry.color}
                       style={{ cursor: 'pointer', outline: 'none' }}
