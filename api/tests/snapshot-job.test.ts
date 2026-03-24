@@ -2,11 +2,17 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 // ─── BS-1: Pricing Service ───────────────────────────────────────────────────
 
-vi.mock('yahoo-finance2', () => ({
-  default: {
-    quote: vi.fn(),
-  },
-}))
+// yahoo-finance2 v3 uses `new YahooFinance()`. The mock must be a constructor
+// whose instances AND the class itself share the same `quote` vi.fn so that
+// both pricing.service.ts (`new YahooFinanceClass().quote(...)`) and the test
+// assertions (`vi.mocked(yahooFinance.quote)`) reference the same spy.
+// vi.hoisted() runs before mock factories so mockQuote is available in the factory.
+const { mockQuote } = vi.hoisted(() => ({ mockQuote: vi.fn() }))
+vi.mock('yahoo-finance2', () => {
+  function MockYahooFinance(this: any) { this.quote = mockQuote }
+  ;(MockYahooFinance as any).quote = mockQuote  // also on the class itself for test assertions
+  return { default: MockYahooFinance }
+})
 
 vi.mock('../src/jobs/pricing.service', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../src/jobs/pricing.service')>()

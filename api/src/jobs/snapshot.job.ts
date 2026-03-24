@@ -9,7 +9,7 @@ function formatDate(d: Date): string {
 }
 
 export async function getMarketAssets(db: DrizzleDB) {
-  return db.select({ id: assets.id, name: assets.name, symbol: assets.symbol, pricingMode: assets.pricingMode, subKind: assets.subKind })
+  return db.select({ id: assets.id, name: assets.name, symbol: assets.symbol, pricingMode: assets.pricingMode, subKind: assets.subKind, market: assets.market })
     .from(assets).where(eq(assets.pricingMode, 'market'))
 }
 

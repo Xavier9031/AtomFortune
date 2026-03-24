@@ -1,15 +1,25 @@
-import yahooFinance from 'yahoo-finance2'
+import YahooFinanceClass from 'yahoo-finance2'
+const yahooFinance = new YahooFinanceClass({ suppressNotices: ['yahooSurvey'] })
 
-type AssetInput = { id: string; symbol: string | null; pricingMode: string; subKind?: string | null }
+type AssetInput = { id: string; symbol: string | null; pricingMode: string; subKind?: string | null; market?: string | null }
 
 export async function fetchMarketPrices(assets: AssetInput[]): Promise<Map<string, number>> {
   const marketAssets = assets.filter(a => a.pricingMode === 'market' && a.symbol)
   const result = new Map<string, number>()
   if (marketAssets.length === 0) return result
 
-  // Crypto symbols need '-USD' suffix for Yahoo Finance (e.g. BTC → BTC-USD)
+  // Adjust symbols for Yahoo Finance:
+  // - Crypto: append '-USD' (e.g. BTC → BTC-USD)
+  // - Taiwan stocks/ETFs: append '.TW' (e.g. 00878 → 00878.TW)
   const yahooSymbolToId = new Map(marketAssets.map(a => {
-    const ys = a.subKind === 'crypto' ? `${a.symbol!.toUpperCase()}-USD` : a.symbol!
+    let ys: string
+    if (a.subKind === 'crypto') {
+      ys = `${a.symbol!.toUpperCase()}-USD`
+    } else if (a.market === 'TWSE' || a.market === 'TPEX') {
+      ys = `${a.symbol!}.TW`
+    } else {
+      ys = a.symbol!
+    }
     return [ys, a.id]
   }))
   const symbols = [...yahooSymbolToId.keys()]
