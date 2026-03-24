@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import app from '../src/index'
-import { cleanDb, closeDb } from './helpers/db'
+import { cleanDb, closeDb, seedTestUser } from './helpers/db'
 
-beforeEach(() => cleanDb())
+beforeEach(async () => { cleanDb(); await seedTestUser() })
 afterAll(() => closeDb())
 
 describe('POST /api/v1/assets', () => {

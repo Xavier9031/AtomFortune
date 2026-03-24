@@ -1,17 +1,17 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import app from '../src/index'
-import { cleanDb, closeDb, testDb } from './helpers/db'
+import { cleanDb, closeDb, testDb, seedTestUser } from './helpers/db'
 import { accounts, assets } from '../src/db/schema'
 
-beforeEach(() => cleanDb())
+beforeEach(async () => { cleanDb(); await seedTestUser() })
 afterAll(() => closeDb())
 
 const seedAssetAndAccount = async () => {
   const [asset] = await testDb.insert(assets).values({
     name: 'BTC', assetClass: 'asset', category: 'investment',
-    subKind: 'crypto', currencyCode: 'USD', pricingMode: 'market',
+    subKind: 'crypto', currencyCode: 'USD', pricingMode: 'market', userId: 'default-user',
   }).returning()
-  const [account] = await testDb.insert(accounts).values({ name: 'Binance', accountType: 'crypto_exchange' }).returning()
+  const [account] = await testDb.insert(accounts).values({ name: 'Binance', accountType: 'crypto_exchange', userId: 'default-user' }).returning()
   return { asset, account }
 }
 
@@ -27,7 +27,7 @@ describe('PUT /api/v1/holdings/:assetId/:accountId', () => {
   })
 
   it('returns 404 if asset does not exist', async () => {
-    const [account] = await testDb.insert(accounts).values({ name: 'X', accountType: 'bank' }).returning()
+    const [account] = await testDb.insert(accounts).values({ name: 'X', accountType: 'bank', userId: 'default-user' }).returning()
     const res = await app.request(`/api/v1/holdings/00000000-0000-0000-0000-000000000000/${account.id}`, {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ quantity: 1 }),

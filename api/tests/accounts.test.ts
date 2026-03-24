@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import app from '../src/index'
-import { cleanDb, closeDb, testDb } from './helpers/db'
+import { cleanDb, closeDb, testDb, seedTestUser } from './helpers/db'
 import { accounts, assets, holdings } from '../src/db/schema'
 
-beforeEach(() => cleanDb())
+beforeEach(async () => { cleanDb(); await seedTestUser() })
 afterAll(() => closeDb())
 
 describe('POST /api/v1/accounts', () => {
@@ -21,19 +21,19 @@ describe('POST /api/v1/accounts', () => {
 
 describe('DELETE /api/v1/accounts/:id', () => {
   it('returns 409 if account has holdings', async () => {
-    const [account] = await testDb.insert(accounts).values({ name: 'TestBank', accountType: 'bank' }).returning()
+    const [account] = await testDb.insert(accounts).values({ name: 'TestBank', accountType: 'bank', userId: 'default-user' }).returning()
     const [asset] = await testDb.insert(assets).values({
       name: 'Cash', assetClass: 'asset', category: 'liquid',
-      subKind: 'bank_account', currencyCode: 'TWD', pricingMode: 'fixed',
+      subKind: 'bank_account', currencyCode: 'TWD', pricingMode: 'fixed', userId: 'default-user',
     }).returning()
-    await testDb.insert(holdings).values({ assetId: asset.id, accountId: account.id, quantity: '1000' })
+    await testDb.insert(holdings).values({ assetId: asset.id, accountId: account.id, quantity: '1000', userId: 'default-user' })
 
     const res = await app.request(`/api/v1/accounts/${account.id}`, { method: 'DELETE' })
     expect(res.status).toBe(409)
   })
 
   it('deletes account with no holdings and returns 204', async () => {
-    const [account] = await testDb.insert(accounts).values({ name: 'Empty', accountType: 'cash' }).returning()
+    const [account] = await testDb.insert(accounts).values({ name: 'Empty', accountType: 'cash', userId: 'default-user' }).returning()
     const res = await app.request(`/api/v1/accounts/${account.id}`, { method: 'DELETE' })
     expect(res.status).toBe(204)
   })

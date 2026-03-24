@@ -10,8 +10,16 @@ export const tickers = sqliteTable('tickers', {
   updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
 
+export const users = sqliteTable('users', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull(),
+  createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
+})
+
 export const assets = sqliteTable('assets', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   assetClass: text('assetClass').notNull(),
   category: text('category').notNull(),
@@ -27,6 +35,7 @@ export const assets = sqliteTable('assets', {
 
 export const accounts = sqliteTable('accounts', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   institution: text('institution'),
   accountType: text('accountType').notNull(),
@@ -38,6 +47,7 @@ export const accounts = sqliteTable('accounts', {
 export const holdings = sqliteTable('holdings', {
   assetId: text('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
   accountId: text('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   quantity: numeric('quantity').notNull(),
   createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
@@ -45,6 +55,7 @@ export const holdings = sqliteTable('holdings', {
 
 export const transactions = sqliteTable('transactions', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   assetId: text('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
   accountId: text('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
   txnType: text('txnType').notNull(),
@@ -78,6 +89,7 @@ export const snapshotItems = sqliteTable('snapshotItems', {
   snapshotDate: text('snapshotDate').notNull(),
   assetId: text('assetId').notNull().references(() => assets.id, { onDelete: 'cascade' }),
   accountId: text('accountId').notNull().references(() => accounts.id, { onDelete: 'cascade' }),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   quantity: numeric('quantity').notNull(),
   price: numeric('price').notNull(),
   fxRate: numeric('fxRate').notNull(),
@@ -88,9 +100,10 @@ export const snapshotItems = sqliteTable('snapshotItems', {
 
 export const recurringEntries = sqliteTable('recurringEntries', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   assetId: text('assetId').references(() => assets.id, { onDelete: 'cascade' }),
   accountId: text('accountId').references(() => accounts.id, { onDelete: 'cascade' }),
-  type: text('type').notNull(),  // 'income' | 'expense'
+  type: text('type').notNull(),
   amount: numeric('amount').notNull(),
   currencyCode: text('currencyCode').notNull().default('TWD'),
   dayOfMonth: integer('dayOfMonth').notNull().default(1),
