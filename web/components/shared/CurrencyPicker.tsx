@@ -1,5 +1,6 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
+import { flushSync } from 'react-dom'
 import { useTranslations, useLocale } from 'next-intl'
 
 const CURRENCY_CODES = [
@@ -90,7 +91,12 @@ export function CurrencyPicker({ value, onChange }: Props) {
                 <button
                   key={code}
                   type="button"
-                  onClick={() => { onChange(code); setOpen(false); setQuery('') }}
+                  onClick={() => {
+                    setOpen(false)
+                    setQuery('')
+                    if (!document.startViewTransition) { onChange(code); return }
+                    document.startViewTransition(() => { flushSync(() => onChange(code)) })
+                  }}
                   className={`w-full flex items-center justify-between px-3 py-2 text-xs
                     hover:bg-[var(--color-bg)] transition-colors
                     ${code === value ? 'font-bold text-[var(--color-accent)]' : ''}`}>
