@@ -3,6 +3,8 @@ import app from '../src/index'
 import { cleanDb, closeDb, testDb, seedTestUser } from './helpers/db'
 import { accounts, assets } from '../src/db/schema'
 
+const USER_HEADER = { 'x-user-id': 'default-user' }
+
 beforeEach(async () => { cleanDb(); await seedTestUser() })
 afterAll(() => closeDb())
 
@@ -19,7 +21,7 @@ describe('POST /api/v1/transactions', () => {
   it('creates a buy transaction (positive quantity)', async () => {
     const { asset, account } = await seedAssetAndAccount()
     const res = await app.request('/api/v1/transactions', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ assetId: asset.id, accountId: account.id,
         txnType: 'buy', quantity: 1.0, txnDate: '2026-03-20', note: 'test buy' }),
     })
@@ -30,7 +32,7 @@ describe('POST /api/v1/transactions', () => {
   it('rejects negative quantity for buy type → 422', async () => {
     const { asset, account } = await seedAssetAndAccount()
     const res = await app.request('/api/v1/transactions', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ assetId: asset.id, accountId: account.id,
         txnType: 'buy', quantity: -1.0, txnDate: '2026-03-20' }),
     })
@@ -40,7 +42,7 @@ describe('POST /api/v1/transactions', () => {
   it('allows negative quantity for adjustment type', async () => {
     const { asset, account } = await seedAssetAndAccount()
     const res = await app.request('/api/v1/transactions', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ assetId: asset.id, accountId: account.id,
         txnType: 'adjustment', quantity: -0.5, txnDate: '2026-03-20' }),
     })
@@ -52,13 +54,13 @@ describe('PATCH /api/v1/transactions/:id', () => {
   it('updates only note field', async () => {
     const { asset, account } = await seedAssetAndAccount()
     const create = await app.request('/api/v1/transactions', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ assetId: asset.id, accountId: account.id,
         txnType: 'adjustment', quantity: 1, txnDate: '2026-03-20' }),
     })
     const { id } = await create.json()
     const res = await app.request(`/api/v1/transactions/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ note: 'corrected note' }),
     })
     expect(res.status).toBe(200)
@@ -70,24 +72,24 @@ describe('DELETE /api/v1/transactions/:id', () => {
   it('deletes adjustment transaction → 204', async () => {
     const { asset, account } = await seedAssetAndAccount()
     const create = await app.request('/api/v1/transactions', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ assetId: asset.id, accountId: account.id,
         txnType: 'adjustment', quantity: 1, txnDate: '2026-03-20' }),
     })
     const { id } = await create.json()
-    const res = await app.request(`/api/v1/transactions/${id}`, { method: 'DELETE' })
+    const res = await app.request(`/api/v1/transactions/${id}`, { method: 'DELETE', headers: USER_HEADER })
     expect(res.status).toBe(204)
   })
 
   it('rejects delete of non-adjustment transaction → 422', async () => {
     const { asset, account } = await seedAssetAndAccount()
     const create = await app.request('/api/v1/transactions', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ assetId: asset.id, accountId: account.id,
         txnType: 'buy', quantity: 1, txnDate: '2026-03-20' }),
     })
     const { id } = await create.json()
-    const res = await app.request(`/api/v1/transactions/${id}`, { method: 'DELETE' })
+    const res = await app.request(`/api/v1/transactions/${id}`, { method: 'DELETE', headers: USER_HEADER })
     expect(res.status).toBe(422)
   })
 })

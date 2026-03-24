@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import app from '../src/index'
 
+const USER_HEADER = { 'x-user-id': 'default-user' }
+
 vi.mock('../src/modules/dashboard/dashboard.repository', () => ({
   getLatestSnapshotDate: vi.fn(),
   getSummaryForDate: vi.fn(),
@@ -23,7 +25,7 @@ describe('GET /api/v1/dashboard/summary', () => {
     vi.mocked(repo.getPreviousSummary).mockResolvedValue({ netWorth: '12558320.00' })
     vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(1.0)
 
-    const res = await app.request('/api/v1/dashboard/summary?displayCurrency=TWD')
+    const res = await app.request('/api/v1/dashboard/summary?displayCurrency=TWD', { headers: USER_HEADER })
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.snapshotDate).toBe('2026-03-22')
@@ -40,7 +42,7 @@ describe('GET /api/v1/dashboard/summary', () => {
     vi.mocked(repo.getPreviousSummary).mockResolvedValue(null)
     vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(1.0)
 
-    const res = await app.request('/api/v1/dashboard/summary?displayCurrency=TWD')
+    const res = await app.request('/api/v1/dashboard/summary?displayCurrency=TWD', { headers: USER_HEADER })
     const body = await res.json()
     expect(body.changeAmount).toBeNull()
     expect(body.changePct).toBeNull()
@@ -48,7 +50,7 @@ describe('GET /api/v1/dashboard/summary', () => {
 
   it('returns 404 when no snapshots exist at all', async () => {
     vi.mocked(repo.getLatestSnapshotDate).mockResolvedValue(null)
-    const res = await app.request('/api/v1/dashboard/summary?displayCurrency=TWD')
+    const res = await app.request('/api/v1/dashboard/summary?displayCurrency=TWD', { headers: USER_HEADER })
     expect(res.status).toBe(404)
   })
 
@@ -60,7 +62,7 @@ describe('GET /api/v1/dashboard/summary', () => {
     vi.mocked(repo.getPreviousSummary).mockResolvedValue(null)
     vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(32.5)
 
-    const res = await app.request('/api/v1/dashboard/summary?displayCurrency=USD')
+    const res = await app.request('/api/v1/dashboard/summary?displayCurrency=USD', { headers: USER_HEADER })
     const body = await res.json()
     expect(body.netWorth).toBeCloseTo(100000)
     expect(body.displayCurrency).toBe('USD')
@@ -78,7 +80,7 @@ describe('GET /api/v1/dashboard/allocation', () => {
     ])
     vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(1.0)
 
-    const res = await app.request('/api/v1/dashboard/allocation?displayCurrency=TWD')
+    const res = await app.request('/api/v1/dashboard/allocation?displayCurrency=TWD', { headers: USER_HEADER })
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.categories).toHaveLength(2)
@@ -100,7 +102,7 @@ describe('GET /api/v1/dashboard/net-worth-history', () => {
     vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(32.5)
     vi.mocked(repo.getLatestSnapshotDate).mockResolvedValue('2026-03-22')
 
-    const res = await app.request('/api/v1/dashboard/net-worth-history?range=30d&displayCurrency=USD')
+    const res = await app.request('/api/v1/dashboard/net-worth-history?range=30d&displayCurrency=USD', { headers: USER_HEADER })
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.displayCurrency).toBe('USD')
@@ -110,7 +112,7 @@ describe('GET /api/v1/dashboard/net-worth-history', () => {
   })
 
   it('returns 400 for invalid range', async () => {
-    const res = await app.request('/api/v1/dashboard/net-worth-history?range=bad')
+    const res = await app.request('/api/v1/dashboard/net-worth-history?range=bad', { headers: USER_HEADER })
     expect(res.status).toBe(400)
   })
 })

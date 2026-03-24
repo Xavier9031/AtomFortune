@@ -39,9 +39,13 @@ export class HoldingsRepository {
     return query.where(eq(holdings.userId, userId))
   }
 
-  findOne(assetId: string, accountId: string) {
+  findOne(userId: string, assetId: string, accountId: string) {
     return this.db.select().from(holdings)
-      .where(and(eq(holdings.assetId, assetId), eq(holdings.accountId, accountId)))
+      .where(and(
+        eq(holdings.assetId, assetId),
+        eq(holdings.accountId, accountId),
+        eq(holdings.userId, userId),
+      ))
       .then(r => r[0] ?? null)
   }
 
@@ -55,9 +59,13 @@ export class HoldingsRepository {
       .returning().then(r => r[0])
   }
 
-  delete(assetId: string, accountId: string) {
+  delete(userId: string, assetId: string, accountId: string) {
     return this.db.delete(holdings)
-      .where(and(eq(holdings.assetId, assetId), eq(holdings.accountId, accountId)))
+      .where(and(
+        eq(holdings.assetId, assetId),
+        eq(holdings.accountId, accountId),
+        eq(holdings.userId, userId),
+      ))
       .returning().then(r => r[0] ?? null)
   }
 }

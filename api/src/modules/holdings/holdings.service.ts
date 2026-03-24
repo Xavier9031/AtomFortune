@@ -22,8 +22,8 @@ export class HoldingsService {
   }
 
   async delete(userId: string, assetId: string, accountId: string) {
-    const existing = await this.repo.findOne(assetId, accountId)
+    const existing = await this.repo.findOne(userId, assetId, accountId)
     if (!existing) throw new HTTPException(404, { message: 'Holding not found' })
-    return this.repo.delete(assetId, accountId)
+    return this.repo.delete(userId, assetId, accountId)
   }
 }

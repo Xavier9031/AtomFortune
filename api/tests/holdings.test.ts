@@ -3,6 +3,8 @@ import app from '../src/index'
 import { cleanDb, closeDb, testDb, seedTestUser } from './helpers/db'
 import { accounts, assets } from '../src/db/schema'
 
+const USER_HEADER = { 'x-user-id': 'default-user' }
+
 beforeEach(async () => { cleanDb(); await seedTestUser() })
 afterAll(() => closeDb())
 
@@ -19,7 +21,7 @@ describe('PUT /api/v1/holdings/:assetId/:accountId', () => {
   it('upserts holding and returns 200', async () => {
     const { asset, account } = await seedAssetAndAccount()
     const res = await app.request(`/api/v1/holdings/${asset.id}/${account.id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ quantity: 0.5 }),
     })
     expect(res.status).toBe(200)
@@ -29,7 +31,7 @@ describe('PUT /api/v1/holdings/:assetId/:accountId', () => {
   it('returns 404 if asset does not exist', async () => {
     const [account] = await testDb.insert(accounts).values({ name: 'X', accountType: 'bank', userId: 'default-user' }).returning()
     const res = await app.request(`/api/v1/holdings/00000000-0000-0000-0000-000000000000/${account.id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ quantity: 1 }),
     })
     expect(res.status).toBe(404)
@@ -38,7 +40,7 @@ describe('PUT /api/v1/holdings/:assetId/:accountId', () => {
   it('returns 422 if quantity is negative', async () => {
     const { asset, account } = await seedAssetAndAccount()
     const res = await app.request(`/api/v1/holdings/${asset.id}/${account.id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ quantity: -1 }),
     })
     expect(res.status).toBe(422)
@@ -49,10 +51,10 @@ describe('GET /api/v1/holdings', () => {
   it('returns holdings with joined asset and account fields', async () => {
     const { asset, account } = await seedAssetAndAccount()
     await app.request(`/api/v1/holdings/${asset.id}/${account.id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ quantity: 2 }),
     })
-    const res = await app.request('/api/v1/holdings')
+    const res = await app.request('/api/v1/holdings', { headers: USER_HEADER })
     expect(res.status).toBe(200)
     const list = await res.json()
     expect(list[0].assetName).toBe('BTC')
@@ -65,10 +67,10 @@ describe('DELETE /api/v1/holdings/:assetId/:accountId', () => {
   it('deletes a holding and returns 204', async () => {
     const { asset, account } = await seedAssetAndAccount()
     await app.request(`/api/v1/holdings/${asset.id}/${account.id}`, {
-      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      method: 'PUT', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ quantity: 1 }),
     })
-    const res = await app.request(`/api/v1/holdings/${asset.id}/${account.id}`, { method: 'DELETE' })
+    const res = await app.request(`/api/v1/holdings/${asset.id}/${account.id}`, { method: 'DELETE', headers: USER_HEADER })
     expect(res.status).toBe(204)
   })
 })
