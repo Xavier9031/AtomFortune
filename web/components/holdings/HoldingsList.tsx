@@ -40,14 +40,14 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
 
   if (holdings.length === 0) {
     return (
-      <div className="rounded-xl border border-[var(--color-border)] p-12 text-center text-sm text-[var(--color-muted)]">
+      <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-12 text-center text-sm text-[var(--color-muted)]">
         {t('holdings.empty')}
       </div>
     )
   }
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">

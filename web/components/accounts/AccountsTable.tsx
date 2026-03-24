@@ -11,7 +11,7 @@ interface Props {
 export function AccountsTable({ accounts, holdingsCount, onEdit }: Props) {
   const t = useTranslations()
   return (
-    <div className="rounded-xl border border-[var(--color-border)] overflow-hidden">
+    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">

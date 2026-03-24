@@ -60,7 +60,7 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
   return (
     <div className="space-y-2">
       {dates.map(date => (
-        <div key={date} className="rounded-lg border border-[var(--color-border)]">
+        <div key={date} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
           <div className="flex items-center justify-between px-4 py-3">
             <button onClick={() => toggle(date)} className="font-medium">{date}</button>
             <button onClick={() => onRebuild(date)} title={t('snapshots.rebuildTitle')}

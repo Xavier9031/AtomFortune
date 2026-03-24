@@ -28,7 +28,7 @@ export default function AccountsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-xl font-bold">{t('title')}</h1>
         <button onClick={openAdd}
-          className="bg-[var(--color-accent)] text-white px-4 py-2 rounded">{t('addButton')}</button>
+          className="bg-[var(--color-accent)] text-white px-4 py-2 rounded-lg text-sm font-medium">{t('addButton')}</button>
       </div>
       <AccountsTable
         accounts={accounts ?? []}
