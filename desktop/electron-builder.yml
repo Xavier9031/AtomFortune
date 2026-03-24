@@ -26,7 +26,7 @@ mac:
   target:
     - target: dmg
       arch:
-        - universal
+        - arm64
 
 npmRebuild: true
 
