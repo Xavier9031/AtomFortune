@@ -92,16 +92,19 @@ function HoldDeleteButton({ onConfirm, label }: { onConfirm: () => void; label: 
       onClick={() => ready && onConfirm()}
       onMouseEnter={enter}
       onMouseLeave={leave}
-      className={`relative flex-1 border rounded-xl py-3 overflow-hidden select-none transition-colors
+      className={`relative flex-1 border rounded-xl py-3 overflow-hidden select-none transition-colors duration-300
         ${ready
           ? 'border-red-500 bg-red-500 text-white cursor-pointer'
           : 'border-red-400 text-red-500 cursor-default'}`}>
-      {/* Progress fill */}
+      {/* Animated fill: orange → red gradient, pill-shaped leading edge, glow at front */}
       <div
-        className="absolute inset-y-0 left-0 bg-red-400/20 pointer-events-none"
+        className="absolute inset-y-0 left-0 pointer-events-none"
         style={{
-          width: hovering && !ready ? '100%' : '0%',
+          width: hovering && !ready ? '115%' : '0%',
           transition: hovering && !ready ? 'width 3s linear' : 'none',
+          background: 'linear-gradient(to right, rgba(251,146,60,0.25) 0%, rgba(239,68,68,0.45) 70%, rgba(239,68,68,0.6) 87%, transparent 100%)',
+          borderRadius: '0 56px 56px 0',
+          boxShadow: hovering && !ready ? '3px 0 16px rgba(239,68,68,0.5)' : 'none',
         }}
       />
       <span className="relative z-10 font-medium">
