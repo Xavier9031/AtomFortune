@@ -1,7 +1,15 @@
 # Atom Fortune
 
 **隱私優先的個人淨值追蹤工具。**
-所有資料存放在你自己的 PostgreSQL，完全自架，不依賴任何雲端帳號或訂閱服務。
+所有資料存放在本機，完全離線，不依賴任何雲端帳號或訂閱服務。
+
+---
+
+## 下載（macOS Desktop）
+
+前往 [GitHub Releases](https://github.com/Xavier9031/AtomFortune/releases) 下載最新版 `.dmg`，安裝後即可使用，無需任何設定。
+
+> 目前僅支援 **Apple Silicon（arm64）**。
 
 ---
 
@@ -22,7 +30,6 @@ Atom Fortune 讓你在一個介面上追蹤所有資產與負債：
 
 - **儀表板** — 淨值總覽、資產結構圖、30 天 / 1 年 / 全期趨勢、財務自由進度估算
 - **持倉管理** — 依帳戶分組，快速新增、編輯、刪除持倉
-- **自動記** — 設定固定收入/支出（薪水、房租等），自動追蹤每月現金流
 - **資產管理** — 管理資產清單，查看各資產的持倉分佈與歷史趨勢
 - **帳戶管理** — 管理銀行、券商、錢包等帳戶
 - **多幣顯示** — 基準幣 TWD，可切換 USD / JPY 等顯示
@@ -31,21 +38,14 @@ Atom Fortune 讓你在一個介面上追蹤所有資產與負債：
 
 ---
 
-## 安裝（Docker Compose）
+## 自架（Docker Compose）
 
-**需要：** Docker + Docker Compose
-
-所有外部資料來源均免費且無需 API 金鑰。
+偏好網頁版或 Linux/Windows 的用戶可透過 Docker Compose 自架：
 
 ```bash
-# 1. 下載專案
 git clone https://github.com/Xavier9031/AtomFortune.git
 cd AtomFortune
-
-# 2. 啟動
 docker compose up -d
-
-# 3. 執行資料庫遷移（首次啟動）
 docker compose exec api npm run db:migrate
 ```
 
@@ -57,10 +57,11 @@ docker compose exec api npm run db:migrate
 
 | 層  | 技術 |
 |-----|------|
+| 桌面殼層 | [Electron](https://www.electronjs.org/) 31 |
 | 後端 | [Hono](https://hono.dev/) + TypeScript |
-| 資料庫 | PostgreSQL 16 + [Drizzle ORM](https://orm.drizzle.team/) |
+| 資料庫 | SQLite（[better-sqlite3](https://github.com/WiseLibs/better-sqlite3)）+ [Drizzle ORM](https://orm.drizzle.team/) |
 | 前端 | Next.js 16 + Tailwind CSS v4 + Recharts |
-| 市價 | yahoo-finance2（股票/ETF/加密貨幣）、open.er-api（匯率） |
+| 市價 | yahoo-finance2（股票/ETF/加密貨幣）、open.er-api（匯率）|
 
 ---
 

@@ -130,29 +130,37 @@ export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date())
   }
 
   let snapshotItemsWritten = 0
-  await db.transaction(async (tx) => {
-    await tx.delete(snapshotItems).where(eq(snapshotItems.snapshotDate, today))
 
-    const holdingRows = await getAllHoldingsWithAssets(tx)
-    const missingAssets: string[] = []
+  // Pre-fetch all reads outside the transaction (better-sqlite3 requires sync transaction callbacks)
+  const holdingRows = await getAllHoldingsWithAssets(db)
+  const resolvedItems: Array<{
+    snapshotDate: string, assetId: string, accountId: string,
+    quantity: string, price: string, fxRate: string, valueInBase: string,
+  }> = []
+  const missingAssets: string[] = []
 
-    for (const h of holdingRows) {
-      const price = await resolvePrice(tx, h.assetId, h.pricingMode, today)
-      if (price === null) { missingAssets.push(h.assetId); continue }
+  for (const h of holdingRows) {
+    const price = await resolvePrice(db, h.assetId, h.pricingMode, today)
+    if (price === null) { missingAssets.push(h.assetId); continue }
+    const fxRate = await resolveFxRate(db, h.currencyCode, today)
+    const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
+    const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
+    resolvedItems.push({
+      snapshotDate: today, assetId: h.assetId, accountId: h.accountId,
+      quantity: h.quantity, price: String(price), fxRate: String(fxRate),
+      valueInBase: String(valueInBase),
+    })
+  }
 
-      const fxRate = await resolveFxRate(tx, h.currencyCode, today)
-      const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
-      const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
+  if (missingAssets.length) console.warn('Missing assets:', missingAssets)
 
-      await tx.insert(snapshotItems).values({
-        snapshotDate: today, assetId: h.assetId, accountId: h.accountId,
-        quantity: h.quantity, price: String(price), fxRate: String(fxRate),
-        valueInBase: String(valueInBase),
-      })
+  // Sync transaction for writes only
+  db.transaction((tx) => {
+    tx.delete(snapshotItems).where(eq(snapshotItems.snapshotDate, today)).run()
+    for (const item of resolvedItems) {
+      tx.insert(snapshotItems).values(item).run()
       snapshotItemsWritten++
     }
-
-    if (missingAssets.length) console.warn('Missing assets:', missingAssets)
   })
 
   return { date: today, prices: priceResults, fxStatus, snapshotItemsWritten }

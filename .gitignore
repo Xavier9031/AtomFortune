@@ -11,3 +11,11 @@ legacy
 .vscode/
 dev_*
 .worktrees/
+
+# Node modules
+/node_modules
+
+# Desktop build output
+desktop/dist/
+desktop/release/
+
