@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import useSWR, { mutate as globalMutate } from 'swr'
 import { BASE, fetcher } from '@/lib/api'
@@ -69,6 +69,46 @@ const DEFAULT_PRICING: Record<string, PricingMode> = {
   stock: 'market', etf: 'market', crypto: 'market',
   fund: 'manual', precious_metal: 'market', real_estate: 'manual',
   vehicle: 'manual', other: 'manual',
+}
+
+// Hold-to-confirm delete button: hover 3 s to arm, then click to fire
+function HoldDeleteButton({ onConfirm, label }: { onConfirm: () => void; label: string }) {
+  const [hovering, setHovering] = useState(false)
+  const [ready, setReady] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function enter() {
+    setHovering(true)
+    timer.current = setTimeout(() => setReady(true), 3000)
+  }
+  function leave() {
+    setHovering(false)
+    setReady(false)
+    if (timer.current) { clearTimeout(timer.current); timer.current = null }
+  }
+
+  return (
+    <button
+      onClick={() => ready && onConfirm()}
+      onMouseEnter={enter}
+      onMouseLeave={leave}
+      className={`relative flex-1 border rounded-xl py-3 overflow-hidden select-none transition-colors
+        ${ready
+          ? 'border-red-500 bg-red-500 text-white cursor-pointer'
+          : 'border-red-400 text-red-500 cursor-default'}`}>
+      {/* Progress fill */}
+      <div
+        className="absolute inset-y-0 left-0 bg-red-400/20 pointer-events-none"
+        style={{
+          width: hovering && !ready ? '100%' : '0%',
+          transition: hovering && !ready ? 'width 3s linear' : 'none',
+        }}
+      />
+      <span className="relative z-10 font-medium">
+        {ready ? '確認刪除' : label}
+      </span>
+    </button>
+  )
 }
 
 export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
@@ -360,14 +400,13 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   className="flex-1 text-right bg-transparent text-sm outline-none" />
               </div>
             </div>
-            <button onClick={handleSave} disabled={!canSubmit}
-              className="w-full bg-[var(--color-accent)] text-white rounded-xl py-3 font-medium disabled:opacity-40">
-              {t('holdings.update')}
-            </button>
-            <button onClick={handleDelete}
-              className="w-full text-xs text-[var(--color-muted)] hover:text-red-400 transition-colors py-1 text-center">
-              {t('common.delete')}
-            </button>
+            <div className="flex gap-3">
+              <button onClick={handleSave} disabled={!canSubmit}
+                className="flex-1 bg-[var(--color-accent)] text-white rounded-xl py-3 font-medium disabled:opacity-40">
+                {t('holdings.update')}
+              </button>
+              <HoldDeleteButton onConfirm={handleDelete} label={t('common.delete')} />
+            </div>
             <RecurringEntriesPanel assetId={holding.assetId} accountId={holding.accountId} />
             <HoldingTransactions assetId={holding.assetId} accountId={holding.accountId} />
           </div>
