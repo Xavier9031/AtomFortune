@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import app from '../src/index'
-import { cleanDb, closeDb, testDb, seedTestUser } from './helpers/db'
+import { cleanDb, closeDb, testDb } from './helpers/db'
 import { users } from '../src/db/schema'
 
 beforeEach(() => cleanDb())
@@ -47,11 +47,11 @@ describe('POST /api/v1/users', () => {
   })
 })
 
-describe('PUT /api/v1/users/:id', () => {
+describe('PATCH /api/v1/users/:id', () => {
   it('updates user name and returns 200', async () => {
     const [u] = await testDb.insert(users).values({ id: 'u1', name: 'Old' }).returning()
     const res = await app.request(`/api/v1/users/${u.id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'New Name' }),
     })
@@ -61,7 +61,7 @@ describe('PUT /api/v1/users/:id', () => {
 
   it('returns 404 for unknown user', async () => {
     const res = await app.request('/api/v1/users/nonexistent', {
-      method: 'PUT',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: 'X' }),
     })
