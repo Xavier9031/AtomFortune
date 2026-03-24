@@ -1,5 +1,3 @@
-'use client'
-
 const UID_KEY = 'atomfortune_uid'
 const DEFAULT_USER_ID = 'default-user'
 

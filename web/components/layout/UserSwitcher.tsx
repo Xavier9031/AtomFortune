@@ -35,7 +35,8 @@ export default function UserSwitcher() {
 
   async function fetchUsers() {
     try {
-      const res = await fetch(`${BASE}/users`)
+      // /users is a global endpoint — no x-user-id needed
+    const res = await fetch(`${BASE}/users`)
       if (res.ok) setUsers(await res.json())
     } catch { /* silently fail */ }
   }
@@ -49,20 +50,26 @@ export default function UserSwitcher() {
 
   async function handleCreate() {
     if (!newName.trim()) return
-    const res = await fetch(`${BASE}/users`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newName.trim() }),
-    })
-    if (res.ok) {
-      const user: UserRecord = await res.json()
-      setUsers(prev => [...prev, user])
-      setActiveUserId(user.id)
-      setActiveId(user.id)
+    try {
+      // POST /users is user-agnostic (creating a new user, no owner)
+      const res = await fetch(`${BASE}/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName.trim() }),
+      })
+      if (res.ok) {
+        const user: UserRecord = await res.json()
+        setUsers(prev => [...prev, user])
+        setActiveUserId(user.id)
+        setActiveId(user.id)
+        setCreating(false)
+        setNewName('')
+        setOpen(false)
+        window.location.reload()
+      }
+    } catch {
       setCreating(false)
       setNewName('')
-      setOpen(false)
-      window.location.reload()
     }
   }
 

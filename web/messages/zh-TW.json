@@ -309,8 +309,7 @@
   "userSwitcher": {
     "defaultUser": "預設使用者",
     "newProfile": "新增個人檔案",
-    "newProfilePlaceholder": "輸入名稱\u2026",
-    "switchConfirm": "切換至此個人檔案？"
+    "newProfilePlaceholder": "輸入名稱\u2026"
   },
   "snapshots": {
     "title": "快照紀錄",

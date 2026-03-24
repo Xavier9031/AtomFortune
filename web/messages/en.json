@@ -309,8 +309,7 @@
   "userSwitcher": {
     "defaultUser": "Default",
     "newProfile": "New profile",
-    "newProfilePlaceholder": "Profile name\u2026",
-    "switchConfirm": "Switch to this profile?"
+    "newProfilePlaceholder": "Profile name\u2026"
   },
   "snapshots": {
     "title": "Snapshots",
