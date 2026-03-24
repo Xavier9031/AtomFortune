@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { DrizzleDB } from '../../db/client'
 import { snapshotItems } from '../../db/schema'
 

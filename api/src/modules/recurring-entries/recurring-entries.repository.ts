@@ -5,27 +5,30 @@ import type { DrizzleDB } from '../../db/client'
 export class RecurringEntriesRepository {
   constructor(private db: DrizzleDB) {}
 
-  async findAll({ assetId, accountId }: { assetId?: string; accountId?: string } = {}) {
+  async findAll({ userId, assetId, accountId }: { userId: string; assetId?: string; accountId?: string }) {
     if (assetId && accountId) {
       return this.db.select().from(recurringEntries)
-        .where(and(eq(recurringEntries.assetId, assetId), eq(recurringEntries.accountId, accountId)))
+        .where(and(eq(recurringEntries.userId, userId), eq(recurringEntries.assetId, assetId), eq(recurringEntries.accountId, accountId)))
     } else if (assetId) {
       return this.db.select().from(recurringEntries)
-        .where(eq(recurringEntries.assetId, assetId))
+        .where(and(eq(recurringEntries.userId, userId), eq(recurringEntries.assetId, assetId)))
     } else if (accountId) {
       return this.db.select().from(recurringEntries)
-        .where(eq(recurringEntries.accountId, accountId))
+        .where(and(eq(recurringEntries.userId, userId), eq(recurringEntries.accountId, accountId)))
     }
     return this.db.select().from(recurringEntries)
+      .where(eq(recurringEntries.userId, userId))
   }
 
   async create(data: {
+    userId: string
     assetId?: string; accountId?: string
     type: string; amount: number; currencyCode: string
     dayOfMonth: number; label?: string
     effectiveFrom: string; effectiveTo?: string
   }) {
     const [row] = await this.db.insert(recurringEntries).values({
+      userId: data.userId,
       assetId: data.assetId,
       accountId: data.accountId,
       type: data.type,
@@ -39,7 +42,7 @@ export class RecurringEntriesRepository {
     return row
   }
 
-  async update(id: string, data: Partial<{
+  async update(id: string, userId: string, data: Partial<{
     type: string; amount: number; currencyCode: string
     dayOfMonth: number; label: string | null
     effectiveFrom: string; effectiveTo: string | null
@@ -55,12 +58,13 @@ export class RecurringEntriesRepository {
 
     const [row] = await this.db.update(recurringEntries)
       .set(set as any)
-      .where(eq(recurringEntries.id, id))
+      .where(and(eq(recurringEntries.id, id), eq(recurringEntries.userId, userId)))
       .returning()
     return row
   }
 
-  async delete(id: string) {
-    await this.db.delete(recurringEntries).where(eq(recurringEntries.id, id))
+  async delete(id: string, userId: string) {
+    await this.db.delete(recurringEntries)
+      .where(and(eq(recurringEntries.id, id), eq(recurringEntries.userId, userId)))
   }
 }

@@ -10,13 +10,13 @@ const CATEGORY_META: Record<string, { label: string; color: string }> = {
   debt:       { label: '負債',     color: '#f45d48' },
 }
 
-export async function getSummary(displayCurrency: DisplayCurrency) {
-  const latestDate = await repo.getLatestSnapshotDate(db)
+export async function getSummary(userId: string, displayCurrency: DisplayCurrency) {
+  const latestDate = await repo.getLatestSnapshotDate(db, userId)
   if (!latestDate) return null
 
-  const { totalAssets, totalLiabilities } = await repo.getSummaryForDate(db, latestDate)
+  const { totalAssets, totalLiabilities } = await repo.getSummaryForDate(db, userId, latestDate)
   const fxRate = await repo.getFxRateForDisplay(db, displayCurrency, latestDate)
-  const prevSummary = await repo.getPreviousSummary(db, latestDate)
+  const prevSummary = await repo.getPreviousSummary(db, userId, latestDate)
 
   const netWorthTWD = Number(totalAssets) - Number(totalLiabilities)
   const netWorth = netWorthTWD / fxRate
@@ -41,11 +41,11 @@ export async function getSummary(displayCurrency: DisplayCurrency) {
   }
 }
 
-export async function getAllocation(date: string | undefined, displayCurrency: DisplayCurrency) {
-  const snapshotDate = date ?? await repo.getLatestSnapshotDate(db)
+export async function getAllocation(userId: string, date: string | undefined, displayCurrency: DisplayCurrency) {
+  const snapshotDate = date ?? await repo.getLatestSnapshotDate(db, userId)
   if (!snapshotDate) return null
 
-  const rows = await repo.getAllocationForDate(db, snapshotDate)
+  const rows = await repo.getAllocationForDate(db, userId, snapshotDate)
   const fxRate = await repo.getFxRateForDisplay(db, displayCurrency, snapshotDate)
   const totalValue = rows.reduce((s, r) => s + Number(r.valueInBase), 0)
 
@@ -78,8 +78,8 @@ export async function getAllocation(date: string | undefined, displayCurrency: D
 
 type AssetEntry = { assetId: string; name: string; category: string; value: number; assetClass: string }
 
-export async function getLiveData(displayCurrency: DisplayCurrency) {
-  const rows = await repo.getLiveHoldings(db)
+export async function getLiveData(userId: string, displayCurrency: DisplayCurrency) {
+  const rows = await repo.getLiveHoldings(db, userId)
   if (rows.length === 0) return null
 
   const assetMap = new Map<string, AssetEntry>()
@@ -99,7 +99,7 @@ export async function getLiveData(displayCurrency: DisplayCurrency) {
     else totalAssets += value
   }
 
-  const latestDate = await repo.getLatestSnapshotDate(db)
+  const latestDate = await repo.getLatestSnapshotDate(db, userId)
   const today = new Date().toISOString().slice(0, 10)
   const fxRate = await repo.getFxRateForDisplay(db, displayCurrency, latestDate ?? today)
   const netWorthTWD = totalAssets - totalLiabilities
@@ -107,7 +107,7 @@ export async function getLiveData(displayCurrency: DisplayCurrency) {
   let changeAmount: number | null = null
   let changePct: number | null = null
   if (latestDate) {
-    const prev = await repo.getSummaryForDate(db, latestDate)
+    const prev = await repo.getSummaryForDate(db, userId, latestDate)
     const prevNet = (Number(prev.totalAssets) - Number(prev.totalLiabilities)) / fxRate
     const liveNet = netWorthTWD / fxRate
     changeAmount = Math.round((liveNet - prevNet) * 100) / 100
@@ -145,8 +145,8 @@ export async function getLiveData(displayCurrency: DisplayCurrency) {
   }
 }
 
-export async function getCategoryHistoryData(range: '30d' | '1y' | 'all', displayCurrency: DisplayCurrency) {
-  const rows = await repo.getCategoryHistory(db, range)
+export async function getCategoryHistoryData(userId: string, range: '30d' | '1y' | 'all', displayCurrency: DisplayCurrency) {
+  const rows = await repo.getCategoryHistory(db, userId, range)
   const latestDate = rows.length ? rows[rows.length - 1].snapshotDate : null
   const fxRate = latestDate ? await repo.getFxRateForDisplay(db, displayCurrency, latestDate) : 1.0
 
@@ -169,8 +169,8 @@ export async function getCategoryHistoryData(range: '30d' | '1y' | 'all', displa
   return { displayCurrency, data }
 }
 
-export async function getNetWorthHistoryData(range: '30d' | '1y' | 'all', displayCurrency: DisplayCurrency) {
-  const rows = await repo.getNetWorthHistory(db, range)
+export async function getNetWorthHistoryData(userId: string, range: '30d' | '1y' | 'all', displayCurrency: DisplayCurrency) {
+  const rows = await repo.getNetWorthHistory(db, userId, range)
   const latestDate = rows.length ? rows[rows.length - 1].snapshotDate : null
   const fxRate = latestDate ? await repo.getFxRateForDisplay(db, displayCurrency, latestDate) : 1.0
 

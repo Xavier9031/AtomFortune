@@ -11,17 +11,17 @@ export class HoldingsService {
     private accountsRepo: AccountsRepository,
   ) {}
 
-  findAll(accountId?: string) { return this.repo.findAll(accountId) }
+  findAll(userId: string, accountId?: string) { return this.repo.findAll(userId, accountId) }
 
-  async upsert(assetId: string, accountId: string, data: HoldingUpsertInput) {
-    const asset = await this.assetsRepo.findById(assetId)
+  async upsert(userId: string, assetId: string, accountId: string, data: HoldingUpsertInput) {
+    const asset = await this.assetsRepo.findById(assetId, userId)
     if (!asset) throw new HTTPException(404, { message: 'Asset not found' })
-    const account = await this.accountsRepo.findById(accountId)
+    const account = await this.accountsRepo.findById(accountId, userId)
     if (!account) throw new HTTPException(404, { message: 'Account not found' })
-    return this.repo.upsert(assetId, accountId, String(data.quantity))
+    return this.repo.upsert(userId, assetId, accountId, String(data.quantity))
   }
 
-  async delete(assetId: string, accountId: string) {
+  async delete(userId: string, assetId: string, accountId: string) {
     const existing = await this.repo.findOne(assetId, accountId)
     if (!existing) throw new HTTPException(404, { message: 'Holding not found' })
     return this.repo.delete(assetId, accountId)

@@ -10,8 +10,8 @@ export class PricesService {
     return this.repo.findAll(filters)
   }
 
-  async createManual(data: PriceManualCreateInput) {
-    const asset = await this.assetsRepo.findById(data.assetId)
+  async createManual(userId: string, data: PriceManualCreateInput) {
+    const asset = await this.assetsRepo.findById(data.assetId, userId)
     if (!asset) throw new HTTPException(404, { message: 'Asset not found' })
     if (asset.pricingMode !== 'manual')
       throw new HTTPException(422, { message: 'Manual price entry only for pricingMode=manual assets' })

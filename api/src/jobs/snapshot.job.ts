@@ -16,6 +16,7 @@ export async function getMarketAssets(db: DrizzleDB) {
 export async function getAllHoldingsWithAssets(tx: DrizzleDB) {
   return tx
     .select({
+      userId: holdings.userId,
       assetId: holdings.assetId, accountId: holdings.accountId,
       quantity: holdings.quantity, pricingMode: assets.pricingMode,
       currencyCode: assets.currencyCode, subKind: assets.subKind, unit: assets.unit,
@@ -134,7 +135,7 @@ export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date())
   // Pre-fetch all reads outside the transaction (better-sqlite3 requires sync transaction callbacks)
   const holdingRows = await getAllHoldingsWithAssets(db)
   const resolvedItems: Array<{
-    snapshotDate: string, assetId: string, accountId: string,
+    userId: string, snapshotDate: string, assetId: string, accountId: string,
     quantity: string, price: string, fxRate: string, valueInBase: string,
   }> = []
   const missingAssets: string[] = []
@@ -146,7 +147,7 @@ export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date())
     const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
     const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
     resolvedItems.push({
-      snapshotDate: today, assetId: h.assetId, accountId: h.accountId,
+      userId: h.userId, snapshotDate: today, assetId: h.assetId, accountId: h.accountId,
       quantity: h.quantity, price: String(price), fxRate: String(fxRate),
       valueInBase: String(valueInBase),
     })
