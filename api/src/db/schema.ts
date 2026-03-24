@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, numeric, date, timestamp, primaryKey } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, numeric, date, timestamp, primaryKey, integer } from 'drizzle-orm/pg-core'
 
 export const tickers = pgTable('tickers', {
   symbol: text('symbol').primaryKey(),
@@ -84,3 +84,18 @@ export const snapshotItems = pgTable('snapshotItems', {
   createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({ pk: primaryKey({ columns: [t.snapshotDate, t.assetId, t.accountId] }) }))
+
+export const recurringEntries = pgTable('recurringEntries', {
+  id: uuid('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  assetId: uuid('assetId').references(() => assets.id, { onDelete: 'cascade' }),
+  accountId: uuid('accountId').references(() => accounts.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(),  // 'income' | 'expense'
+  amount: numeric('amount', { precision: 24, scale: 8 }).notNull(),
+  currencyCode: text('currencyCode').notNull().default('TWD'),
+  dayOfMonth: integer('dayOfMonth').notNull().default(1),
+  label: text('label'),
+  effectiveFrom: date('effectiveFrom').notNull(),
+  effectiveTo: date('effectiveTo'),
+  createdAt: timestamp('createdAt', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt', { withTimezone: true }).notNull().defaultNow(),
+})

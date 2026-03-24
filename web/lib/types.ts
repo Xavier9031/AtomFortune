@@ -77,6 +77,21 @@ export interface Transaction {
   id: string; assetId: string; accountId: string
   txnType: TxnType; quantity: number; txnDate: string; note?: string
 }
+export interface RecurringEntry {
+  id: string
+  assetId: string | null
+  accountId: string | null
+  type: 'income' | 'expense'
+  amount: string
+  currencyCode: string
+  dayOfMonth: number
+  label: string | null
+  effectiveFrom: string
+  effectiveTo: string | null
+  createdAt: string
+  updatedAt: string
+}
+
 export interface SnapshotItem {
   assetId: string; accountId: string; assetName: string; accountName: string
   quantity: number; price: number; currencyCode: string; unit: string | null

@@ -5,7 +5,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
 } from 'recharts'
 import useSWR from 'swr'
-import { BASE, fetcher, useNetWorthHistory, useCategoryHistory } from '@/lib/api'
+import { BASE, fetcher, useNetWorthHistory, useCategoryHistory, useRecurringEntries } from '@/lib/api'
 import type { Currency, Transaction } from '@/lib/types'
 
 // ─── Shared helpers ───────────────────────────────────────────────────────────
@@ -67,6 +67,7 @@ function RangeTabs({ value, onChange }: { value: Range; onChange: (r: Range) => 
 
 function FireProgress({ currency }: { currency: Currency }) {
   const { data } = useNetWorthHistory(currency, 'all')
+  const { data: allEntries } = useRecurringEntries()
   if (!data?.data?.length) return null
 
   const pts = data.data
@@ -74,12 +75,22 @@ function FireProgress({ currency }: { currency: Currency }) {
   const target = FIRE_TARGET[currency] ?? 30_000_000
   const pct = Math.min((current / target) * 100, 100)
 
-  // Monthly growth rate: compare last data point to 90 days ago
+  // Monthly growth rate from recent 90 data points
   const recent = pts.slice(-90)
   const monthlyRate = recent.length > 10
     ? (recent.at(-1)!.netWorth - recent[0]!.netWorth) / (recent.length / 30.44)
     : 0
   const monthsLeft = monthlyRate > 0 ? (target - current) / monthlyRate : null
+
+  // Monthly cashflow from recurring entries (TWD, no FX conversion)
+  const today = new Date().toISOString().slice(0, 10)
+  const active = (allEntries ?? []).filter(e =>
+    e.effectiveFrom <= today && (!e.effectiveTo || e.effectiveTo >= today)
+  )
+  const monthlyIncome = active.filter(e => e.type === 'income').reduce((s, e) => s + Number(e.amount), 0)
+  const monthlyExpense = active.filter(e => e.type === 'expense').reduce((s, e) => s + Number(e.amount), 0)
+  const monthlyNet = monthlyIncome - monthlyExpense
+  const monthsFromCashflow = monthlyNet > 0 ? (target - current) / monthlyNet : null
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] p-4">
@@ -99,19 +110,51 @@ function FireProgress({ currency }: { currency: Currency }) {
         <span className="tabular-nums font-medium text-[var(--color-text)]">{pct.toFixed(1)}%</span>
         {monthsLeft ? (
           <span>
-            按近期增速，約{' '}
+            近期增速預估{' '}
             <span className="text-[var(--color-text)] font-medium">
               {monthsLeft >= 12 ? `${(monthsLeft / 12).toFixed(1)} 年` : `${Math.round(monthsLeft)} 個月`}
             </span>
-            {' '}後達成
           </span>
         ) : <span>增速計算中…</span>}
         <span className="tabular-nums">{fmtShort(current)}</span>
       </div>
 
       {monthlyRate > 0 && (
-        <p className="text-xs text-[var(--color-muted)] mt-1.5">
+        <p className="text-xs text-[var(--color-muted)] mt-1">
           近 3 個月月均增 +{fmtShort(monthlyRate)} {currency}
+        </p>
+      )}
+
+      {/* ── Recurring cashflow section ── */}
+      {active.length > 0 ? (
+        <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
+          <div className="flex items-center justify-between text-xs mb-1.5">
+            <span className="text-[var(--color-muted)]">月淨現金流（自動記）</span>
+            <span className={`font-medium tabular-nums ${monthlyNet >= 0 ? 'text-green-500' : 'text-red-400'}`}>
+              {monthlyNet >= 0 ? '+' : ''}{fmtShort(monthlyNet)} TWD
+            </span>
+          </div>
+          <div className="flex gap-4 text-xs text-[var(--color-muted)]">
+            <span className="text-green-500">↑ +{fmtShort(monthlyIncome)}</span>
+            <span className="text-red-400">↓ -{fmtShort(monthlyExpense)}</span>
+          </div>
+          {monthsFromCashflow ? (
+            <p className="text-xs text-[var(--color-muted)] mt-1.5">
+              按現金流計算約{' '}
+              <span className="text-[var(--color-text)] font-medium">
+                {monthsFromCashflow >= 12
+                  ? `${(monthsFromCashflow / 12).toFixed(1)} 年`
+                  : `${Math.round(monthsFromCashflow)} 個月`}
+              </span>
+              {' '}後達成
+            </p>
+          ) : monthlyNet <= 0 ? (
+            <p className="text-xs text-red-400 mt-1.5">現金流為負，建議檢視支出</p>
+          ) : null}
+        </div>
+      ) : (
+        <p className="text-xs text-[var(--color-muted)] mt-3 pt-3 border-t border-[var(--color-border)]">
+          前往資產詳情頁設定「自動記」以啟用現金流預測
         </p>
       )}
     </div>
@@ -242,6 +285,7 @@ function StackedAssetArea({ currency }: { currency: Currency }) {
 
   const assetCats = ['liquid', 'investment', 'fixed', 'receivable']
   const active = assetCats.filter(cat => data?.data.some(d => (d[cat] as number) > 0))
+  const hasDebt = data?.data.some(d => (d['debt'] as number) < 0)
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] p-4">
@@ -267,6 +311,11 @@ function StackedAssetArea({ currency }: { currency: Currency }) {
                 stroke={CAT_COLOR[cat]} fill={CAT_COLOR[cat]}
                 fillOpacity={0.6} strokeWidth={1.5} dot={false} />
             ))}
+            {hasDebt && (
+              <Area type="monotone" dataKey="debt"
+                stroke={CAT_COLOR.debt} fill={CAT_COLOR.debt}
+                fillOpacity={0.5} strokeWidth={1.5} dot={false} />
+            )}
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -278,6 +327,12 @@ function StackedAssetArea({ currency }: { currency: Currency }) {
             <span className="text-xs text-[var(--color-muted)]">{CAT_LABEL[cat]}</span>
           </div>
         ))}
+        {hasDebt && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-sm" style={{ background: CAT_COLOR.debt }} />
+            <span className="text-xs text-[var(--color-muted)]">{CAT_LABEL.debt}</span>
+          </div>
+        )}
       </div>
     </div>
   )

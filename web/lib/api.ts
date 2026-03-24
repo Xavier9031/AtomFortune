@@ -1,5 +1,5 @@
 import useSWR from 'swr'
-import type { Currency, DashboardSummary, AllocationData, NetWorthHistory, CategoryHistory, LiveDashboard } from './types'
+import type { Currency, DashboardSummary, AllocationData, NetWorthHistory, CategoryHistory, LiveDashboard, RecurringEntry } from './types'
 
 export const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v1'
 export const fetcher = (url: string) =>
@@ -33,4 +33,10 @@ export const useLiveDashboard = (currency: Currency) =>
     `${BASE}/dashboard/live?displayCurrency=${currency}`,
     fetcher,
     { keepPreviousData: true }
+  )
+
+export const useRecurringEntries = (assetId?: string) =>
+  useSWR<RecurringEntry[]>(
+    `${BASE}/recurring-entries${assetId ? `?assetId=${assetId}` : ''}`,
+    fetcher
   )
