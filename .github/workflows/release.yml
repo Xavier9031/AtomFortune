@@ -19,7 +19,18 @@ jobs:
     runs-on: macos-latest
 
     steps:
+      - name: Determine ref
+        id: ref
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "ref=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.ref.outputs.ref }}
 
       - uses: actions/setup-node@v4
         with:
@@ -37,7 +48,13 @@ jobs:
       - name: Install desktop dependencies
         run: cd desktop && npm ci
 
-      - name: Build and publish .dmg
+      - name: Build .dmg
+        run: cd desktop && npm run build && npx electron-builder --mac --publish never
+
+      - name: Upload DMG to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: cd desktop && npm run dist
+        run: |
+          TAG="${{ steps.ref.outputs.ref }}"
+          DMG=$(ls desktop/release/*.dmg)
+          gh release upload "$TAG" "$DMG" --repo Xavier9031/AtomFortune --clobber
