@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* Declare custom color properties as animatable */
+@property --color-bg      { syntax: '<color>'; inherits: true; initial-value: #f8f5f2; }
+@property --color-surface { syntax: '<color>'; inherits: true; initial-value: #fffffe; }
+@property --color-text    { syntax: '<color>'; inherits: true; initial-value: #232323; }
+@property --color-muted   { syntax: '<color>'; inherits: true; initial-value: #888888; }
+@property --color-accent  { syntax: '<color>'; inherits: true; initial-value: #078080; }
+@property --color-coral   { syntax: '<color>'; inherits: true; initial-value: #f45d48; }
+@property --color-border  { syntax: '<color>'; inherits: true; initial-value: #e8e8e8; }
+
 :root {
   --color-bg:       #f8f5f2;
   --color-surface:  #fffffe;
@@ -25,6 +34,18 @@
   --color-coral:   #ff7059;
 }
 
+/* Smooth theme transition — only active during the toggle */
+html.theme-changing {
+  transition:
+    --color-bg      0.3s ease,
+    --color-surface 0.3s ease,
+    --color-text    0.3s ease,
+    --color-muted   0.3s ease,
+    --color-accent  0.3s ease,
+    --color-coral   0.3s ease,
+    --color-border  0.3s ease;
+}
+
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
@@ -47,33 +68,4 @@ body {
 @keyframes bubbleIn {
   from { opacity: 0; transform: translateY(-6px) scale(0.97); }
   to   { opacity: 1; transform: translateY(0)    scale(1);    }
-}
-
-/* Language switch transition */
-html.lang-exit {
-  transition: opacity 0.22s ease, transform 0.22s ease;
-  opacity: 0;
-  transform: scale(0.985);
-  pointer-events: none;
-}
-html.lang-enter {
-  animation: langEnter 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes langEnter {
-  from { opacity: 0; transform: translateY(12px) scale(0.99); }
-  to   { opacity: 1; transform: translateY(0)    scale(1);    }
-}
-
-/* Dark/light mode circular reveal (View Transitions API) */
-::view-transition-old(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
-::view-transition-new(root) {
-  animation: 0.5s ease-out theme-reveal;
-  mix-blend-mode: normal;
-}
-@keyframes theme-reveal {
-  from { clip-path: circle(0% at var(--vt-x, 95%) var(--vt-y, 28px)); }
-  to   { clip-path: circle(150% at var(--vt-x, 95%) var(--vt-y, 28px)); }
 }

@@ -1,5 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 import { CurrencyProvider } from '@/context/CurrencyContext'
@@ -14,13 +15,11 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale()
   const messages = await getMessages()
+  const cookieStore = await cookies()
+  const theme = cookieStore.get('theme')?.value === 'dark' ? 'dark' : 'light'
 
   return (
-    <html lang={locale}>
-      <head>
-        {/* Restore theme + lang-enter animation before first paint — prevents white flash */}
-        <script dangerouslySetInnerHTML={{ __html: `(function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');if(localStorage.getItem('lang-anim')){document.documentElement.classList.add('lang-enter');localStorage.removeItem('lang-anim');setTimeout(function(){document.documentElement.classList.remove('lang-enter')},500);}})();` }} />
-      </head>
+    <html lang={locale} data-theme={theme}>
       <body>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <CurrencyProvider>

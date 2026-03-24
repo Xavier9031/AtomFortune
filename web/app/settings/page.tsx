@@ -1,12 +1,17 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import { setLocale } from '@/app/actions/setLocale'
+import { setTheme } from '@/app/actions/setTheme'
 import { SUPPORTED_LOCALES } from '@/lib/locales'
 import { BASE } from '@/lib/api'
 
 export default function SettingsPage() {
   const t = useTranslations()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const wasPending = useRef(false)
   const [dark, setDark] = useState(false)
   const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [importing, setImporting] = useState(false)
@@ -14,17 +19,27 @@ export default function SettingsPage() {
   const schedule = process.env.NEXT_PUBLIC_SNAPSHOT_SCHEDULE ?? '0 22 * * *'
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setDark(document.documentElement.getAttribute('data-theme') === 'dark')
-    }
+    setDark(document.documentElement.dataset.theme === 'dark')
   }, [])
 
-  function handleDark(checked: boolean) {
-    setDark(checked)
-    if (typeof window !== 'undefined') {
-      document.documentElement.setAttribute('data-theme', checked ? 'dark' : 'light')
-      localStorage.setItem('theme', checked ? 'dark' : 'light')
+  // Fade back in after router.refresh() completes
+  useEffect(() => {
+    if (wasPending.current && !isPending) {
+      wasPending.current = false
+      const html = document.documentElement
+      html.style.transition = 'opacity 0.25s ease'
+      html.style.opacity = '1'
+      setTimeout(() => { html.style.transition = ''; html.style.opacity = '' }, 300)
     }
+  }, [isPending])
+
+  async function handleDark(checked: boolean) {
+    setDark(checked)
+    const html = document.documentElement
+    html.classList.add('theme-changing')
+    html.dataset.theme = checked ? 'dark' : 'light'
+    await setTheme(checked ? 'dark' : 'light')
+    setTimeout(() => html.classList.remove('theme-changing'), 350)
   }
 
   function handleExport() {
@@ -58,11 +73,12 @@ export default function SettingsPage() {
 
   async function handleLocale(locale: string) {
     const html = document.documentElement
-    html.classList.add('lang-exit')
-    await new Promise(r => setTimeout(r, 260))
-    localStorage.setItem('lang-anim', '1')
+    html.style.transition = 'opacity 0.2s ease'
+    html.style.opacity = '0'
+    await new Promise(r => setTimeout(r, 220))
     await setLocale(locale)
-    window.location.reload()
+    wasPending.current = true
+    startTransition(() => router.refresh())
   }
 
   return (

@@ -1,10 +1,12 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useTransition } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import { Moon, Sun } from 'lucide-react'
 import { useCurrency } from '@/context/CurrencyContext'
 import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
 import { setLocale } from '@/app/actions/setLocale'
+import { setTheme } from '@/app/actions/setTheme'
 import { SUPPORTED_LOCALES } from '@/lib/locales'
 import type { Currency } from '@/lib/types'
 
@@ -13,10 +15,24 @@ const LOCALE_LABEL: Record<string, string> = { 'zh-TW': '中文', 'en': 'EN' }
 function LocaleSwitcher() {
   const t = useTranslations('settings')
   const locale = useLocale()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const wasPending = useRef(false)
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, right: 0 })
   const btnRef = useRef<HTMLButtonElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
+
+  // Fade back in once router.refresh() completes
+  useEffect(() => {
+    if (wasPending.current && !isPending) {
+      wasPending.current = false
+      const html = document.documentElement
+      html.style.transition = 'opacity 0.25s ease'
+      html.style.opacity = '1'
+      setTimeout(() => { html.style.transition = ''; html.style.opacity = '' }, 300)
+    }
+  }, [isPending])
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -39,12 +55,14 @@ function LocaleSwitcher() {
 
   async function handleSelect(l: string) {
     setOpen(false)
+    // Fade out
     const html = document.documentElement
-    html.classList.add('lang-exit')
-    await new Promise(r => setTimeout(r, 260))
-    localStorage.setItem('lang-anim', '1')
+    html.style.transition = 'opacity 0.2s ease'
+    html.style.opacity = '0'
+    await new Promise(r => setTimeout(r, 220))
     await setLocale(l)
-    window.location.reload()
+    wasPending.current = true
+    startTransition(() => router.refresh())
   }
 
   return (
@@ -52,9 +70,11 @@ function LocaleSwitcher() {
       <button
         ref={btnRef}
         onClick={handleOpen}
+        disabled={isPending}
         className="h-7 px-2.5 flex items-center gap-1 rounded-lg text-xs font-medium
           bg-[var(--color-bg)] border border-[var(--color-border)]
-          hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors">
+          hover:border-[var(--color-accent)] hover:text-[var(--color-accent)] transition-colors
+          disabled:opacity-50">
         {LOCALE_LABEL[locale] ?? locale}
         <span className="text-[0.6rem] opacity-50">▾</span>
       </button>
@@ -87,32 +107,19 @@ function LocaleSwitcher() {
 export default function TopBar() {
   const { currency, setCurrency } = useCurrency()
   const [dark, setDark] = useState(false)
-  const themeBtnRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
-    const stored = localStorage.getItem('theme')
-    if (stored === 'dark') {
-      setDark(true)
-      document.documentElement.dataset.theme = 'dark'
-    }
+    setDark(document.documentElement.dataset.theme === 'dark')
   }, [])
 
-  function toggleTheme() {
+  async function toggleTheme() {
     const next = !dark
-    const apply = () => {
-      setDark(next)
-      document.documentElement.dataset.theme = next ? 'dark' : 'light'
-      localStorage.setItem('theme', next ? 'dark' : 'light')
-    }
-    if (!document.startViewTransition) { apply(); return }
-
-    // Pin the reveal origin to the button position
-    if (themeBtnRef.current) {
-      const r = themeBtnRef.current.getBoundingClientRect()
-      document.documentElement.style.setProperty('--vt-x', `${r.left + r.width / 2}px`)
-      document.documentElement.style.setProperty('--vt-y', `${r.top  + r.height / 2}px`)
-    }
-    document.startViewTransition(apply)
+    setDark(next)
+    const html = document.documentElement
+    html.classList.add('theme-changing')
+    html.dataset.theme = next ? 'dark' : 'light'
+    await setTheme(next ? 'dark' : 'light')
+    setTimeout(() => html.classList.remove('theme-changing'), 350)
   }
 
   return (
@@ -139,7 +146,6 @@ export default function TopBar() {
         <CurrencyPicker value={currency} onChange={v => setCurrency(v as Currency)} />
         <LocaleSwitcher />
         <button
-          ref={themeBtnRef}
           aria-label="theme toggle"
           onClick={toggleTheme}
           className="h-7 w-7 flex items-center justify-center rounded-lg
