@@ -79,7 +79,7 @@ function HoldDeleteButton({ onConfirm, label }: { onConfirm: () => void; label: 
 
   function enter() {
     setHovering(true)
-    timer.current = setTimeout(() => setReady(true), 3000)
+    timer.current = setTimeout(() => setReady(true), 2500)
   }
   function leave() {
     setHovering(false)
@@ -101,9 +101,9 @@ function HoldDeleteButton({ onConfirm, label }: { onConfirm: () => void; label: 
         className="absolute inset-y-0 left-0 pointer-events-none"
         style={{
           width: hovering && !ready ? '115%' : '0%',
-          transition: hovering && !ready ? 'width 3s linear' : 'none',
+          transition: hovering && !ready ? 'width 2.5s linear' : 'none',
           background: 'linear-gradient(to right, rgba(251,146,60,0.25) 0%, rgba(239,68,68,0.45) 70%, rgba(239,68,68,0.6) 87%, transparent 100%)',
-          borderRadius: '0 56px 56px 0',
+          borderRadius: '0 0.75rem 0.75rem 0',
           boxShadow: hovering && !ready ? '3px 0 16px rgba(239,68,68,0.5)' : 'none',
         }}
       />
