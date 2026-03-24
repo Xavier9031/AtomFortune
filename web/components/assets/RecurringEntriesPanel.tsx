@@ -245,69 +245,68 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
                   </button>
                 </div>
 
-                {/* Edit bubble */}
+                {/* Edit bubble — floats below the row with a gap */}
                 {isEditing && (
                   <>
-                    {/* backdrop — click outside to dismiss */}
                     <div className="fixed inset-0 z-10" onClick={() => setEditingId(null)} />
-                    <div className="relative z-20 mx-3 mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl p-3 space-y-2"
-                      style={{ animation: 'bubbleIn 0.18s cubic-bezier(0.34,1.4,0.64,1) both' }}>
-                      {/* Type toggle */}
-                      <div className="flex gap-1.5 p-1 bg-[var(--color-bg)] rounded-xl">
+                    <div className="relative z-20 mx-2 mt-0 mb-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl overflow-hidden"
+                      style={{ animation: 'bubbleIn 0.2s cubic-bezier(0.34,1.4,0.64,1) both' }}>
+
+                      {/* Type toggle — slim segmented at top */}
+                      <div className="flex border-b border-[var(--color-border)]">
                         {(['income', 'expense'] as const).map(t => (
                           <button key={t} onClick={() => setEType(t)}
-                            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all
+                            className={`flex-1 py-2 text-xs font-semibold transition-colors
                               ${eType === t
-                                ? t === 'income' ? 'bg-green-500 text-white shadow-sm' : 'bg-red-400 text-white shadow-sm'
-                                : 'text-[var(--color-muted)]'}`}>
+                                ? t === 'income' ? 'bg-green-500/15 text-green-400' : 'bg-red-400/15 text-red-400'
+                                : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
                             {t === 'income' ? '固定收入' : '固定支出'}
                           </button>
                         ))}
                       </div>
 
-                      {/* Amount + currency */}
-                      <div className="flex items-center bg-[var(--color-bg)] rounded-xl px-3 py-2 gap-2">
+                      {/* Amount — prominent, no box */}
+                      <div className="flex items-baseline gap-2 px-4 pt-3 pb-2">
                         <input type="number" value={eAmount} min="0" autoFocus
                           onChange={e => setEAmount(e.target.value)}
-                          className="flex-1 text-right bg-transparent text-lg font-semibold outline-none tabular-nums
+                          className="flex-1 text-right bg-transparent text-2xl font-bold outline-none tabular-nums
                             [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-                        <span className="text-[var(--color-border)] text-sm">|</span>
                         <input value={eCurrency} maxLength={4}
                           onChange={e => setECurrency(e.target.value.toUpperCase())}
-                          className="w-10 bg-transparent text-xs font-bold text-center outline-none text-[var(--color-muted)]" />
+                          className="w-11 bg-transparent text-sm font-semibold text-[var(--color-muted)] text-center outline-none pb-0.5" />
                       </div>
 
-                      {/* Day + label — same height, same bg pill */}
-                      <div className="flex items-center gap-1.5">
-                        <div className="flex items-center gap-1 bg-[var(--color-bg)] rounded-xl px-3 h-9 shrink-0">
-                          <span className="text-xs text-[var(--color-muted)]">每月</span>
+                      {/* Day + label — inline, no boxes */}
+                      <div className="flex items-center gap-3 px-4 pb-3 border-b border-[var(--color-border)]">
+                        <div className="flex items-center gap-1 text-xs text-[var(--color-muted)] shrink-0">
+                          <span>每月</span>
                           <input type="number" min="1" max="31" value={eDayOfMonth}
                             onChange={e => setEDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value))))}
-                            className="w-7 bg-transparent text-xs font-semibold text-center outline-none
+                            className="w-7 bg-transparent text-xs font-semibold text-center outline-none border-b border-[var(--color-border)]
                               [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-                          <span className="text-xs text-[var(--color-muted)]">日</span>
+                          <span>日</span>
                         </div>
                         <input placeholder="標籤（選填）" value={eLabel}
                           onChange={e => setELabel(e.target.value)}
-                          className="flex-1 bg-[var(--color-bg)] rounded-xl px-3 h-9 text-xs outline-none placeholder:text-[var(--color-border)]" />
+                          className="flex-1 bg-transparent text-xs outline-none text-[var(--color-text)] placeholder:text-[var(--color-border)]" />
                       </div>
 
                       {/* Advanced: date range */}
                       <button onClick={() => setEShowAdv(!eShowAdv)}
-                        className="w-full text-left text-xs text-[var(--color-muted)] flex items-center gap-1.5 px-1">
+                        className="w-full text-left text-xs text-[var(--color-muted)] flex items-center gap-1.5 px-4 py-2.5 hover:text-[var(--color-text)] transition-colors">
                         <span className={`inline-block transition-transform text-[10px] ${eShowAdv ? 'rotate-90' : ''}`}>▶</span>
                         有效期限
                         {!eShowAdv && <span className="opacity-40">（選填）</span>}
                       </button>
 
                       {eShowAdv && (
-                        <div className="space-y-2.5 px-1">
-                          <div>
-                            <p className="text-xs text-[var(--color-muted)] mb-1.5">開始月份</p>
+                        <div className="space-y-3 px-4 pb-3 border-t border-[var(--color-border)]">
+                          <div className="pt-3">
+                            <p className="text-xs text-[var(--color-muted)] mb-2">開始月份</p>
                             <MonthYearPicker value={eFrom} onChange={setEFrom} />
                           </div>
                           <div>
-                            <div className="flex items-center justify-between mb-1.5">
+                            <div className="flex items-center justify-between mb-2">
                               <p className="text-xs text-[var(--color-muted)]">結束</p>
                               <div className="flex rounded-lg overflow-hidden border border-[var(--color-border)] text-xs">
                                 <button onClick={() => { setEHasEndDate(false); setETo('') }}
@@ -322,13 +321,13 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
                       )}
 
                       {/* Actions */}
-                      <div className="flex gap-2 pt-0.5">
+                      <div className="flex border-t border-[var(--color-border)]">
                         <button onClick={() => setEditingId(null)}
-                          className="flex-1 py-2 rounded-xl text-xs text-[var(--color-muted)] bg-[var(--color-bg)]">
+                          className="flex-1 py-2.5 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors border-r border-[var(--color-border)]">
                           取消
                         </button>
                         <button onClick={handleUpdate} disabled={!eAmount || Number(eAmount) <= 0 || eSaving}
-                          className="flex-1 py-2 rounded-xl text-xs font-semibold bg-[var(--color-accent)] text-white disabled:opacity-40">
+                          className="flex-1 py-2.5 text-xs font-semibold text-[var(--color-accent)] disabled:opacity-40 transition-opacity">
                           {eSaving ? '儲存中…' : '儲存'}
                         </button>
                       </div>
