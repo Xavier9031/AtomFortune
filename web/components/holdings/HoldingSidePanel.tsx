@@ -370,8 +370,8 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                 {t('common.delete')}
               </button>
             </div>
-            <HoldingTransactions assetId={holding.assetId} accountId={holding.accountId} />
             <RecurringEntriesPanel assetId={holding.assetId} accountId={holding.accountId} />
+            <HoldingTransactions assetId={holding.assetId} accountId={holding.accountId} />
           </div>
         )}
 
