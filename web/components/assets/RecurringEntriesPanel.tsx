@@ -172,7 +172,8 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
             <div className="flex items-center gap-1.5 ml-auto">
               <span className="text-xs text-[var(--color-muted)]">每月</span>
               <input type="number" min="1" max="31" value={dayOfMonth}
-                onChange={e => setDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value))))}
+                onFocus={e => e.target.select()}
+                onChange={e => setDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value) || 1)))}
                 className="w-10 bg-transparent text-sm font-semibold text-center outline-none border-b border-[var(--color-border)]" />
               <span className="text-xs text-[var(--color-muted)]">日</span>
             </div>
@@ -281,7 +282,8 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
                         <div className="flex items-center gap-1 text-xs text-[var(--color-muted)] shrink-0">
                           <span>每月</span>
                           <input type="number" min="1" max="31" value={eDayOfMonth}
-                            onChange={e => setEDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value))))}
+                            onFocus={e => e.target.select()}
+                            onChange={e => setEDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value) || 1)))}
                             className="w-7 bg-transparent text-xs font-semibold text-center outline-none border-b border-[var(--color-border)]
                               [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
                           <span>日</span>
