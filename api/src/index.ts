@@ -52,17 +52,17 @@ app.onError((err, c) => {
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
 
-export async function startServer(port: number, migrationsFolder: string): Promise<void> {
+export async function startServer(port: number, migrationsFolder: string): Promise<ReturnType<typeof serve>> {
   migrate(db, { migrationsFolder })
   console.log('DB migrations applied')
 
   // Wrap serve() in a Promise so 'error' events (e.g. EADDRINUSE) are catchable.
   // serve() returns the http.Server immediately after calling listen(); it does NOT
   // reject on bind failure — errors come via the 'error' event.
-  await new Promise<void>((resolve, reject) => {
-    const server = serve({ fetch: app.fetch, port })
-    server.on('listening', () => resolve())
-    server.on('error', (err) => reject(err))
+  const server = await new Promise<ReturnType<typeof serve>>((resolve, reject) => {
+    const s = serve({ fetch: app.fetch, port })
+    s.on('listening', () => resolve(s))
+    s.on('error', (err) => reject(err))
   })
   console.log(`API listening on port ${port}`)
 
@@ -81,6 +81,8 @@ export async function startServer(port: number, migrationsFolder: string): Promi
   cron.schedule(config.snapshotSchedule, () => {
     dailySnapshotJob(db).catch(err => console.error('Snapshot job failed:', err))
   })
+
+  return server
 }
 
 // Auto-start for Docker and direct `node dist/index.js`.

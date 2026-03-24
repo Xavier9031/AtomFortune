@@ -5,6 +5,7 @@ import http from 'http'
 
 let mainWindow: BrowserWindow | null = null
 let nextServerProcess: Electron.UtilityProcess | null = null
+let apiServer: any = null
 
 // Poll until the given port accepts a connection, then resolve.
 function waitForPort(port: number, timeoutMs = 30_000): Promise<void> {
@@ -62,7 +63,7 @@ async function bootstrap(): Promise<void> {
 
   // ─── Start Hono API ────────────────────────────────────────────────────────
   // Dynamic import() ensures db/client.ts evaluates AFTER DATABASE_PATH is set above.
-  let startServer: (port: number, migrationsFolder: string) => Promise<void>
+  let startServer: (port: number, migrationsFolder: string) => Promise<any>
   try {
     ;({ startServer } = await import('atomfortune-api'))
   } catch (err) {
@@ -72,7 +73,7 @@ async function bootstrap(): Promise<void> {
   }
 
   try {
-    await startServer(8000, migrationsFolder)
+    apiServer = await startServer(8000, migrationsFolder)
   } catch (err: any) {
     if (err?.code === 'EADDRINUSE') {
       dialog.showErrorBox(
@@ -136,5 +137,6 @@ app.on('ready', bootstrap)
 
 app.on('window-all-closed', () => {
   nextServerProcess?.kill()
+  apiServer?.close()
   app.quit()
 })
