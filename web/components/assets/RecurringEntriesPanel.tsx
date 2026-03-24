@@ -250,42 +250,46 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
                   <>
                     {/* backdrop — click outside to dismiss */}
                     <div className="fixed inset-0 z-10" onClick={() => setEditingId(null)} />
-                    <div className="relative z-20 mx-3 mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl p-3 space-y-2.5">
+                    <div className="relative z-20 mx-3 mb-3 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl p-3 space-y-2"
+                      style={{ animation: 'bubbleIn 0.18s cubic-bezier(0.34,1.4,0.64,1) both' }}>
                       {/* Type toggle */}
-                      <div className="flex gap-2">
+                      <div className="flex gap-1.5 p-1 bg-[var(--color-bg)] rounded-xl">
                         {(['income', 'expense'] as const).map(t => (
                           <button key={t} onClick={() => setEType(t)}
-                            className={`flex-1 py-1.5 rounded-xl text-xs font-semibold transition-colors
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all
                               ${eType === t
-                                ? t === 'income' ? 'bg-green-500 text-white' : 'bg-red-400 text-white'
-                                : 'bg-[var(--color-bg)] text-[var(--color-muted)]'}`}>
+                                ? t === 'income' ? 'bg-green-500 text-white shadow-sm' : 'bg-red-400 text-white shadow-sm'
+                                : 'text-[var(--color-muted)]'}`}>
                             {t === 'income' ? '固定收入' : '固定支出'}
                           </button>
                         ))}
                       </div>
 
                       {/* Amount + currency */}
-                      <div className="flex items-center gap-2 bg-[var(--color-bg)] rounded-xl px-3 py-2">
+                      <div className="flex items-center bg-[var(--color-bg)] rounded-xl px-3 py-2 gap-2">
                         <input type="number" value={eAmount} min="0" autoFocus
                           onChange={e => setEAmount(e.target.value)}
-                          className="flex-1 text-right bg-transparent text-lg font-semibold outline-none tabular-nums" />
+                          className="flex-1 text-right bg-transparent text-lg font-semibold outline-none tabular-nums
+                            [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+                        <span className="text-[var(--color-border)] text-sm">|</span>
                         <input value={eCurrency} maxLength={4}
                           onChange={e => setECurrency(e.target.value.toUpperCase())}
-                          className="w-12 bg-[var(--color-surface)] rounded-lg px-1.5 py-0.5 text-xs font-bold text-center outline-none border border-[var(--color-border)]" />
+                          className="w-10 bg-transparent text-xs font-bold text-center outline-none text-[var(--color-muted)]" />
                       </div>
 
-                      {/* Day + label */}
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1 bg-[var(--color-bg)] rounded-xl px-3 py-2 shrink-0">
+                      {/* Day + label — same height, same bg pill */}
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1 bg-[var(--color-bg)] rounded-xl px-3 h-9 shrink-0">
                           <span className="text-xs text-[var(--color-muted)]">每月</span>
                           <input type="number" min="1" max="31" value={eDayOfMonth}
                             onChange={e => setEDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value))))}
-                            className="w-7 bg-transparent text-xs font-semibold text-center outline-none" />
+                            className="w-7 bg-transparent text-xs font-semibold text-center outline-none
+                              [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
                           <span className="text-xs text-[var(--color-muted)]">日</span>
                         </div>
                         <input placeholder="標籤（選填）" value={eLabel}
                           onChange={e => setELabel(e.target.value)}
-                          className="flex-1 bg-[var(--color-bg)] rounded-xl px-3 py-2 text-xs outline-none placeholder:text-[var(--color-border)]" />
+                          className="flex-1 bg-[var(--color-bg)] rounded-xl px-3 h-9 text-xs outline-none placeholder:text-[var(--color-border)]" />
                       </div>
 
                       {/* Advanced: date range */}

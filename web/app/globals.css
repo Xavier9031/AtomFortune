@@ -43,3 +43,8 @@ body {
   --color-cat-receivable: var(--cat-receivable);
   --color-cat-debt:       var(--cat-debt);
 }
+
+@keyframes bubbleIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
