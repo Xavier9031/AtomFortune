@@ -7,6 +7,6 @@ describe('monorepo scaffold', () => {
     expect(existsSync(resolve(__dirname, '../src/index.ts'))).toBe(true)
   })
   it('shared/types.ts exists', () => {
-    expect(existsSync(resolve(__dirname, '../../../shared/types.ts'))).toBe(true)
+    expect(existsSync(resolve(__dirname, '../../shared/types.ts'))).toBe(true)
   })
 })

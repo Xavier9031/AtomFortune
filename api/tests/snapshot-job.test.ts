@@ -97,7 +97,7 @@ describe('fetchFxRates', () => {
     const twd = rates.find(r => r.fromCurrency === 'TWD')
 
     expect(usd?.rate).toBeCloseTo(1 / 0.030581, 4)
-    expect(usd?.source).toBe('exchangerate-api')
+    expect(usd?.source).toBe('open.er-api')
     expect(jpy?.rate).toBeCloseTo(1 / 4.6296, 4)
     expect(usdt?.rate).toBeCloseTo(32.68)
     expect(usdt?.source).toBe('coingecko')
@@ -107,7 +107,7 @@ describe('fetchFxRates', () => {
 
   it('throws if exchangerate-api response is not ok', async () => {
     vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 500 } as Response)
-    await expect(fetchFxRates()).rejects.toThrow('exchangerate-api')
+    await expect(fetchFxRates()).rejects.toThrow('open.er-api')
   })
 })
 

@@ -1,4 +1,4 @@
-import YahooFinance from 'yahoo-finance2'
+import yahooFinance from 'yahoo-finance2'
 
 type AssetInput = { id: string; symbol: string | null; pricingMode: string; subKind?: string | null }
 
@@ -6,9 +6,6 @@ export async function fetchMarketPrices(assets: AssetInput[]): Promise<Map<strin
   const marketAssets = assets.filter(a => a.pricingMode === 'market' && a.symbol)
   const result = new Map<string, number>()
   if (marketAssets.length === 0) return result
-
-  // Create a fresh instance each call so the CSRF crumb is never stale
-  const yahooFinance = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
 
   // Crypto symbols need '-USD' suffix for Yahoo Finance (e.g. BTC → BTC-USD)
   const yahooSymbolToId = new Map(marketAssets.map(a => {
