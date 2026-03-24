@@ -57,11 +57,7 @@ Atom Fortune/
 
 ### 1. 準備環境變數
 
-在專案根目錄建立 `.env`：
-
-```env
-EXCHANGERATE_API_KEY=your_key_here
-```
+所有外部資料來源均免費且無需 API 金鑰，`.env` 不需要額外設定。
 
 > 從 [https://www.exchangerate-api.com](https://www.exchangerate-api.com) 免費申請 API key（每月 1500 次請求）。
 
@@ -123,7 +119,6 @@ DATABASE_URL=postgres://atomfortune:atomfortune@localhost:5432/atomfortune \
 DATABASE_URL=postgres://atomfortune:atomfortune@localhost:5432/atomfortune \
 BASE_CURRENCY=TWD \
 SNAPSHOT_SCHEDULE="0 22 * * *" \
-EXCHANGERATE_API_KEY=your_key_here \
   npm run dev
 ```
 
@@ -254,7 +249,6 @@ curl -X POST "http://localhost:8000/snapshots/trigger?date=2026-03-22"
 | `TEST_DATABASE_URL` | 否 | — | 測試用 DB（vitest 自動使用） |
 | `BASE_CURRENCY` | 否 | `TWD` | 基準幣別 |
 | `SNAPSHOT_SCHEDULE` | 否 | `0 22 * * *` | cron 表達式 |
-| `EXCHANGERATE_API_KEY` | 是 | — | exchangerate-api.com 金鑰 |
 | `PORT` | 否 | `8000` | API 監聽 port |
 | `NEXT_PUBLIC_API_BASE_URL` | 否 | `http://localhost:8000/api/v1` | 前端 API base URL |
 | `NEXT_PUBLIC_SNAPSHOT_SCHEDULE` | 否 | `0 22 * * *` | 顯示在設定頁的排程說明 |

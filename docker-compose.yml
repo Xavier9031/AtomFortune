@@ -15,7 +15,6 @@ services:
       DATABASE_URL: postgres://atomfortune:atomfortune@db:5432/atomfortune
       BASE_CURRENCY: TWD
       SNAPSHOT_SCHEDULE: "0 22 * * *"
-      EXCHANGERATE_API_KEY: ${EXCHANGERATE_API_KEY}
     ports:
       - "8000:8000"
     depends_on: [db]
