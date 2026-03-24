@@ -73,21 +73,14 @@ export default function SettingsPage() {
     setTimeout(() => html.classList.remove('theme-changing'), 350)
   }
 
-  async function handleExport() {
-    const passwordParam = exportPassword ? `?password=${encodeURIComponent(exportPassword)}` : ''
-    const res = await fetchWithUser(`${BASE}/backup/export${passwordParam}`)
-    if (!res.ok) return
-    const blob = await res.blob()
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    const date = new Date().toISOString().slice(0, 10)
-    const ext = exportPassword ? 'enc' : 'json'
-    a.download = `atomfortune-backup-${date}.zip`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  function handleExport() {
+    // Build a direct download URL so the browser handles Content-Disposition: attachment
+    // natively — bypasses the async blob-URL trick that breaks in Safari.
+    const params = new URLSearchParams()
+    const uid = getActiveUserId()
+    if (uid) params.set('userId', uid)
+    if (exportPassword) params.set('password', exportPassword)
+    window.location.href = `${BASE}/backup/export?${params.toString()}`
   }
 
   async function handleImport(file: File) {

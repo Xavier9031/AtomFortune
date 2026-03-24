@@ -45,7 +45,8 @@ function decryptBackup(data: Uint8Array, password: string): string {
 // ── Export ───────────────────────────────────────────────────────────────────
 
 backupRouter.get('/export', async (c) => {
-  const userId = c.req.header('x-user-id')
+  // Accept userId from header (API clients) or query param (direct browser download links)
+  const userId = c.req.header('x-user-id') ?? c.req.query('userId')
   if (!userId) return c.json({ error: 'Missing X-User-Id header' }, 400)
 
   const password = c.req.query('password')
