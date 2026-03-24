@@ -179,3 +179,18 @@ backupRouter.post('/import', async (c) => {
 
   return c.json({ ok: true, imported: counts })
 })
+
+// ── Reset ───────────────────────────────────────────────────────────────────
+
+backupRouter.delete('/reset', (c) => {
+  db.transaction((tx) => {
+    tx.delete(snapshotItems).run()
+    tx.delete(fxRates).run()
+    tx.delete(prices).run()
+    tx.delete(transactions).run()
+    tx.delete(holdings).run()
+    tx.delete(accounts).run()
+    tx.delete(assets).run()
+  })
+  return c.json({ ok: true })
+})

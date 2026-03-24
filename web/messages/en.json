@@ -293,7 +293,16 @@
     "importButton": "Import Backup",
     "importing": "Importing…",
     "importSuccess": "Import complete: {assets} assets, {accounts} accounts, {holdings} holdings, {transactions} transactions, {snapshotItems} snapshots",
-    "importError": "Import failed"
+    "importError": "Import failed",
+    "sectionDanger": "Danger Zone",
+    "resetTitle": "Clear All Data",
+    "resetDesc": "Permanently delete all assets, accounts, holdings, transactions and snapshots. This cannot be undone. Export a backup first.",
+    "resetConfirmPlaceholder": "Type \"RESET\" to confirm",
+    "resetConfirmWord": "RESET",
+    "resetButton": "Clear Data",
+    "resetting": "Clearing…",
+    "resetSuccess": "All data has been cleared",
+    "resetError": "Clear failed"
   },
   "snapshots": {
     "title": "Snapshots",
