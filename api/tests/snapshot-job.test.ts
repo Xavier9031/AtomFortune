@@ -146,17 +146,14 @@ describe('dailySnapshotJob', () => {
   })
 
   it('calls fetchMarketPrices and fetchFxRates exactly once', async () => {
-    // getMarketAssets: returns empty, getAllHoldingsWithAssets: returns empty
-    mockDb.select = vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn().mockResolvedValue([]),
-        innerJoin: vi.fn(() => ({
-          // getAllHoldingsWithAssets doesn't have nested innerJoin - it's chained
-          // The result is directly awaitable after innerJoin
-          then: (resolve: any) => resolve([]),
-        })),
-      })),
-    }))
+    // Build a chainable mock: from() returns a thenable [] with .where() and .innerJoin()
+    const makeFromResult = () => {
+      const result: any = Promise.resolve([])
+      result.where = vi.fn().mockResolvedValue([])
+      result.innerJoin = vi.fn(() => ({ where: vi.fn().mockResolvedValue([]) }))
+      return result
+    }
+    mockDb.select = vi.fn(() => ({ from: vi.fn(makeFromResult) }))
 
     await dailySnapshotJob(mockDb as any, new Date('2026-03-22'))
 
@@ -165,15 +162,14 @@ describe('dailySnapshotJob', () => {
   })
 
   it('inserts snapshot item when price and fx_rate are resolved', async () => {
-    // Return empty arrays for all db.select calls
-    mockDb.select = vi.fn(() => ({
-      from: vi.fn(() => ({
-        where: vi.fn().mockResolvedValue([]),
-        innerJoin: vi.fn(() => ({
-          then: (resolve: any) => resolve([]),
-        })),
-      })),
-    }))
+    // Build a chainable mock: from() returns a thenable [] with .where() and .innerJoin()
+    const makeFromResult = () => {
+      const result: any = Promise.resolve([])
+      result.where = vi.fn().mockResolvedValue([])
+      result.innerJoin = vi.fn(() => ({ where: vi.fn().mockResolvedValue([]) }))
+      return result
+    }
+    mockDb.select = vi.fn(() => ({ from: vi.fn(makeFromResult) }))
 
     await dailySnapshotJob(mockDb as any, new Date('2026-03-22'))
     // Just verify it ran without error

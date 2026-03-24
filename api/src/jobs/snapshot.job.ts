@@ -1,5 +1,5 @@
 import { eq, and, gte, lte, desc } from 'drizzle-orm'
-import { assets, holdings, prices, fxRates, snapshotItems } from '../db/schema'
+import { assets, holdings, prices, fxRates, snapshotItems, users } from '../db/schema'
 import { fetchMarketPrices } from './pricing.service'
 import { fetchFxRates } from './fx.service'
 import type { DrizzleDB } from '../db/client'
@@ -13,16 +13,20 @@ export async function getMarketAssets(db: DrizzleDB) {
     .from(assets).where(eq(assets.pricingMode, 'market'))
 }
 
-export async function getAllHoldingsWithAssets(tx: DrizzleDB) {
+export async function getAllHoldingsWithAssets(tx: DrizzleDB, userId: string) {
   return tx
     .select({
-      userId: holdings.userId,
       assetId: holdings.assetId, accountId: holdings.accountId,
       quantity: holdings.quantity, pricingMode: assets.pricingMode,
       currencyCode: assets.currencyCode, subKind: assets.subKind, unit: assets.unit,
     })
     .from(holdings)
     .innerJoin(assets, eq(holdings.assetId, assets.id))
+    .where(eq(holdings.userId, userId))
+}
+
+async function getAllUsers(db: DrizzleDB) {
+  return db.select({ id: users.id }).from(users)
 }
 
 // Precious metal prices are quoted per troy ounce; convert grams to oz for value calc
@@ -132,37 +136,43 @@ export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date())
 
   let snapshotItemsWritten = 0
 
-  // Pre-fetch all reads outside the transaction (better-sqlite3 requires sync transaction callbacks)
-  const holdingRows = await getAllHoldingsWithAssets(db)
-  const resolvedItems: Array<{
-    userId: string, snapshotDate: string, assetId: string, accountId: string,
-    quantity: string, price: string, fxRate: string, valueInBase: string,
-  }> = []
-  const missingAssets: string[] = []
+  // Iterate per user
+  const allUsers = await getAllUsers(db)
 
-  for (const h of holdingRows) {
-    const price = await resolvePrice(db, h.assetId, h.pricingMode, today)
-    if (price === null) { missingAssets.push(h.assetId); continue }
-    const fxRate = await resolveFxRate(db, h.currencyCode, today)
-    const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
-    const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
-    resolvedItems.push({
-      userId: h.userId, snapshotDate: today, assetId: h.assetId, accountId: h.accountId,
-      quantity: h.quantity, price: String(price), fxRate: String(fxRate),
-      valueInBase: String(valueInBase),
+  for (const user of allUsers) {
+    const holdingRows = await getAllHoldingsWithAssets(db, user.id)
+    const resolvedItems: Array<{
+      snapshotDate: string, assetId: string, accountId: string, userId: string,
+      quantity: string, price: string, fxRate: string, valueInBase: string,
+    }> = []
+    const missingAssets: string[] = []
+
+    for (const h of holdingRows) {
+      const price = await resolvePrice(db, h.assetId, h.pricingMode, today)
+      if (price === null) { missingAssets.push(h.assetId); continue }
+      const fxRate = await resolveFxRate(db, h.currencyCode, today)
+      const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
+      const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
+      resolvedItems.push({
+        snapshotDate: today, assetId: h.assetId, accountId: h.accountId,
+        userId: user.id,
+        quantity: h.quantity, price: String(price), fxRate: String(fxRate),
+        valueInBase: String(valueInBase),
+      })
+    }
+
+    if (missingAssets.length) console.warn(`[user ${user.id}] Missing assets:`, missingAssets)
+
+    db.transaction((tx) => {
+      tx.delete(snapshotItems)
+        .where(and(eq(snapshotItems.snapshotDate, today), eq(snapshotItems.userId, user.id)))
+        .run()
+      for (const item of resolvedItems) {
+        tx.insert(snapshotItems).values(item).run()
+        snapshotItemsWritten++
+      }
     })
   }
-
-  if (missingAssets.length) console.warn('Missing assets:', missingAssets)
-
-  // Sync transaction for writes only
-  db.transaction((tx) => {
-    tx.delete(snapshotItems).where(eq(snapshotItems.snapshotDate, today)).run()
-    for (const item of resolvedItems) {
-      tx.insert(snapshotItems).values(item).run()
-      snapshotItemsWritten++
-    }
-  })
 
   return { date: today, prices: priceResults, fxStatus, snapshotItemsWritten }
 }
