@@ -63,3 +63,17 @@ html.lang-enter {
   from { opacity: 0; transform: translateY(12px) scale(0.99); }
   to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
+
+/* Dark/light mode circular reveal (View Transitions API) */
+::view-transition-old(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  animation: 0.5s ease-out theme-reveal;
+  mix-blend-mode: normal;
+}
+@keyframes theme-reveal {
+  from { clip-path: circle(0% at var(--vt-x, 95%) var(--vt-y, 28px)); }
+  to   { clip-path: circle(150% at var(--vt-x, 95%) var(--vt-y, 28px)); }
+}
