@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "start": "electron .",
-    "predist": "cd ../web && npm run build && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && cd ../api && npm run build",
+    "predist": "cd ../web && npm run build && cp -r .next/static .next/standalone/web/.next/static && cp -r public .next/standalone/web/public && cd ../api && npm run build",
     "dist": "npm run build && electron-builder --mac"
   },
   "dependencies": {

@@ -15,7 +15,7 @@ files:
 extraResources:
   - from: "../api/drizzle"
     to: "drizzle"
-  - from: "../web/.next/standalone"
+  - from: "../web/.next/standalone/web"
     to: "web-standalone"
 
 mac:

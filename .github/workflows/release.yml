@@ -26,8 +26,8 @@ jobs:
       - name: Build Next.js standalone
         run: |
           cd web && npm ci && npm run build
-          cp -r .next/static .next/standalone/.next/static
-          cp -r public .next/standalone/public
+          cp -r .next/static .next/standalone/web/.next/static
+          cp -r public .next/standalone/web/public
 
       - name: Install desktop dependencies
         run: cd desktop && npm ci
