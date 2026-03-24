@@ -18,31 +18,18 @@ function LocaleSwitcher() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const wasPending = useRef(false)
+  const resolveVT = useRef<(() => void) | null>(null)
   const [open, setOpen] = useState(false)
   const [pos, setPos] = useState({ top: 0, right: 0 })
   const btnRef = useRef<HTMLButtonElement>(null)
   const dropRef = useRef<HTMLDivElement>(null)
 
-  // Fade back in once router.refresh() completes
+  // Resolve the View Transition promise once router.refresh() has committed
   useEffect(() => {
     if (wasPending.current && !isPending) {
       wasPending.current = false
-      const html = document.documentElement
-      // Prepare start state while still invisible
-      html.style.transform = 'translateY(14px)'
-      // Double-rAF: first frame paints the start state, second triggers the transition
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          html.style.transition = 'opacity 0.4s cubic-bezier(0.22,1,0.36,1), transform 0.4s cubic-bezier(0.22,1,0.36,1)'
-          html.style.opacity = '1'
-          html.style.transform = 'translateY(0)'
-          setTimeout(() => {
-            html.style.transition = ''
-            html.style.opacity = ''
-            html.style.transform = ''
-          }, 450)
-        })
-      })
+      resolveVT.current?.()
+      resolveVT.current = null
     }
   }, [isPending])
 
@@ -67,18 +54,17 @@ function LocaleSwitcher() {
 
   async function handleSelect(l: string) {
     setOpen(false)
-    const html = document.documentElement
-    // Ensure we start from a clean opacity:1 state before fading out
-    html.style.transition = 'none'
-    html.style.opacity = '1'
-    void html.offsetHeight // force reflow so transition registers
-    html.style.transition = 'opacity 0.22s ease-in'
-    html.style.opacity = '0'
-    await new Promise(r => setTimeout(r, 250))
-    html.style.transition = '' // keep opacity at 0 while refreshing
     await setLocale(l)
-    wasPending.current = true
-    startTransition(() => router.refresh())
+    if (!document.startViewTransition) {
+      wasPending.current = true
+      startTransition(() => router.refresh())
+      return
+    }
+    document.startViewTransition(() => new Promise<void>((resolve) => {
+      resolveVT.current = resolve
+      wasPending.current = true
+      startTransition(() => router.refresh())
+    }))
   }
 
   return (

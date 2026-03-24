@@ -12,6 +12,7 @@ export default function SettingsPage() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const wasPending = useRef(false)
+  const resolveRef = useRef<(() => void) | null>(null)
   const [dark, setDark] = useState(false)
   const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const [importing, setImporting] = useState(false)
@@ -22,24 +23,12 @@ export default function SettingsPage() {
     setDark(document.documentElement.dataset.theme === 'dark')
   }, [])
 
-  // Fade back in after router.refresh() completes
+  // Resolve the View Transition promise once router.refresh() has committed
   useEffect(() => {
     if (wasPending.current && !isPending) {
       wasPending.current = false
-      const html = document.documentElement
-      html.style.transform = 'translateY(14px)'
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          html.style.transition = 'opacity 0.4s cubic-bezier(0.22,1,0.36,1), transform 0.4s cubic-bezier(0.22,1,0.36,1)'
-          html.style.opacity = '1'
-          html.style.transform = 'translateY(0)'
-          setTimeout(() => {
-            html.style.transition = ''
-            html.style.opacity = ''
-            html.style.transform = ''
-          }, 450)
-        })
-      })
+      resolveRef.current?.()
+      resolveRef.current = null
     }
   }, [isPending])
 
@@ -82,17 +71,17 @@ export default function SettingsPage() {
   }
 
   async function handleLocale(locale: string) {
-    const html = document.documentElement
-    html.style.transition = 'none'
-    html.style.opacity = '1'
-    void html.offsetHeight
-    html.style.transition = 'opacity 0.22s ease-in'
-    html.style.opacity = '0'
-    await new Promise(r => setTimeout(r, 250))
-    html.style.transition = ''
     await setLocale(locale)
-    wasPending.current = true
-    startTransition(() => router.refresh())
+    if (!document.startViewTransition) {
+      wasPending.current = true
+      startTransition(() => router.refresh())
+      return
+    }
+    document.startViewTransition(() => new Promise<void>((resolve) => {
+      resolveRef.current = resolve
+      wasPending.current = true
+      startTransition(() => router.refresh())
+    }))
   }
 
   return (
