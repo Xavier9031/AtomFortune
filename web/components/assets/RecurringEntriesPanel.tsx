@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
-import { mutate } from 'swr'
-import { BASE, fetcher, useRecurringEntries } from '@/lib/api'
+import useSWR, { mutate } from 'swr'
+import { BASE, fetcher } from '@/lib/api'
 import type { RecurringEntry } from '@/lib/types'
 
 function fmt(amount: string, type: 'income' | 'expense') {
@@ -9,8 +9,9 @@ function fmt(amount: string, type: 'income' | 'expense') {
   return `${type === 'income' ? '+' : '-'}${n.toLocaleString('zh-TW', { maximumFractionDigits: 2 })}`
 }
 
-export function RecurringEntriesPanel({ assetId }: { assetId: string }) {
-  const { data: entries, mutate: revalidate } = useRecurringEntries(assetId)
+export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string; accountId?: string }) {
+  const swrKey = `${BASE}/recurring-entries?assetId=${assetId}${accountId ? `&accountId=${accountId}` : ''}`
+  const { data: entries, mutate: revalidate } = useSWR<RecurringEntry[]>(swrKey, fetcher)
   const [showForm, setShowForm] = useState(false)
   const [type, setType] = useState<'income' | 'expense'>('income')
   const [amount, setAmount] = useState('')
@@ -34,7 +35,8 @@ export function RecurringEntriesPanel({ assetId }: { assetId: string }) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        assetId, type, amount: Number(amount), currencyCode,
+        assetId, accountId: accountId || undefined,
+        type, amount: Number(amount), currencyCode,
         dayOfMonth, label: label || undefined,
         effectiveFrom, effectiveTo: effectiveTo || undefined,
       }),
@@ -43,14 +45,13 @@ export function RecurringEntriesPanel({ assetId }: { assetId: string }) {
     setShowForm(false)
     resetForm()
     revalidate()
-    // also refresh the global list (used by FIRE widget)
-    mutate(`${BASE}/recurring-entries`)
+    mutate(`${BASE}/recurring-entries`)  // refresh FIRE widget
   }
 
   async function handleDelete(id: string) {
     await fetch(`${BASE}/recurring-entries/${id}`, { method: 'DELETE' })
     revalidate()
-    mutate(`${BASE}/recurring-entries`)
+    mutate(`${BASE}/recurring-entries`)  // refresh FIRE widget
   }
 
   const today = new Date().toISOString().slice(0, 10)

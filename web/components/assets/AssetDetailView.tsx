@@ -8,7 +8,6 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import { BASE, fetcher } from '@/lib/api'
 import { formatValue, getHoldingUnit, translateUnit } from '@/lib/utils'
 import { ManualPriceModal } from './ManualPriceModal'
-import { RecurringEntriesPanel } from './RecurringEntriesPanel'
 import type { Asset, Holding, Transaction } from '@/lib/types'
 
 type ChartRange = '30d' | '1y' | 'all'
@@ -276,9 +275,6 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
           </div>
         )}
       </section>
-
-      {/* ── Recurring cashflow entries ── */}
-      <RecurringEntriesPanel assetId={initial.id} />
 
       <ManualPriceModal assetId={initial.id} open={priceModalOpen}
         onClose={() => setPriceModalOpen(false)} />

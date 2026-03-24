@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import useSWR, { mutate as globalMutate } from 'swr'
 import { BASE, fetcher } from '@/lib/api'
+import { RecurringEntriesPanel } from '@/components/assets/RecurringEntriesPanel'
 import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker, Transaction } from '@/lib/types'
 import { TickerSearch } from '@/components/assets/TickerSearch'
 import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
@@ -370,6 +371,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               </button>
             </div>
             <HoldingTransactions assetId={holding.assetId} accountId={holding.accountId} />
+            <RecurringEntriesPanel assetId={holding.assetId} accountId={holding.accountId} />
           </div>
         )}
 
