@@ -71,8 +71,8 @@ export default function SettingsPage() {
   }
 
   async function handleLocale(locale: string) {
-    await setLocale(locale)
     if (!document.startViewTransition) {
+      await setLocale(locale)
       wasPending.current = true
       startTransition(() => router.refresh())
       return
@@ -80,7 +80,7 @@ export default function SettingsPage() {
     document.startViewTransition(() => new Promise<void>((resolve) => {
       resolveRef.current = resolve
       wasPending.current = true
-      startTransition(() => router.refresh())
+      setLocale(locale).then(() => startTransition(() => router.refresh()))
     }))
   }
 

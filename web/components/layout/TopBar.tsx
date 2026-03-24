@@ -54,8 +54,8 @@ function LocaleSwitcher() {
 
   async function handleSelect(l: string) {
     setOpen(false)
-    await setLocale(l)
     if (!document.startViewTransition) {
+      await setLocale(l)
       wasPending.current = true
       startTransition(() => router.refresh())
       return
@@ -63,7 +63,7 @@ function LocaleSwitcher() {
     document.startViewTransition(() => new Promise<void>((resolve) => {
       resolveVT.current = resolve
       wasPending.current = true
-      startTransition(() => router.refresh())
+      setLocale(l).then(() => startTransition(() => router.refresh()))
     }))
   }
 
