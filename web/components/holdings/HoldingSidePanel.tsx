@@ -360,16 +360,14 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   className="flex-1 text-right bg-transparent text-sm outline-none" />
               </div>
             </div>
-            <div className="flex gap-3">
-              <button onClick={handleSave} disabled={!canSubmit}
-                className="flex-1 bg-[var(--color-accent)] text-white rounded-xl py-3 font-medium disabled:opacity-40">
-                {t('holdings.update')}
-              </button>
-              <button onClick={handleDelete}
-                className="flex-1 border border-red-400 text-red-500 rounded-xl py-3">
-                {t('common.delete')}
-              </button>
-            </div>
+            <button onClick={handleSave} disabled={!canSubmit}
+              className="w-full bg-[var(--color-accent)] text-white rounded-xl py-3 font-medium disabled:opacity-40">
+              {t('holdings.update')}
+            </button>
+            <button onClick={handleDelete}
+              className="w-full text-xs text-[var(--color-muted)] hover:text-red-400 transition-colors py-1 text-center">
+              {t('common.delete')}
+            </button>
             <RecurringEntriesPanel assetId={holding.assetId} accountId={holding.accountId} />
             <HoldingTransactions assetId={holding.assetId} accountId={holding.accountId} />
           </div>
