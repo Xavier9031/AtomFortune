@@ -304,7 +304,13 @@
     "resetButton": "Clear Data",
     "resetting": "Clearing…",
     "resetSuccess": "All data has been cleared",
-    "resetError": "Clear failed"
+    "resetError": "Clear failed",
+    "sectionProfiles": "Profiles",
+    "deleteProfileConfirm": "Delete \"{name}\"? All data in this profile will be lost.",
+    "exportPassword": "Export password (optional)",
+    "exportPasswordPlaceholder": "Leave empty for no encryption",
+    "importPassword": "Import password (if encrypted)",
+    "importPasswordPlaceholder": "Leave empty if not encrypted"
   },
   "userSwitcher": {
     "defaultUser": "Default",
