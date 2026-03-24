@@ -17,11 +17,6 @@ export function AssetDetailSidePanel({ open, asset, onClose }: Props) {
 
   return (
     <>
-      {/* Backdrop */}
-      {open && (
-        <div className="fixed inset-0 z-30 bg-black/20" onClick={onClose} />
-      )}
-
       <div className={`fixed inset-y-0 right-0 w-[440px] bg-[var(--color-surface)] shadow-2xl
         transform transition-transform duration-300 z-40 flex flex-col
         ${open ? 'translate-x-0' : 'translate-x-full'}`}>
