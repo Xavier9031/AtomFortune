@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "electron .",
     "predist": "cd ../web && npm run build && cp -r .next/static .next/standalone/web/.next/static && cp -r public .next/standalone/web/public && cd ../api && npm run build",
-    "dist": "npm run build && electron-builder --mac"
+    "dist": "npm run build && electron-builder --mac",
+    "postdist": "cd ../api && npm rebuild"
   },
   "dependencies": {
     "electron-updater": "^6.1.0",

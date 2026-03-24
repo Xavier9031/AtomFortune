@@ -17,6 +17,9 @@ extraResources:
     to: "drizzle"
   - from: "../web/.next/standalone/web"
     to: "web-standalone"
+    filter:
+      - "**/*"
+      - "!node_modules/@img/**"
 
 mac:
   category: public.app-category.finance
