@@ -23,7 +23,8 @@
     "back": "返回",
     "add": "新增",
     "search": "搜尋",
-    "notFound": "找不到"
+    "notFound": "找不到",
+    "next": "下一步"
   },
   "accounts": {
     "title": "帳戶管理",
@@ -315,7 +316,12 @@
   "userSwitcher": {
     "defaultUser": "預設使用者",
     "newProfile": "新增個人檔案",
-    "newProfilePlaceholder": "輸入名稱\u2026"
+    "newProfilePlaceholder": "輸入名稱\u2026",
+    "setupProfile": "設定「{name}」",
+    "startEmpty": "空白開始",
+    "importBackup": "匯入備份",
+    "importing": "匯入中\u2026",
+    "deleteConfirm": "刪除「{name}」？"
   },
   "snapshots": {
     "title": "快照紀錄",

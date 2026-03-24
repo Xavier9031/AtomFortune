@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useTransition } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Download, Upload, Clock, FlaskConical, Trash2, Pencil, Check, X, Users } from 'lucide-react'
+import { Download, Upload, Clock, FlaskConical, Trash2 } from 'lucide-react'
 import { setLocale } from '@/app/actions/setLocale'
 import { setTheme } from '@/app/actions/setTheme'
 import { setExperimental } from '@/app/actions/setExperimental'
@@ -31,11 +31,6 @@ export default function SettingsPage() {
   const [holdReady, setHoldReady] = useState(false)
   const [exportPassword, setExportPassword] = useState('')
   const [importPassword, setImportPassword] = useState('')
-  const [profiles, setProfiles] = useState<{ id: string; name: string }[]>([])
-  const [editingProfileId, setEditingProfileId] = useState<string | null>(null)
-  const [editingName, setEditingName] = useState('')
-  const [deletingProfileId, setDeletingProfileId] = useState<string | null>(null)
-  const activeUserId = getActiveUserId()
   const schedule = process.env.NEXT_PUBLIC_SNAPSHOT_SCHEDULE ?? '0 22 * * *'
 
   useEffect(() => {
@@ -50,13 +45,6 @@ export default function SettingsPage() {
       resolveRef.current = null
     }
   }, [isPending])
-
-  useEffect(() => {
-    fetch(`${BASE}/users`)
-      .then(r => r.ok ? r.json() : [])
-      .then(setProfiles)
-      .catch(() => {})
-  }, [])
 
   async function handleExperimental(checked: boolean) {
     setExperimentalState(checked)
@@ -136,29 +124,6 @@ export default function SettingsPage() {
       setResetMsg({ ok: false, text: t('settings.resetError') })
     } finally {
       setResetting(false)
-    }
-  }
-
-  async function handleRenameProfile(id: string) {
-    if (!editingName.trim()) return
-    const res = await fetchWithUser(`${BASE}/users/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: editingName.trim() }),
-    })
-    if (res.ok) {
-      const updated = await res.json()
-      setProfiles(prev => prev.map(p => p.id === id ? updated : p))
-      setEditingProfileId(null)
-      setEditingName('')
-    }
-  }
-
-  async function handleDeleteProfile(id: string) {
-    const res = await fetchWithUser(`${BASE}/users/${id}`, { method: 'DELETE' })
-    if (res.status === 204) {
-      setProfiles(prev => prev.filter(p => p.id !== id))
-      setDeletingProfileId(null)
     }
   }
 
@@ -278,89 +243,6 @@ export default function SettingsPage() {
             <p className={`text-xs ${importMsg.ok ? 'text-[var(--color-accent)]' : 'text-[var(--color-coral)]'}`}>
               {importMsg.text}
             </p>
-          )}
-        </div>
-      </section>
-
-      {/* Profiles */}
-      <section className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
-        <div className="px-5 py-3 border-b border-[var(--color-border)]">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            {t('settings.sectionProfiles')}
-          </h2>
-        </div>
-        <div className="divide-y divide-[var(--color-border)]">
-          {profiles.map(profile => (
-            <div key={profile.id} className="flex items-center gap-3 px-5 py-3">
-              <span className="w-7 h-7 rounded-full bg-[var(--color-accent)]/15 text-[var(--color-accent)]
-                flex items-center justify-center text-xs font-bold shrink-0">
-                {profile.name.charAt(0).toUpperCase()}
-              </span>
-
-              {editingProfileId === profile.id ? (
-                <div className="flex-1 flex items-center gap-2">
-                  <input
-                    autoFocus
-                    value={editingName}
-                    onChange={e => setEditingName(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') handleRenameProfile(profile.id)
-                      if (e.key === 'Escape') { setEditingProfileId(null); setEditingName('') }
-                    }}
-                    className="flex-1 text-sm px-2 py-1 rounded border border-[var(--color-border)]
-                      bg-[var(--color-bg)] focus:outline-none focus:border-[var(--color-accent)]"
-                  />
-                  <button onClick={() => handleRenameProfile(profile.id)}
-                    className="p-1 rounded text-[var(--color-accent)] hover:bg-[var(--color-bg)]">
-                    <Check size={14} />
-                  </button>
-                  <button onClick={() => { setEditingProfileId(null); setEditingName('') }}
-                    className="p-1 rounded text-[var(--color-muted)] hover:bg-[var(--color-bg)]">
-                    <X size={14} />
-                  </button>
-                </div>
-              ) : deletingProfileId === profile.id ? (
-                <div className="flex-1 flex items-center gap-2">
-                  <span className="flex-1 text-sm text-[var(--color-coral)]">
-                    {t('settings.deleteProfileConfirm', { name: profile.name })}
-                  </span>
-                  <button onClick={() => handleDeleteProfile(profile.id)}
-                    className="text-xs px-2 py-1 rounded bg-[var(--color-coral)] text-white">
-                    {t('common.delete')}
-                  </button>
-                  <button onClick={() => setDeletingProfileId(null)}
-                    className="text-xs px-2 py-1 rounded border border-[var(--color-border)]">
-                    {t('common.cancel')}
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <span className={`flex-1 text-sm font-medium ${profile.id === activeUserId ? 'text-[var(--color-accent)]' : ''}`}>
-                    {profile.name}
-                    {profile.id === activeUserId && (
-                      <span className="ml-2 text-xs text-[var(--color-muted)] font-normal">(active)</span>
-                    )}
-                  </span>
-                  <button
-                    onClick={() => { setEditingProfileId(profile.id); setEditingName(profile.name) }}
-                    className="p-1.5 rounded text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)]">
-                    <Pencil size={13} />
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (profile.id === activeUserId) return
-                      setDeletingProfileId(profile.id)
-                    }}
-                    disabled={profile.id === activeUserId}
-                    className="p-1.5 rounded text-[var(--color-muted)] hover:text-[var(--color-coral)] hover:bg-[var(--color-bg)] disabled:opacity-30 disabled:cursor-not-allowed">
-                    <Trash2 size={13} />
-                  </button>
-                </>
-              )}
-            </div>
-          ))}
-          {profiles.length === 0 && (
-            <p className="px-5 py-4 text-sm text-[var(--color-muted)]">No profiles found</p>
           )}
         </div>
       </section>

@@ -23,7 +23,8 @@
     "back": "Back",
     "add": "Add",
     "search": "Search",
-    "notFound": "Not found"
+    "notFound": "Not found",
+    "next": "Next"
   },
   "accounts": {
     "title": "Accounts",
@@ -315,7 +316,12 @@
   "userSwitcher": {
     "defaultUser": "Default",
     "newProfile": "New profile",
-    "newProfilePlaceholder": "Profile name\u2026"
+    "newProfilePlaceholder": "Profile name\u2026",
+    "setupProfile": "Set up \"{name}\"",
+    "startEmpty": "Start empty",
+    "importBackup": "Import backup",
+    "importing": "Importing\u2026",
+    "deleteConfirm": "Delete \"{name}\"?"
   },
   "snapshots": {
     "title": "Snapshots",
