@@ -52,12 +52,19 @@ app.onError((err, c) => {
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404))
 
-if (process.env.NODE_ENV !== 'test') {
-  const migrationsFolder = path.join(__dirname, '..', 'drizzle')
+export async function startServer(port: number, migrationsFolder: string): Promise<void> {
   migrate(db, { migrationsFolder })
   console.log('DB migrations applied')
 
-  serve({ fetch: app.fetch, port: config.port })
+  // Wrap serve() in a Promise so 'error' events (e.g. EADDRINUSE) are catchable.
+  // serve() returns the http.Server immediately after calling listen(); it does NOT
+  // reject on bind failure — errors come via the 'error' event.
+  await new Promise<void>((resolve, reject) => {
+    const server = serve({ fetch: app.fetch, port })
+    server.on('listening', () => resolve())
+    server.on('error', (err) => reject(err))
+  })
+  console.log(`API listening on port ${port}`)
 
   ;(async () => {
     try {
@@ -71,9 +78,18 @@ if (process.env.NODE_ENV !== 'test') {
     )
   })()
 
-  // Register daily snapshot cron only outside test environment
   cron.schedule(config.snapshotSchedule, () => {
     dailySnapshotJob(db).catch(err => console.error('Snapshot job failed:', err))
+  })
+}
+
+// Auto-start for Docker and direct `node dist/index.js`.
+// NOT run when ELECTRON=true (main.ts calls startServer after setting DATABASE_PATH)
+// or when NODE_ENV=test (vitest).
+if (!process.env.ELECTRON && process.env.NODE_ENV !== 'test') {
+  startServer(config.port, path.join(__dirname, '..', 'drizzle')).catch(err => {
+    console.error('Failed to start server:', err)
+    process.exit(1)
   })
 }
 
