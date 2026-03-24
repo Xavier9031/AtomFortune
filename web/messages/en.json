@@ -265,7 +265,10 @@
     "range1y": "1Y",
     "rangeAll": "All",
     "viewDetail": "Details",
-    "moreItems": "more"
+    "moreItems": "more",
+    "annotatedNetWorthTitle": "Net Worth with Transactions",
+    "stackedAreaTitle": "Asset Structure",
+    "txnMarkers": "Dashed lines = transaction dates ({count} total)"
   },
   "settings": {
     "title": "Settings",

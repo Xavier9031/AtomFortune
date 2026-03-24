@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   AreaChart, Area, LineChart, Line, BarChart, Bar, Cell,
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, ReferenceLine,
@@ -49,7 +50,8 @@ const tooltipStyle = {
 type Range = '30d' | '1y' | 'all'
 
 function RangeTabs({ value, onChange }: { value: Range; onChange: (r: Range) => void }) {
-  const labels: Record<Range, string> = { '30d': '30天', '1y': '1年', 'all': '全部' }
+  const t = useTranslations('dashboard')
+  const labels: Record<Range, string> = { '30d': t('range30d'), '1y': t('range1y'), 'all': t('rangeAll') }
   return (
     <div className="flex gap-1">
       {(['30d', '1y', 'all'] as Range[]).map(r => (
@@ -229,7 +231,8 @@ function MonthlyDelta({ currency }: { currency: Currency }) {
 
 // ─── Widget 3: Net Worth + Transaction Markers ────────────────────────────────
 
-function AnnotatedNetWorth({ currency }: { currency: Currency }) {
+export function AnnotatedNetWorth({ currency }: { currency: Currency }) {
+  const t = useTranslations('dashboard')
   const [range, setRange] = useState<Range>('1y')
   const { data: nwData } = useNetWorthHistory(currency, range)
   const { data: txns } = useSWR<Transaction[]>(`${BASE}/transactions`, fetcher)
@@ -244,7 +247,7 @@ function AnnotatedNetWorth({ currency }: { currency: Currency }) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold">淨值歷史・含交易標記</h3>
+        <h3 className="text-sm font-semibold">{t('annotatedNetWorthTitle')}</h3>
         <RangeTabs value={range} onChange={setRange} />
       </div>
 
@@ -256,7 +259,7 @@ function AnnotatedNetWorth({ currency }: { currency: Currency }) {
               tickFormatter={d => fmtDate(d, range)} />
             <YAxis tick={{ fontSize: 10, fill: 'var(--color-muted)' }} tickFormatter={fmtShort} width={48} />
             <Tooltip
-              formatter={(v: any) => [fmtShort(Number(v)), '淨值']}
+              formatter={(v: any) => [fmtShort(Number(v)), t('netWorth')]}
               labelStyle={{ color: 'var(--color-text)' }}
               contentStyle={tooltipStyle}
             />
@@ -271,7 +274,7 @@ function AnnotatedNetWorth({ currency }: { currency: Currency }) {
       </div>
 
       <p className="text-xs text-[var(--color-muted)] mt-2">
-        虛線 = 交易日（共 {markerDates.length} 筆）
+        {t('txnMarkers', { count: markerDates.length })}
       </p>
     </div>
   )
@@ -279,7 +282,9 @@ function AnnotatedNetWorth({ currency }: { currency: Currency }) {
 
 // ─── Widget 4: Stacked Asset Area ─────────────────────────────────────────────
 
-function StackedAssetArea({ currency }: { currency: Currency }) {
+export function StackedAssetArea({ currency }: { currency: Currency }) {
+  const t = useTranslations('dashboard')
+  const tAsset = useTranslations('asset')
   const [range, setRange] = useState<Range>('1y')
   const { data } = useCategoryHistory(currency, range)
 
@@ -287,10 +292,12 @@ function StackedAssetArea({ currency }: { currency: Currency }) {
   const active = assetCats.filter(cat => data?.data.some(d => (d[cat] as number) > 0))
   const hasDebt = data?.data.some(d => (d['debt'] as number) < 0)
 
+  const getCatLabel = (key: string) => tAsset(`categories.${key}` as any) ?? key
+
   return (
     <div className="rounded-xl border border-[var(--color-border)] p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold">資產結構堆疊</h3>
+        <h3 className="text-sm font-semibold">{t('stackedAreaTitle')}</h3>
         <RangeTabs value={range} onChange={setRange} />
       </div>
 
@@ -302,7 +309,7 @@ function StackedAssetArea({ currency }: { currency: Currency }) {
               tickFormatter={d => fmtDate(d, range)} />
             <YAxis tick={{ fontSize: 10, fill: 'var(--color-muted)' }} tickFormatter={fmtShort} width={48} />
             <Tooltip
-              formatter={(v: any, name: any) => [fmtShort(Number(v)), CAT_LABEL[name] ?? name]}
+              formatter={(v: any, name: any) => [fmtShort(Number(v)), getCatLabel(name as string)]}
               labelStyle={{ color: 'var(--color-text)' }}
               contentStyle={tooltipStyle}
             />
@@ -324,13 +331,13 @@ function StackedAssetArea({ currency }: { currency: Currency }) {
         {active.map(cat => (
           <div key={cat} className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm" style={{ background: CAT_COLOR[cat] }} />
-            <span className="text-xs text-[var(--color-muted)]">{CAT_LABEL[cat]}</span>
+            <span className="text-xs text-[var(--color-muted)]">{getCatLabel(cat)}</span>
           </div>
         ))}
         {hasDebt && (
           <div className="flex items-center gap-1.5">
             <div className="w-2.5 h-2.5 rounded-sm" style={{ background: CAT_COLOR.debt }} />
-            <span className="text-xs text-[var(--color-muted)]">{CAT_LABEL.debt}</span>
+            <span className="text-xs text-[var(--color-muted)]">{getCatLabel('debt')}</span>
           </div>
         )}
       </div>
@@ -356,8 +363,6 @@ export default function ExperimentalWidgets({ currency }: { currency: Currency }
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <FireProgress currency={currency} />
         <MonthlyDelta currency={currency} />
-        <AnnotatedNetWorth currency={currency} />
-        <StackedAssetArea currency={currency} />
       </div>
     </div>
   )

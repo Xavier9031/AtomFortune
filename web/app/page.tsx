@@ -4,8 +4,7 @@ import { useCurrency } from '@/context/CurrencyContext'
 import { useLiveDashboard } from '@/lib/api'
 import NetWorthHeader from '@/components/dashboard/NetWorthHeader'
 import AllocationBreakdown from '@/components/dashboard/AllocationBreakdown'
-import NetWorthChart from '@/components/dashboard/NetWorthChart'
-import ExperimentalWidgets from '@/components/dashboard/ExperimentalWidgets'
+import ExperimentalWidgets, { AnnotatedNetWorth, StackedAssetArea } from '@/components/dashboard/ExperimentalWidgets'
 import type { DashboardSummary } from '@/lib/types'
 
 export default function DashboardPage() {
@@ -68,20 +67,18 @@ export default function DashboardPage() {
   return (
     <div data-testid="dashboard-root">
       <NetWorthHeader summary={liveSummary} />
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)]">
-          <h2 className="text-sm font-semibold mb-3">{t('allocation')}</h2>
-          <AllocationBreakdown
-            categories={live.categories}
-            totalAssets={live.totalAssets}
-            totalLiabilities={live.totalLiabilities}
-            displayCurrency={live.displayCurrency}
-          />
-        </div>
-        <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)]">
-          <h2 className="text-sm font-semibold mb-3">{t('history')}</h2>
-          <NetWorthChart currency={currency} />
-        </div>
+      <div className="bg-[var(--color-surface)] rounded-xl p-4 border border-[var(--color-border)]">
+        <h2 className="text-sm font-semibold mb-3">{t('allocation')}</h2>
+        <AllocationBreakdown
+          categories={live.categories}
+          totalAssets={live.totalAssets}
+          totalLiabilities={live.totalLiabilities}
+          displayCurrency={live.displayCurrency}
+        />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <AnnotatedNetWorth currency={currency} />
+        <StackedAssetArea currency={currency} />
       </div>
       <ExperimentalWidgets currency={currency} />
     </div>

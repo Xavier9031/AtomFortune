@@ -265,7 +265,10 @@
     "range1y": "1年",
     "rangeAll": "全部",
     "viewDetail": "詳細",
-    "moreItems": "項"
+    "moreItems": "項",
+    "annotatedNetWorthTitle": "淨值歷史・含交易標記",
+    "stackedAreaTitle": "資產結構堆疊",
+    "txnMarkers": "虛線 = 交易日（共 {count} 筆）"
   },
   "settings": {
     "title": "設定",
