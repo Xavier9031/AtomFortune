@@ -4,16 +4,16 @@ import * as repo from './snapshots.repository'
 
 type RangeParam = '30d' | '1y' | 'all'
 
-export async function listHistory(range: RangeParam) {
-  return repo.getSnapshotHistory(db, range)
+export async function listHistory(userId: string, range: RangeParam) {
+  return repo.getSnapshotHistory(db, userId, range)
 }
 
-export async function listItemsByAsset(assetId: string, range: RangeParam) {
-  return repo.getSnapshotItemsByAsset(db, assetId, range)
+export async function listItemsByAsset(userId: string, assetId: string, range: RangeParam) {
+  return repo.getSnapshotItemsByAsset(db, userId, assetId, range)
 }
 
-export async function getDetail(date: string) {
-  return repo.getSnapshotByDate(db, date)
+export async function getDetail(userId: string, date: string) {
+  return repo.getSnapshotByDate(db, userId, date)
 }
 
 export async function rebuildDate(date: string) {
