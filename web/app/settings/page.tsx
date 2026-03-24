@@ -27,9 +27,19 @@ export default function SettingsPage() {
     if (wasPending.current && !isPending) {
       wasPending.current = false
       const html = document.documentElement
-      html.style.transition = 'opacity 0.25s ease'
-      html.style.opacity = '1'
-      setTimeout(() => { html.style.transition = ''; html.style.opacity = '' }, 300)
+      html.style.transform = 'translateY(14px)'
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          html.style.transition = 'opacity 0.4s cubic-bezier(0.22,1,0.36,1), transform 0.4s cubic-bezier(0.22,1,0.36,1)'
+          html.style.opacity = '1'
+          html.style.transform = 'translateY(0)'
+          setTimeout(() => {
+            html.style.transition = ''
+            html.style.opacity = ''
+            html.style.transform = ''
+          }, 450)
+        })
+      })
     }
   }, [isPending])
 
@@ -73,9 +83,13 @@ export default function SettingsPage() {
 
   async function handleLocale(locale: string) {
     const html = document.documentElement
-    html.style.transition = 'opacity 0.2s ease'
+    html.style.transition = 'none'
+    html.style.opacity = '1'
+    void html.offsetHeight
+    html.style.transition = 'opacity 0.22s ease-in'
     html.style.opacity = '0'
-    await new Promise(r => setTimeout(r, 220))
+    await new Promise(r => setTimeout(r, 250))
+    html.style.transition = ''
     await setLocale(locale)
     wasPending.current = true
     startTransition(() => router.refresh())
