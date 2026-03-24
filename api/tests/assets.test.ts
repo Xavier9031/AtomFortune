@@ -43,6 +43,29 @@ describe('GET /api/v1/assets', () => {
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual([])
   })
+
+  it('only returns assets belonging to the requesting user', async () => {
+    // Create asset for the default test user
+    await app.request('/api/v1/assets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...USER_HEADER },
+      body: JSON.stringify({ name: 'Mine', assetClass: 'asset', category: 'investment',
+        subKind: 'stock', currencyCode: 'USD', pricingMode: 'market' }),
+    })
+    // Create user B and their asset
+    const userB = await seedTestUser('User B')
+    await app.request('/api/v1/assets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': userB.id },
+      body: JSON.stringify({ name: 'Theirs', assetClass: 'asset', category: 'investment',
+        subKind: 'stock', currencyCode: 'USD', pricingMode: 'market' }),
+    })
+    // Default user should only see their own asset
+    const res = await app.request('/api/v1/assets', { headers: USER_HEADER })
+    const body = await res.json()
+    expect(body).toHaveLength(1)
+    expect(body[0].name).toBe('Mine')
+  })
 })
 
 describe('PATCH /api/v1/assets/:id', () => {
