@@ -321,7 +321,14 @@
     "startEmpty": "Start empty",
     "importBackup": "Import backup",
     "importing": "Importing\u2026",
-    "deleteConfirm": "Delete \"{name}\"?"
+    "deleteConfirm": "Delete \"{name}\"?",
+    "dataSection": "Data",
+    "passwordPlaceholder": "Password (optional, for encryption)",
+    "export": "Export",
+    "import": "Import",
+    "clearData": "Clear data",
+    "clearConfirm": "Clear all data for this profile?",
+    "clearing": "Clearing\u2026"
   },
   "snapshots": {
     "title": "Snapshots",

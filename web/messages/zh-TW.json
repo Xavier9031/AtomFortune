@@ -321,7 +321,14 @@
     "startEmpty": "空白開始",
     "importBackup": "匯入備份",
     "importing": "匯入中\u2026",
-    "deleteConfirm": "刪除「{name}」？"
+    "deleteConfirm": "刪除「{name}」？",
+    "dataSection": "資料",
+    "passwordPlaceholder": "密碼（選填，加密用）",
+    "export": "匯出",
+    "import": "匯入",
+    "clearData": "清空資料",
+    "clearConfirm": "清除此個人檔案的所有資料？",
+    "clearing": "清除中\u2026"
   },
   "snapshots": {
     "title": "快照紀錄",
