@@ -4,9 +4,10 @@
 
 ## 功能特色
 
-- **儀表板** — 淨值總覽、資產/負債分配 Treemap、30 天趨勢折線圖、持倉 Accordion
-- **持倉管理** — 依帳戶分組、右側 SidePanel 4 步驟新增精靈 / 快速編輯刪除
-- **資產設定** — CRUD 表格、cascade 下拉（資產類別 → Category → Sub-kind → 報價模式）、詳情頁含趨勢圖與交易紀錄
+- **儀表板** — 淨值總覽（含漲跌）、資產/負債結構堆疊面積圖、財務自由進度、持倉 Accordion
+- **持倉管理** — 依帳戶分組、右側 SidePanel 新增精靈 / 快速編輯刪除
+- **自動記** — 在持倉上設定固定收入/支出（薪水、房租等），每月自動記錄現金流，支援有效期限設定
+- **資產設定** — 表格一覽、點擊列開啟右側 SidePanel 詳情（持倉分佈、趨勢圖、交易紀錄、編輯名稱/代號/手動報價）
 - **帳戶管理** — CRUD 表格、有持倉時禁止刪除
 - **價格快照** — 每日自動 cron job（可設定時間）、手動觸發 / 重建、快照歷史展開檢視
 - **多幣顯示** — 基準幣 TWD，可切換顯示 USD / JPY，匯率自動更新
@@ -20,22 +21,22 @@
 | ORM / 遷移 | [Drizzle ORM](https://orm.drizzle.team/) + drizzle-kit |
 | 資料庫 | PostgreSQL 16 |
 | 排程 | node-cron |
-| 市價抓取 | yahoo-finance2（股票/ETF）、CoinGecko（加密貨幣）、exchangerate-api（法幣匯率） |
+| 市價抓取 | yahoo-finance2（股票/ETF）、CoinGecko（加密貨幣）、open.er-api（法幣匯率，免費無 API 金鑰） |
 | 前端框架 | Next.js 15 App Router + TypeScript |
 | 樣式 | Tailwind CSS v4 |
 | 資料抓取 | SWR |
 | 圖表 | Recharts |
 | 後端測試 | Vitest + 真實 PostgreSQL 測試庫 |
-| 前端測試 | Jest + @testing-library/react |
 
 ## 專案結構
 
 ```
-Atom Fortune/
+AtomFortune/
 ├── api/                    # Hono 後端
 │   ├── src/
 │   │   ├── modules/        # assets / accounts / holdings / transactions
 │   │   │                   # prices / fx-rates / snapshots / dashboard
+│   │   │                   # recurring-entries / tickers
 │   │   ├── jobs/           # snapshot.job.ts / pricing.service.ts / fx.service.ts
 │   │   ├── db/             # Drizzle schema + client
 │   │   └── index.ts        # 主入口
@@ -44,9 +45,8 @@ Atom Fortune/
 ├── web/                    # Next.js 前端
 │   ├── app/                # App Router 頁面
 │   ├── components/         # dashboard / holdings / assets / accounts / snapshots / layout
-│   ├── lib/                # types.ts / api.ts / utils.ts / assetTaxonomy.ts
+│   ├── lib/                # types.ts / api.ts / utils.ts
 │   └── __tests__/          # Jest 測試
-├── shared/                 # 前後端共用型別
 ├── docker-compose.yml
 └── README.md
 ```
@@ -55,13 +55,9 @@ Atom Fortune/
 
 ## 快速啟動（Docker Compose — 推薦）
 
-### 1. 準備環境變數
+所有外部資料來源均免費且無需 API 金鑰，直接啟動即可。
 
-所有外部資料來源均免費且無需 API 金鑰，`.env` 不需要額外設定。
-
-> 從 [https://www.exchangerate-api.com](https://www.exchangerate-api.com) 免費申請 API key（每月 1500 次請求）。
-
-### 2. 啟動所有服務
+### 1. 啟動所有服務
 
 ```bash
 docker compose up -d
@@ -72,13 +68,13 @@ docker compose up -d
 - `api` — Hono API（port 8000）
 - `web` — Next.js（port 3000）
 
-### 3. 執行資料庫遷移（首次啟動）
+### 2. 執行資料庫遷移（首次啟動）
 
 ```bash
 docker compose exec api npm run db:migrate
 ```
 
-### 4. 開啟瀏覽器
+### 3. 開啟瀏覽器
 
 ```
 http://localhost:3000
@@ -144,7 +140,7 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api/v1 \
 
 ```bash
 # 建立測試資料庫（只需一次）
-docker exec atomfortune-db psql -U atomfortune -c "CREATE DATABASE test_atomworth;"
+docker exec atomfortune-db psql -U atomfortune -c "CREATE DATABASE test_atomfortune;"
 
 # 執行遷移到測試庫
 cd api
@@ -155,12 +151,6 @@ TEST_DATABASE_URL=postgres://atomfortune:atomfortune@localhost:5432/test_atomfor
 npm test
 ```
 
-### 前端
-
-```bash
-cd web && npx jest
-```
-
 ---
 
 ## API 端點總覽
@@ -169,7 +159,7 @@ cd web && npx jest
 |------|------|------|
 | GET | `/api/v1/assets` | 資產列表 |
 | POST | `/api/v1/assets` | 新增資產 |
-| PATCH | `/api/v1/assets/:id` | 更新資產（name/symbol/market） |
+| PATCH | `/api/v1/assets/:id` | 更新資產（name/symbol） |
 | DELETE | `/api/v1/assets/:id` | 刪除資產 |
 | GET | `/api/v1/accounts` | 帳戶列表 |
 | POST | `/api/v1/accounts` | 新增帳戶 |
@@ -180,6 +170,10 @@ cd web && npx jest
 | DELETE | `/api/v1/holdings/:assetId/:accountId` | 刪除持倉 |
 | GET | `/api/v1/transactions` | 交易紀錄（支援 `?assetId=`） |
 | POST | `/api/v1/transactions` | 新增交易 |
+| GET | `/api/v1/recurring-entries` | 自動記列表（支援 `?assetId=&accountId=`） |
+| POST | `/api/v1/recurring-entries` | 新增自動記 |
+| PATCH | `/api/v1/recurring-entries/:id` | 更新自動記 |
+| DELETE | `/api/v1/recurring-entries/:id` | 刪除自動記 |
 | GET | `/api/v1/prices` | 價格紀錄 |
 | POST | `/api/v1/prices/manual` | 手動輸入價格（manual 資產用） |
 | GET | `/api/v1/fx-rates` | 匯率紀錄 |
@@ -199,7 +193,7 @@ cd web && npx jest
 每日 cron job（預設 22:00）執行 `dailySnapshotJob`：
 
 1. 抓取所有 `market` 資產的最新市價（yahoo-finance2 / CoinGecko）
-2. 抓取最新匯率（exchangerate-api + CoinGecko USDT）
+2. 抓取最新匯率（open.er-api 法幣 + CoinGecko USDT）
 3. 對每筆持倉計算 `valueInBase`（TWD）= `quantity × price × fxRate`
 4. 寫入 `snapshotItems` 表（30 天內找不到價格則跳過）
 5. 整個過程在同一 DB transaction 內確保原子性
@@ -251,4 +245,3 @@ curl -X POST "http://localhost:8000/snapshots/trigger?date=2026-03-22"
 | `SNAPSHOT_SCHEDULE` | 否 | `0 22 * * *` | cron 表達式 |
 | `PORT` | 否 | `8000` | API 監聽 port |
 | `NEXT_PUBLIC_API_BASE_URL` | 否 | `http://localhost:8000/api/v1` | 前端 API base URL |
-| `NEXT_PUBLIC_SNAPSHOT_SCHEDULE` | 否 | `0 22 * * *` | 顯示在設定頁的排程說明 |
