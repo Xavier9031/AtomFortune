@@ -3,14 +3,27 @@ productName: AtomFortune
 copyright: Copyright © 2026 AtomFortune
 
 directories:
-  output: dist
+  output: release
   buildResources: resources
 
 files:
   - dist/**
   - node_modules/**
-  - "!node_modules/*/{CHANGELOG.md,README.md,readme.md}"
+  - "!node_modules/**/{CHANGELOG.md,README.md,readme.md,*.md}"
   - "!node_modules/**/{test,__tests__,tests,example,examples}"
+  - "!node_modules/electron/**"
+  - "!node_modules/electron-builder/**"
+  - "!node_modules/app-builder-bin/**"
+  - "!node_modules/app-builder-lib/**"
+  - "!node_modules/builder-util/**"
+  - "!node_modules/builder-util-runtime/**"
+  - "!node_modules/dmg-builder/**"
+  - "!node_modules/7zip-bin/**"
+  - "!node_modules/typescript/**"
+  - "!node_modules/@types/**"
+  - "!node_modules/**/*.d.ts"
+  - "!node_modules/**/*.ts"
+  - "!node_modules/**/{*.map}"
 
 extraResources:
   - from: "../api/drizzle"

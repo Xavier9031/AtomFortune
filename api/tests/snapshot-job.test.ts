@@ -127,8 +127,8 @@ describe('dailySnapshotJob', () => {
     // Spy on the actual module exports for snapshot tests
     vi.spyOn(pricingService, 'fetchMarketPrices').mockResolvedValue(new Map())
     vi.spyOn(fxService, 'fetchFxRates').mockResolvedValue([])
-    mockInsertValues = vi.fn().mockResolvedValue(undefined)
-    mockDeleteWhere = vi.fn().mockResolvedValue(undefined)
+    mockInsertValues = vi.fn(() => ({ run: vi.fn() }))
+    mockDeleteWhere = vi.fn(() => ({ run: vi.fn() }))
 
     mockDb = {
       select: vi.fn(),
@@ -137,7 +137,7 @@ describe('dailySnapshotJob', () => {
         onConflictDoUpdate: vi.fn(() => ({ returning: vi.fn().mockResolvedValue([{}]) })),
       })),
       delete: vi.fn(() => ({ where: mockDeleteWhere })),
-      transaction: vi.fn(async (cb: any) => cb(mockDb)),
+      transaction: vi.fn((cb: any) => cb(mockDb)),
     }
   })
 

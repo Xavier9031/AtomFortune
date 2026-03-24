@@ -17,4 +17,5 @@ dev_*
 
 # Desktop build output
 desktop/dist/
+desktop/release/
 

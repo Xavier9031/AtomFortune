@@ -90,16 +90,16 @@ backupRouter.post('/import', async (c) => {
   const d = body.data
   const counts = { assets: 0, accounts: 0, holdings: 0, transactions: 0, prices: 0, fxRates: 0, snapshotItems: 0 }
 
-  await db.transaction(async (tx) => {
+  db.transaction((tx) => {
     if (Array.isArray(d.assets) && d.assets.length) {
       for (const row of d.assets) {
         const v = strip(row)
-        await tx.insert(assets).values(v)
+        tx.insert(assets).values(v)
           .onConflictDoUpdate({ target: assets.id, set: {
             name: v.name, assetClass: v.assetClass, category: v.category,
             subKind: v.subKind, symbol: v.symbol, market: v.market,
             currencyCode: v.currencyCode, pricingMode: v.pricingMode, unit: v.unit,
-          }})
+          }}).run()
       }
       counts.assets = d.assets.length
     }
@@ -107,11 +107,11 @@ backupRouter.post('/import', async (c) => {
     if (Array.isArray(d.accounts) && d.accounts.length) {
       for (const row of d.accounts) {
         const v = strip(row)
-        await tx.insert(accounts).values(v)
+        tx.insert(accounts).values(v)
           .onConflictDoUpdate({ target: accounts.id, set: {
             name: v.name, institution: v.institution,
             accountType: v.accountType, note: v.note,
-          }})
+          }}).run()
       }
       counts.accounts = d.accounts.length
     }
@@ -119,10 +119,10 @@ backupRouter.post('/import', async (c) => {
     if (Array.isArray(d.holdings) && d.holdings.length) {
       for (const row of d.holdings) {
         const v = strip(row)
-        await tx.insert(holdings).values(v)
+        tx.insert(holdings).values(v)
           .onConflictDoUpdate({ target: [holdings.assetId, holdings.accountId], set: {
             quantity: v.quantity,
-          }})
+          }}).run()
       }
       counts.holdings = d.holdings.length
     }
@@ -130,10 +130,10 @@ backupRouter.post('/import', async (c) => {
     if (Array.isArray(d.transactions) && d.transactions.length) {
       for (const row of d.transactions) {
         const v = strip(row)
-        await tx.insert(transactions).values(v)
+        tx.insert(transactions).values(v)
           .onConflictDoUpdate({ target: transactions.id, set: {
             txnType: v.txnType, quantity: v.quantity, txnDate: v.txnDate, note: v.note,
-          }})
+          }}).run()
       }
       counts.transactions = d.transactions.length
     }
@@ -141,10 +141,10 @@ backupRouter.post('/import', async (c) => {
     if (Array.isArray(d.prices) && d.prices.length) {
       for (const row of d.prices) {
         const v = strip(row)
-        await tx.insert(prices).values(v)
+        tx.insert(prices).values(v)
           .onConflictDoUpdate({ target: [prices.assetId, prices.priceDate], set: {
             price: v.price, source: v.source,
-          }})
+          }}).run()
       }
       counts.prices = d.prices.length
     }
@@ -152,11 +152,11 @@ backupRouter.post('/import', async (c) => {
     if (Array.isArray(d.fxRates) && d.fxRates.length) {
       for (const row of d.fxRates) {
         const v = strip(row)
-        await tx.insert(fxRates).values(v)
+        tx.insert(fxRates).values(v)
           .onConflictDoUpdate({
             target: [fxRates.fromCurrency, fxRates.toCurrency, fxRates.rateDate],
             set: { rate: v.rate, source: v.source },
-          })
+          }).run()
       }
       counts.fxRates = d.fxRates.length
     }
@@ -164,14 +164,14 @@ backupRouter.post('/import', async (c) => {
     if (Array.isArray(d.snapshotItems) && d.snapshotItems.length) {
       for (const row of d.snapshotItems) {
         const v = strip(row)
-        await tx.insert(snapshotItems).values(v)
+        tx.insert(snapshotItems).values(v)
           .onConflictDoUpdate({
             target: [snapshotItems.snapshotDate, snapshotItems.assetId, snapshotItems.accountId],
             set: {
               quantity: v.quantity, price: v.price,
               fxRate: v.fxRate, valueInBase: v.valueInBase,
             },
-          })
+          }).run()
       }
       counts.snapshotItems = d.snapshotItems.length
     }
