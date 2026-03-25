@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.0.5](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.4...atomfortune-v0.0.5) (2026-03-25)
+
+
+### Features
+
+* add quantity field to recurring entries for asset-unit-based schedules ([1b5f047](https://github.com/Xavier9031/AtomFortune/commit/1b5f0471883a3d280e3333ffe54ed66fb453099b))
+* allow pricingMode update via PATCH /assets/:id ([349da16](https://github.com/Xavier9031/AtomFortune/commit/349da163eae89b01547f61f0df04187542c0d4b2))
+* backfill historical snapshots with Yahoo Finance history and extended FX lookback ([86f0477](https://github.com/Xavier9031/AtomFortune/commit/86f047718cf06e409e97865af26c15b1929d4467))
+* toggle category visibility in stacked asset area chart ([5d85f9c](https://github.com/Xavier9031/AtomFortune/commit/5d85f9c8bb2dd9ec31a09d898ab752b22cdfdb95))
+
+
+### Bug Fixes
+
+* daily price variation in historical snapshots ([7b2e6dd](https://github.com/Xavier9031/AtomFortune/commit/7b2e6ddaec7faabeefd0a801a0318bc0b17299b8))
+* demo investment assets use market pricing mode for real daily prices ([8294c1a](https://github.com/Xavier9031/AtomFortune/commit/8294c1a3678a330ae5c2aec64b97b607de0dbdee))
+* demo script — price backfill before loop, market assets only via YF ([db53c0e](https://github.com/Xavier9031/AtomFortune/commit/db53c0eb213fea5ab01f7e4db779f66dd838235b))
+* demo snapshot history reflects historical holdings quantities ([5b73e60](https://github.com/Xavier9031/AtomFortune/commit/5b73e60f27444a279601bb49f4bd587595dafc78))
+* derive unit from subKind; normalize legacy Chinese unit values ([502e12b](https://github.com/Xavier9031/AtomFortune/commit/502e12b8f519fc31b8ca3c459e7ae43ccf180a84))
+* portal UserSwitcher modal to body to escape sidebar stacking context ([e5fdd2f](https://github.com/Xavier9031/AtomFortune/commit/e5fdd2f151ee4f32711b626233ae28063dbc7180))
+* preserve Chinese characters in backup download filename via RFC 5987 ([fa0c1ac](https://github.com/Xavier9031/AtomFortune/commit/fa0c1ac368ec4109da3a5f0930aff6c8d70138ed))
+* resolvePrice market cutoff uses snapshot date not Date.now() ([5e513af](https://github.com/Xavier9031/AtomFortune/commit/5e513af7efc07d12842ee9e1f817f821faad02a4))
+* sidebar shrink, UserSwitcher z-index, backup UTF-8 filename encoding ([b0f6a8d](https://github.com/Xavier9031/AtomFortune/commit/b0f6a8dcc11c6cf7ac838202472f3d54aec7f375))
+* snap transaction marker dates to nearest snapshot date by month ([0cc6f69](https://github.com/Xavier9031/AtomFortune/commit/0cc6f69c1fc0a166c7cc40ed1b2f082e9be7f972))
+* use next-intl locale for month names in MonthYearPicker ([8a3fcd2](https://github.com/Xavier9031/AtomFortune/commit/8a3fcd2c553b6a2f0927599f294237cfa21f746a))
+* use snapshot date for FX rate cutoff in historical snapshots; add demo data script ([8fca38e](https://github.com/Xavier9031/AtomFortune/commit/8fca38e49e625fe97bd81cc5d50bbdb950c32616))
+
 ## [0.0.4](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.3...atomfortune-v0.0.4) (2026-03-25)
 
 
