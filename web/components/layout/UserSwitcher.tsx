@@ -100,6 +100,7 @@ export default function UserSwitcher() {
     setOpen(false)
     setNewStep('idle'); setNewName(''); setCreating(false)
     setEditingId(null); setEditingName('')
+    closeModal()
   }
 
   function closeModal() {
@@ -185,6 +186,7 @@ export default function UserSwitcher() {
     if (res.ok) {
       const updated = await res.json()
       setUsers(p => p.map(u => u.id === id ? updated : u))
+      if (modalUser?.id === id) setModalUser(updated)
       setEditingId(null); setEditingName('')
     }
   }
@@ -291,12 +293,6 @@ export default function UserSwitcher() {
                         <span className="flex-1 truncate text-sm">{u.name}</span>
                         {u.id === activeId && <Check size={13} className="text-[var(--color-accent)] shrink-0" />}
                       </button>
-                      <button onClick={e => { e.stopPropagation(); setEditingId(u.id); setEditingName(u.name) }}
-                        className="p-1 rounded-md text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)]
-                          opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                        title={t('common.edit')}>
-                        <Pencil size={12} />
-                      </button>
                       <button onClick={e => { e.stopPropagation(); openModal(u) }}
                         className="p-1 rounded-md text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)]
                           opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -384,25 +380,49 @@ export default function UserSwitcher() {
               border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4
-              border-b border-[var(--color-border)]">
-              <div className="flex items-center gap-2.5">
-                <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
-                  ${modalUser.id === activeId ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'}`}>
-                  {modalUser.name.charAt(0).toUpperCase()}
-                </span>
-                <div>
-                  <p className="text-sm font-semibold">{modalUser.name}</p>
-                  {modalUser.id === activeId && (
-                    <p className="text-xs text-[var(--color-accent)]">{t('userSwitcher.dataSection')}</p>
-                  )}
-                </div>
-              </div>
-              <button onClick={closeModal}
-                className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)]
-                  hover:bg-[var(--color-bg)] transition-colors">
-                <X size={15} />
-              </button>
+            <div className="flex items-center gap-2.5 px-5 py-4 border-b border-[var(--color-border)]">
+              <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0
+                ${modalUser.id === activeId ? 'bg-[var(--color-accent)] text-white' : 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'}`}>
+                {(editingId === modalUser.id ? editingName : modalUser.name).charAt(0).toUpperCase() || modalUser.name.charAt(0).toUpperCase()}
+              </span>
+              {editingId === modalUser.id ? (
+                <>
+                  <input autoFocus value={editingName}
+                    onChange={e => setEditingName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleRename(modalUser.id)
+                      if (e.key === 'Escape') { setEditingId(null); setEditingName('') }
+                    }}
+                    className="flex-1 text-sm font-semibold px-2 py-1 rounded-lg border border-[var(--color-accent)]
+                      bg-[var(--color-bg)] focus:outline-none min-w-0"
+                  />
+                  <button onClick={() => handleRename(modalUser.id)}
+                    className="p-1.5 rounded-lg text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 shrink-0">
+                    <Check size={14} />
+                  </button>
+                  <button onClick={() => { setEditingId(null); setEditingName('') }}
+                    className="p-1.5 rounded-lg text-[var(--color-muted)] hover:bg-[var(--color-bg)] shrink-0">
+                    <X size={14} />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold truncate">{modalUser.name}</p>
+                    {modalUser.id === activeId && (
+                      <p className="text-xs text-[var(--color-accent)]">{t('userSwitcher.dataSection')}</p>
+                    )}
+                  </div>
+                  <button onClick={() => { setEditingId(modalUser.id); setEditingName(modalUser.name) }}
+                    className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)] shrink-0">
+                    <Pencil size={14} />
+                  </button>
+                  <button onClick={closeModal}
+                    className="p-1.5 rounded-lg text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)] shrink-0">
+                    <X size={15} />
+                  </button>
+                </>
+              )}
             </div>
 
             <div className="divide-y divide-[var(--color-border)]">
