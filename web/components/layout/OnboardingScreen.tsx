@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { flushSync } from 'react-dom'
 import { useTranslations, useLocale } from 'next-intl'
 import { UserPlus, Upload, Moon, Sun } from 'lucide-react'
 import Image from 'next/image'
@@ -27,7 +26,6 @@ export default function OnboardingScreen() {
   const { setCurrency } = useCurrency()
   const [visible, setVisible] = useState(false)
   const [step, setStep] = useState<Step>('choose')
-  const [transitioning, setTransitioning] = useState(false)
   const [name, setName] = useState('')
   const [baseCurrency, setBaseCurrency] = useState<Currency>('TWD')
   const [importPw, setImportPw] = useState('')
@@ -43,13 +41,7 @@ export default function OnboardingScreen() {
       .catch(() => {})
   }, [])
 
-  function navigateTo(newStep: Step) {
-    setTransitioning(true)
-    setTimeout(() => {
-      flushSync(() => setStep(newStep))
-      requestAnimationFrame(() => setTransitioning(false))
-    }, 160)
-  }
+  function navigateTo(newStep: Step) { setStep(newStep) }
 
   function reset() { navigateTo('choose'); setName(''); setImportPw('') }
 
@@ -109,6 +101,13 @@ export default function OnboardingScreen() {
 
   return (
     <div className="fixed inset-0 z-[300] bg-[var(--color-bg)] flex items-center justify-center p-8">
+      <style>{`
+        @keyframes stepIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0);    }
+        }
+        .step-enter { animation: stepIn 240ms cubic-bezier(0.16,1,0.3,1) both; }
+      `}</style>
       <div className="w-full max-w-xl flex gap-8 items-center">
 
         {/* Left panel: language, theme, currency */}
@@ -184,11 +183,7 @@ export default function OnboardingScreen() {
           </div>
 
           {/* Animated step content */}
-          <div className="w-full" style={{
-            opacity: transitioning ? 0 : 1,
-            transform: transitioning ? 'translateY(6px)' : 'translateY(0)',
-            transition: 'opacity 160ms ease, transform 160ms ease',
-          }}>
+          <div key={step} className="w-full step-enter">
 
             {step === 'choose' && (
               <div className="grid grid-cols-2 gap-3">
