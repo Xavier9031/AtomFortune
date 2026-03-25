@@ -1,13 +1,18 @@
 'use client'
 import { useState } from 'react'
 import useSWR, { mutate } from 'swr'
+import { useTranslations } from 'next-intl'
 import { BASE, fetcher } from '@/lib/api'
 import { fetchWithUser } from '@/lib/user'
 import type { RecurringEntry } from '@/lib/types'
 
 // ── Month/Year picker ────────────────────────────────────────────────────────
 
-const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月']
+function getMonthNames(): string[] {
+  return Array.from({ length: 12 }, (_, i) =>
+    new Intl.DateTimeFormat(undefined, { month: 'short' }).format(new Date(2000, i, 1))
+  )
+}
 
 function toYYYYMMDD(year: number, month: number) {
   return `${year}-${String(month).padStart(2, '0')}-01`
@@ -22,6 +27,7 @@ function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: str
   const { year, month } = parseYM(value)
   const thisYear = new Date().getFullYear()
   const years = Array.from({ length: 12 }, (_, i) => thisYear - 1 + i)
+  const months = getMonthNames()
   const sel = `bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg
     px-2 py-1 text-xs outline-none focus:border-[var(--color-accent)] appearance-none
     cursor-pointer text-[var(--color-text)]`
@@ -31,7 +37,7 @@ function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: str
         {years.map(y => <option key={y} value={y}>{y}</option>)}
       </select>
       <select value={month} onChange={e => onChange(toYYYYMMDD(year, Number(e.target.value)))} className={`flex-1 ${sel}`}>
-        {MONTHS.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
+        {months.map((m, i) => <option key={i + 1} value={i + 1}>{m}</option>)}
       </select>
     </div>
   )
@@ -53,7 +59,7 @@ interface EntryFormProps {
   onSave: () => void
   onCancel: () => void
   saving: boolean
-  saveLabel?: string
+  saveLabel?: string | null
   unit?: string | null
 }
 
@@ -62,12 +68,14 @@ function EntryForm({
   dayOfMonth, setDayOfMonth, label, setLabel,
   showAdvanced, setShowAdvanced, effectiveFrom, setEffectiveFrom,
   hasEndDate, setHasEndDate, effectiveTo, setEffectiveTo,
-  onSave, onCancel, saving, saveLabel = '儲存', unit,
+  onSave, onCancel, saving, saveLabel, unit,
 }: EntryFormProps) {
+  const t = useTranslations()
   const isQuantityMode = !!unit
   const canSave = isQuantityMode
     ? (!!quantity && Number(quantity) > 0)
     : (!!amount && Number(amount) > 0)
+  const resolvedSaveLabel = saveLabel ?? t('recurringEntries.saveButton')
 
   return (
     <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl overflow-hidden"
@@ -75,15 +83,15 @@ function EntryForm({
 
       {/* Type toggle */}
       <div className="flex border-b border-[var(--color-border)]">
-        {(['income', 'expense'] as const).map(t => (
-          <button key={t} onClick={() => setType(t)}
+        {(['income', 'expense'] as const).map(kind => (
+          <button key={kind} onClick={() => setType(kind)}
             className={`flex-1 py-2 text-xs font-semibold transition-colors
-              ${type === t
-                ? t === 'income' ? 'bg-green-500/15 text-green-400' : 'bg-red-400/15 text-red-400'
+              ${type === kind
+                ? kind === 'income' ? 'bg-green-500/15 text-green-400' : 'bg-red-400/15 text-red-400'
                 : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
             {isQuantityMode
-              ? (t === 'income' ? '買入' : '賣出')
-              : (t === 'income' ? '收入' : '支出')}
+              ? (kind === 'income' ? t('recurringEntries.typeBuy') : t('recurringEntries.typeSell'))
+              : (kind === 'income' ? t('recurringEntries.typeIncome') : t('recurringEntries.typeExpense'))}
           </button>
         ))}
       </div>
@@ -118,15 +126,15 @@ function EntryForm({
       {/* Day + label */}
       <div className="flex items-center gap-3 px-4 pb-3 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-1 text-xs text-[var(--color-muted)] shrink-0">
-          <span>每月</span>
+          <span>{t('recurringEntries.monthlyOnDay')}</span>
           <input type="number" min="1" max="31" value={dayOfMonth}
             onFocus={e => e.target.select()}
             onChange={e => setDayOfMonth(Math.min(31, Math.max(1, Number(e.target.value) || 1)))}
             className="w-7 bg-transparent text-xs font-semibold text-center outline-none border-b border-[var(--color-border)]
               [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-          <span>日</span>
+          <span>{t('recurringEntries.daySuffix')}</span>
         </div>
-        <input placeholder="標籤（選填）" value={label}
+        <input placeholder={t('recurringEntries.validityOptional')} value={label}
           onChange={e => setLabel(e.target.value)}
           className="flex-1 bg-transparent text-xs outline-none text-[var(--color-text)] placeholder:text-[var(--color-border)]" />
       </div>
@@ -135,24 +143,24 @@ function EntryForm({
       <button onClick={() => setShowAdvanced(!showAdvanced)}
         className="w-full text-left text-xs text-[var(--color-muted)] flex items-center gap-1.5 px-4 py-2.5 hover:text-[var(--color-text)] transition-colors">
         <span className={`inline-block transition-transform text-[10px] ${showAdvanced ? 'rotate-90' : ''}`}>▶</span>
-        有效期限
-        {!showAdvanced && <span className="opacity-40">（選填）</span>}
+        {t('recurringEntries.validityTitle')}
+        {!showAdvanced && <span className="opacity-40">{t('recurringEntries.validityOptional')}</span>}
       </button>
 
       {showAdvanced && (
         <div className="space-y-3 px-4 pb-3 border-t border-[var(--color-border)]">
           <div className="pt-3">
-            <p className="text-xs text-[var(--color-muted)] mb-2">開始月份</p>
+            <p className="text-xs text-[var(--color-muted)] mb-2">{t('recurringEntries.startMonth')}</p>
             <MonthYearPicker value={effectiveFrom} onChange={setEffectiveFrom} />
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs text-[var(--color-muted)]">結束</p>
+              <p className="text-xs text-[var(--color-muted)]">{t('recurringEntries.endLabel')}</p>
               <div className="flex rounded-lg overflow-hidden border border-[var(--color-border)] text-xs">
                 <button onClick={() => { setHasEndDate(false); setEffectiveTo('') }}
-                  className={`px-3 py-1 transition-colors ${!hasEndDate ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)]'}`}>永遠</button>
+                  className={`px-3 py-1 transition-colors ${!hasEndDate ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)]'}`}>{t('recurringEntries.forever')}</button>
                 <button onClick={() => { setHasEndDate(true); if (!effectiveTo) setEffectiveTo(effectiveFrom) }}
-                  className={`px-3 py-1 transition-colors border-l border-[var(--color-border)] ${hasEndDate ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)]'}`}>自訂</button>
+                  className={`px-3 py-1 transition-colors border-l border-[var(--color-border)] ${hasEndDate ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)]'}`}>{t('recurringEntries.custom')}</button>
               </div>
             </div>
             {hasEndDate && <MonthYearPicker value={effectiveTo} onChange={setEffectiveTo} />}
@@ -164,11 +172,11 @@ function EntryForm({
       <div className="flex border-t border-[var(--color-border)]">
         <button onClick={onCancel}
           className="flex-1 py-2.5 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors border-r border-[var(--color-border)]">
-          取消
+          {t('common.cancel')}
         </button>
         <button onClick={onSave} disabled={!canSave || saving}
           className="flex-1 py-2.5 text-xs font-semibold text-[var(--color-accent)] disabled:opacity-40 transition-opacity">
-          {saving ? '儲存中…' : saveLabel}
+          {saving ? t('recurringEntries.savingLabel') : resolvedSaveLabel}
         </button>
       </div>
     </div>
@@ -226,6 +234,7 @@ function useFormState(defaults?: Partial<RecurringEntry>) {
 }
 
 export function RecurringEntriesPanel({ assetId, accountId, unit }: { assetId: string; accountId?: string; unit?: string | null }) {
+  const t = useTranslations()
   const swrKey = `${BASE}/recurring-entries?assetId=${assetId}${accountId ? `&accountId=${accountId}` : ''}`
   const { data: entries, mutate: revalidate } = useSWR<RecurringEntry[]>(swrKey, fetcher)
 
@@ -278,12 +287,12 @@ export function RecurringEntriesPanel({ assetId, accountId, unit }: { assetId: s
     <div className="pt-2">
       {/* Section header */}
       <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">自動記</p>
+        <p className="text-xs font-semibold text-[var(--color-muted)] uppercase tracking-wider">{t('recurringEntries.sectionTitle')}</p>
         <button
           onClick={() => { setShowForm(!showForm); if (showForm) create.reset() }}
           className={`text-xs px-2.5 py-1 rounded-full transition-colors
             ${showForm ? 'text-[var(--color-muted)]' : 'text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10'}`}>
-          {showForm ? '取消' : '+ 新增'}
+          {showForm ? t('common.cancel') : t('recurringEntries.addButton')}
         </button>
       </div>
 
@@ -295,7 +304,7 @@ export function RecurringEntriesPanel({ assetId, accountId, unit }: { assetId: s
             onSave={handleCreate}
             onCancel={() => { setShowForm(false); create.reset() }}
             saving={create.saving}
-            saveLabel="建立"
+            saveLabel={t('recurringEntries.createButton')}
             unit={unit}
           />
         </div>
@@ -325,7 +334,7 @@ export function RecurringEntriesPanel({ assetId, accountId, unit }: { assetId: s
                       ? `${Number(entry.quantity).toLocaleString()} ${unit ?? ''}`
                       : `${Number(entry.amount).toLocaleString()} ${entry.currencyCode}`}
                   </span>
-                  <span className="text-xs text-[var(--color-muted)] shrink-0">每月{entry.dayOfMonth}日</span>
+                  <span className="text-xs text-[var(--color-muted)] shrink-0">{t('recurringEntries.monthlyOnDay')}{entry.dayOfMonth}{t('recurringEntries.daySuffix')}</span>
                   {entry.label && <span className="text-xs text-[var(--color-muted)] truncate">{entry.label}</span>}
                   <button
                     onClick={e => { e.stopPropagation(); handleDelete(entry.id) }}
@@ -344,7 +353,7 @@ export function RecurringEntriesPanel({ assetId, accountId, unit }: { assetId: s
                         onSave={handleUpdate}
                         onCancel={() => setEditingId(null)}
                         saving={edit.saving}
-                        saveLabel="儲存"
+                        saveLabel={t('recurringEntries.saveButton')}
                         unit={unit}
                       />
                     </div>
@@ -355,7 +364,7 @@ export function RecurringEntriesPanel({ assetId, accountId, unit }: { assetId: s
           })}
         </div>
       ) : !showForm ? (
-        <p className="text-xs text-[var(--color-muted)] text-center py-3">尚無定期現金流</p>
+        <p className="text-xs text-[var(--color-muted)] text-center py-3">{t('recurringEntries.noneYet')}</p>
       ) : null}
     </div>
   )

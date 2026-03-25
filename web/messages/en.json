@@ -363,5 +363,25 @@
     "priceFetchFailed": "N/A",
     "rebuildTitle": "Rebuild Snapshot",
     "showMore": "Show more ({count})"
+  },
+  "recurringEntries": {
+    "sectionTitle": "Auto-Record",
+    "addButton": "+ Add",
+    "noneYet": "No recurring cash flows",
+    "typeIncome": "Income",
+    "typeExpense": "Expense",
+    "typeBuy": "Buy",
+    "typeSell": "Sell",
+    "monthlyOnDay": "Monthly on day",
+    "daySuffix": "",
+    "validityTitle": "Validity",
+    "validityOptional": "(Optional)",
+    "startMonth": "Start Month",
+    "endLabel": "End",
+    "forever": "Forever",
+    "custom": "Custom",
+    "createButton": "Create",
+    "saveButton": "Save",
+    "savingLabel": "Saving…"
   }
 }

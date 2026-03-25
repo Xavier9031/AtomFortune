@@ -363,5 +363,25 @@
     "priceFetchFailed": "無法取得",
     "rebuildTitle": "重建快照",
     "showMore": "顯示更多（{count} 筆）"
+  },
+  "recurringEntries": {
+    "sectionTitle": "自動記",
+    "addButton": "+ 新增",
+    "noneYet": "尚無定期現金流",
+    "typeIncome": "收入",
+    "typeExpense": "支出",
+    "typeBuy": "買入",
+    "typeSell": "賣出",
+    "monthlyOnDay": "每月",
+    "daySuffix": "日",
+    "validityTitle": "有效期限",
+    "validityOptional": "（選填）",
+    "startMonth": "開始月份",
+    "endLabel": "結束",
+    "forever": "永遠",
+    "custom": "自訂",
+    "createButton": "建立",
+    "saveButton": "儲存",
+    "savingLabel": "儲存中…"
   }
 }
