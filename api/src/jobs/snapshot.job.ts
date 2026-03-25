@@ -57,7 +57,7 @@ export async function resolveFxRate(
   tx: DrizzleDB, currencyCode: string, today: string
 ): Promise<number> {
   if (currencyCode === 'TWD') return 1.0
-  const cutoff = formatDate(new Date(Date.now() - 7 * 86400_000))
+  const cutoff = formatDate(new Date(new Date(today + 'T00:00:00Z').getTime() - 7 * 86400_000))
   const rows = await tx
     .select({ rate: fxRates.rate })
     .from(fxRates)
