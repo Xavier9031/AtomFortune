@@ -74,6 +74,8 @@ export default function UserSwitcher() {
   const [exportPw, setExportPw] = useState('')
   const [importPw, setImportPw] = useState('')
   const [importing, setImporting] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState(false)
+  const [deleteWord, setDeleteWord] = useState('')
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const modalImportRef = useRef<HTMLInputElement>(null)
@@ -103,7 +105,7 @@ export default function UserSwitcher() {
   function closeModal() {
     setModalUser(null)
     setExportPw(''); setImportPw('')
-    setImporting(false)
+    setImporting(false); setDeleteConfirm(false); setDeleteWord('')
   }
 
   function openModal(u: UserRecord) {
@@ -465,11 +467,52 @@ export default function UserSwitcher() {
               {/* Delete profile — available as long as there's more than one profile */}
               {users.length > 1 && (
                 <div className="px-5 py-4">
-                  <HoldDeleteButton
-                    onConfirm={() => handleDeleteProfile(modalUser.id)}
-                    label={t('userSwitcher.deleteProfile')}
-                    readyLabel={t('common.confirmDelete')}
-                  />
+                  {deleteConfirm ? (
+                    /* Step 2: type profile name to confirm */
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-[var(--color-muted)] shrink-0">{t('common.confirm')}：</span>
+                        <code className="text-xs px-2 py-1 rounded-md bg-[var(--color-bg)]
+                          border border-[var(--color-border)] font-mono text-[var(--color-text)] select-all">
+                          {modalUser.name}
+                        </code>
+                      </div>
+                      <input
+                        autoFocus
+                        value={deleteWord}
+                        onChange={e => setDeleteWord(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Escape') { setDeleteConfirm(false); setDeleteWord('') }
+                          if (e.key === 'Enter' && deleteWord === modalUser.name) handleDeleteProfile(modalUser.id)
+                        }}
+                        placeholder={t('common.confirmDelete') + '…'}
+                        className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--color-border)]
+                          focus:border-red-400 bg-[var(--color-bg)] focus:outline-none
+                          placeholder:text-[var(--color-muted)]"
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <button onClick={() => handleDeleteProfile(modalUser.id)}
+                          disabled={deleteWord !== modalUser.name}
+                          className="py-2 text-sm font-medium rounded-lg
+                            bg-red-500 text-white hover:opacity-90
+                            disabled:opacity-30 transition-opacity">
+                          {t('common.delete')}
+                        </button>
+                        <button onClick={() => { setDeleteConfirm(false); setDeleteWord('') }}
+                          className="py-2 text-sm font-medium rounded-lg border border-[var(--color-border)]
+                            hover:bg-[var(--color-bg)] transition-colors">
+                          {t('common.cancel')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Step 1: hold-to-arm animation */
+                    <HoldDeleteButton
+                      onConfirm={() => setDeleteConfirm(true)}
+                      label={t('userSwitcher.deleteProfile')}
+                      readyLabel={t('common.confirmDelete')}
+                    />
+                  )}
                 </div>
               )}
             </div>
