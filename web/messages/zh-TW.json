@@ -336,6 +336,17 @@
     "deleteProfile": "刪除個人檔案",
     "typeToConfirm": "請輸入以下名稱確認刪除："
   },
+  "onboarding": {
+    "subtitle": "建立你的第一個個人檔案，開始追蹤資產",
+    "startFresh": "空白開始",
+    "startFreshDesc": "從零開始建立資產組合",
+    "importBackup": "匯入備份",
+    "importBackupDesc": "從現有備份還原資料",
+    "profileNameLabel": "個人檔案名稱",
+    "profileNamePlaceholder": "例：我的帳戶",
+    "getStarted": "開始使用",
+    "chooseFile": "選擇備份檔案"
+  },
   "snapshots": {
     "title": "快照紀錄",
     "triggerButton": "立即快照",

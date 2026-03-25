@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { ChevronDown, Plus, Check, Pencil, Trash2, Upload, X, Download, MoreHorizontal } from 'lucide-react'
 import { BASE } from '@/lib/api'
-import { getActiveUserId, setActiveUserId } from '@/lib/user'
+import { getActiveUserId, setActiveUserId, clearActiveUserId } from '@/lib/user'
 
 type UserRecord = { id: string; name: string }
 
@@ -218,7 +218,10 @@ export default function UserSwitcher() {
     if (res.ok) {
       const rem = users.filter(u => u.id !== id)
       setUsers(rem); closeModal()
-      if (id === activeId && rem.length > 0) {
+      if (rem.length === 0) {
+        clearActiveUserId()
+        window.location.reload()
+      } else if (id === activeId) {
         setActiveUserId(rem[0].id); setActiveId(rem[0].id)
         window.location.reload()
       }
@@ -484,8 +487,8 @@ export default function UserSwitcher() {
                 </button>
               </div>
 
-              {/* Delete profile — available as long as there's more than one profile */}
-              {users.length > 1 && (
+              {/* Delete profile */}
+              {(
                 <div className="px-5 py-4">
                   {deleteConfirm ? (
                     /* Step 2: type profile name to confirm */

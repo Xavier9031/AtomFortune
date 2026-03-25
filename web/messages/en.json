@@ -336,6 +336,17 @@
     "deleteProfile": "Delete Profile",
     "typeToConfirm": "Type to confirm deletion:"
   },
+  "onboarding": {
+    "subtitle": "Create your first profile to start tracking assets",
+    "startFresh": "Start Fresh",
+    "startFreshDesc": "Build your portfolio from scratch",
+    "importBackup": "Import Backup",
+    "importBackupDesc": "Restore from an existing backup",
+    "profileNameLabel": "Profile Name",
+    "profileNamePlaceholder": "e.g. My Portfolio",
+    "getStarted": "Get Started",
+    "chooseFile": "Choose Backup File"
+  },
   "snapshots": {
     "title": "Snapshots",
     "triggerButton": "Snapshot Now",

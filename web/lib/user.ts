@@ -15,6 +15,11 @@ export function setActiveUserId(id: string): void {
   localStorage.setItem(UID_KEY, id)
 }
 
+export function clearActiveUserId(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(UID_KEY)
+}
+
 /**
  * Ensures an active user ID is set. Returns the active ID.
  */

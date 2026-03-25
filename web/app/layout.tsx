@@ -7,6 +7,7 @@ import { CurrencyProvider } from '@/context/CurrencyContext'
 import Sidebar from '@/components/layout/Sidebar'
 import TopBar from '@/components/layout/TopBar'
 import ClientInit from '@/components/ClientInit'
+import OnboardingScreen from '@/components/layout/OnboardingScreen'
 
 export const metadata: Metadata = {
   title: 'Atom Fortune',
@@ -26,6 +27,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ClientInit />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <CurrencyProvider>
+            <OnboardingScreen />
             <TopBar />
             <div className="flex">
               <Sidebar />
