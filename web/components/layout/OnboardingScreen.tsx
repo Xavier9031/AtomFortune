@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { flushSync } from 'react-dom'
 import { useTranslations, useLocale } from 'next-intl'
 import { UserPlus, Upload, Moon, Sun } from 'lucide-react'
 import Image from 'next/image'
@@ -45,7 +46,7 @@ export default function OnboardingScreen() {
   function navigateTo(newStep: Step) {
     setTransitioning(true)
     setTimeout(() => {
-      setStep(newStep)
+      flushSync(() => setStep(newStep))
       requestAnimationFrame(() => setTransitioning(false))
     }, 160)
   }
