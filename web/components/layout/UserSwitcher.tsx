@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
-import { ChevronDown, Plus, Check, Pencil, Trash2, Upload, X, Download } from 'lucide-react'
+import { ChevronDown, Plus, Check, Pencil, Trash2, Upload, X, Download, Lock } from 'lucide-react'
 import { BASE } from '@/lib/api'
 import { getActiveUserId, setActiveUserId, fetchWithUser } from '@/lib/user'
 
@@ -27,6 +27,7 @@ export default function UserSwitcher() {
 
   // current-profile data actions
   const [dataPassword, setDataPassword] = useState('')   // shared pw for export/import
+  const [showPassword, setShowPassword] = useState(false)
   const [importing, setImporting] = useState(false)
   const [clearConfirm, setClearConfirm] = useState(false)
   const [clearing, setClearing] = useState(false)
@@ -56,6 +57,7 @@ export default function UserSwitcher() {
     setEditingId(null); setEditingName('')
     setDeletingId(null)
     setClearConfirm(false)
+    setShowPassword(false); setDataPassword('')
   }
 
   async function fetchUsers() {
@@ -185,33 +187,33 @@ export default function UserSwitcher() {
       {/* ── Trigger ──────────────────────────────────────────────────────── */}
       <button
         onClick={() => { if (open) closeDropdown(); else setOpen(true) }}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg
-          hover:bg-[var(--color-bg)] text-[var(--color-text)] text-sm transition-colors"
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl
+          hover:bg-[var(--color-bg)] text-[var(--color-text)] transition-colors"
       >
         <span className="w-7 h-7 rounded-full bg-[var(--color-accent)] text-white flex items-center
           justify-center text-xs font-bold shrink-0">
           {initial}
         </span>
-        <span className="flex-1 text-left truncate font-medium">
+        <span className="flex-1 text-left truncate text-sm font-medium">
           {activeUser?.name ?? t('userSwitcher.defaultUser')}
         </span>
-        <ChevronDown size={14} className={`shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown size={14} className={`shrink-0 text-[var(--color-muted)] transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {/* ── Dropdown ─────────────────────────────────────────────────────── */}
       {open && (
-        <div className="absolute bottom-full left-0 right-0 mb-1 bg-[var(--color-surface)]
+        <div className="absolute bottom-full left-0 right-0 mb-2 bg-[var(--color-surface)]
           border border-[var(--color-border)] rounded-xl shadow-lg overflow-hidden z-50">
 
           {/* ① Profile list */}
-          <div className="max-h-40 overflow-y-auto">
+          <div className="max-h-48 overflow-y-auto py-1">
             {users.map(u => (
-              <div key={u.id} className="group flex items-center gap-1 px-2.5 py-1.5
+              <div key={u.id} className="group flex items-center gap-1.5 px-3 py-2
                 hover:bg-[var(--color-bg)] transition-colors">
 
                 {editingId === u.id ? (
                   <>
-                    <span className="w-5 h-5 rounded-full bg-[var(--color-accent)]/20 text-[var(--color-accent)]
+                    <span className="w-6 h-6 rounded-full bg-[var(--color-accent)]/15 text-[var(--color-accent)]
                       flex items-center justify-center text-xs font-bold shrink-0">
                       {u.name.charAt(0).toUpperCase()}
                     </span>
@@ -221,15 +223,16 @@ export default function UserSwitcher() {
                         if (e.key === 'Enter') handleRename(u.id)
                         if (e.key === 'Escape') { setEditingId(null); setEditingName('') }
                       }}
-                      className="flex-1 text-xs px-1.5 py-0.5 rounded border border-[var(--color-accent)]
+                      className="flex-1 text-xs px-2 py-1 rounded-lg border border-[var(--color-accent)]
                         bg-[var(--color-bg)] focus:outline-none min-w-0"
                     />
-                    <button onClick={() => handleRename(u.id)} className="p-0.5 text-[var(--color-accent)] shrink-0">
-                      <Check size={11} />
+                    <button onClick={() => handleRename(u.id)}
+                      className="p-1 rounded-md text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 shrink-0">
+                      <Check size={12} />
                     </button>
                     <button onClick={() => { setEditingId(null); setEditingName('') }}
-                      className="p-0.5 text-[var(--color-muted)] shrink-0">
-                      <X size={11} />
+                      className="p-1 rounded-md text-[var(--color-muted)] hover:bg-[var(--color-bg)] shrink-0">
+                      <X size={12} />
                     </button>
                   </>
                 ) : deletingId === u.id ? (
@@ -238,34 +241,38 @@ export default function UserSwitcher() {
                       {t('userSwitcher.deleteConfirm', { name: u.name })}
                     </span>
                     <button onClick={() => handleDeleteProfile(u.id)}
-                      className="text-xs px-1.5 py-0.5 rounded bg-[var(--color-coral)] text-white shrink-0">
+                      className="text-xs px-2 py-1 rounded-lg bg-[var(--color-coral)] text-white shrink-0">
                       {t('common.delete')}
                     </button>
                     <button onClick={() => setDeletingId(null)}
-                      className="p-0.5 text-[var(--color-muted)] shrink-0"><X size={11} /></button>
+                      className="p-1 rounded-md text-[var(--color-muted)] hover:bg-[var(--color-bg)] shrink-0">
+                      <X size={12} />
+                    </button>
                   </>
                 ) : (
                   <>
                     <button onClick={() => handleSwitch(u.id)}
-                      className="flex-1 flex items-center gap-1.5 min-w-0 text-left">
-                      <span className="w-5 h-5 rounded-full bg-[var(--color-accent)]/20 text-[var(--color-accent)]
-                        flex items-center justify-center text-xs font-bold shrink-0">
+                      className="flex-1 flex items-center gap-2 min-w-0 text-left">
+                      <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0
+                        ${u.id === activeId
+                          ? 'bg-[var(--color-accent)] text-white'
+                          : 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'}`}>
                         {u.name.charAt(0).toUpperCase()}
                       </span>
-                      <span className="flex-1 truncate text-xs">{u.name}</span>
-                      {u.id === activeId && <Check size={11} className="text-[var(--color-accent)] shrink-0" />}
+                      <span className="flex-1 truncate text-sm">{u.name}</span>
+                      {u.id === activeId && <Check size={13} className="text-[var(--color-accent)] shrink-0" />}
                     </button>
                     <button onClick={e => { e.stopPropagation(); setEditingId(u.id); setEditingName(u.name) }}
-                      className="p-0.5 text-[var(--color-muted)] hover:text-[var(--color-text)]
+                      className="p-1 rounded-md text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)]
                         opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                      <Pencil size={11} />
+                      <Pencil size={12} />
                     </button>
                     <button onClick={e => { e.stopPropagation(); if (u.id !== activeId) setDeletingId(u.id) }}
                       disabled={u.id === activeId}
-                      className="p-0.5 text-[var(--color-muted)] hover:text-[var(--color-coral)]
+                      className="p-1 rounded-md text-[var(--color-muted)] hover:text-[var(--color-coral)] hover:bg-[var(--color-bg)]
                         opacity-0 group-hover:opacity-100 transition-opacity shrink-0
                         disabled:opacity-0 disabled:cursor-not-allowed">
-                      <Trash2 size={11} />
+                      <Trash2 size={12} />
                     </button>
                   </>
                 )}
@@ -274,76 +281,93 @@ export default function UserSwitcher() {
           </div>
 
           {/* ② Current-profile data actions */}
-          <div className="border-t border-[var(--color-border)] px-2.5 py-2 space-y-1.5">
-            <p className="text-xs font-medium text-[var(--color-muted)] truncate">
-              {activeUser?.name ?? ''} — {t('userSwitcher.dataSection')}
-            </p>
+          <div className="border-t border-[var(--color-border)] px-3 py-3 space-y-2">
 
-            {/* Optional encryption password */}
-            <input
-              type="password"
-              value={dataPassword}
-              onChange={e => setDataPassword(e.target.value)}
-              placeholder={t('userSwitcher.passwordPlaceholder')}
-              className="w-full text-xs px-2 py-1 rounded border border-[var(--color-border)]
-                bg-[var(--color-bg)] focus:outline-none focus:border-[var(--color-accent)]
-                placeholder:text-[var(--color-muted)]"
-            />
-
+            {/* Export / Import buttons */}
             {clearConfirm ? (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span className="flex-1 text-xs text-[var(--color-coral)]">
                   {t('userSwitcher.clearConfirm')}
                 </span>
                 <button onClick={handleClear} disabled={clearing}
-                  className="text-xs px-2 py-0.5 rounded bg-[var(--color-coral)] text-white
+                  className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-coral)] text-white
                     disabled:opacity-50 shrink-0">
                   {clearing ? t('userSwitcher.clearing') : t('common.confirm')}
                 </button>
                 <button onClick={() => setClearConfirm(false)}
-                  className="p-0.5 text-[var(--color-muted)] shrink-0"><X size={11} /></button>
+                  className="p-1 rounded-md text-[var(--color-muted)] hover:bg-[var(--color-bg)] shrink-0">
+                  <X size={12} />
+                </button>
               </div>
             ) : (
-              <div className="flex gap-1.5">
+              <div className="grid grid-cols-2 gap-2">
                 <button onClick={handleExport}
-                  className="flex-1 flex items-center justify-center gap-1 text-xs py-1 rounded
-                    border border-[var(--color-border)] hover:border-[var(--color-accent)]
-                    hover:text-[var(--color-accent)] transition-colors">
-                  <Download size={11} />
+                  className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-lg
+                    bg-[var(--color-bg)] border border-[var(--color-border)]
+                    hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]
+                    transition-colors">
+                  <Download size={12} />
                   {t('userSwitcher.export')}
                 </button>
                 <button onClick={() => importRef.current?.click()} disabled={importing}
-                  className="flex-1 flex items-center justify-center gap-1 text-xs py-1 rounded
-                    border border-[var(--color-border)] hover:border-[var(--color-accent)]
-                    hover:text-[var(--color-accent)] transition-colors disabled:opacity-50">
-                  <Upload size={11} />
+                  className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-lg
+                    bg-[var(--color-bg)] border border-[var(--color-border)]
+                    hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]
+                    transition-colors disabled:opacity-50">
+                  <Upload size={12} />
                   {importing ? t('userSwitcher.importing') : t('userSwitcher.import')}
-                </button>
-                <button onClick={() => setClearConfirm(true)}
-                  title={t('userSwitcher.clearData')}
-                  className="flex items-center justify-center px-2 py-1 rounded
-                    border border-[var(--color-border)] hover:border-[var(--color-coral)]
-                    hover:text-[var(--color-coral)] transition-colors">
-                  <Trash2 size={11} />
                 </button>
               </div>
             )}
+
+            {/* Collapsible password + clear row */}
+            <div className="flex items-center gap-2">
+              {showPassword ? (
+                <input
+                  autoFocus
+                  type="password"
+                  value={dataPassword}
+                  onChange={e => setDataPassword(e.target.value)}
+                  placeholder={t('userSwitcher.passwordPlaceholder')}
+                  className="flex-1 text-xs px-2 py-1 rounded-lg border border-[var(--color-border)]
+                    bg-[var(--color-bg)] focus:outline-none focus:border-[var(--color-accent)]
+                    placeholder:text-[var(--color-muted)]"
+                />
+              ) : (
+                <button onClick={() => setShowPassword(true)}
+                  className="flex items-center gap-1 text-xs text-[var(--color-muted)]
+                    hover:text-[var(--color-text)] transition-colors">
+                  <Lock size={11} />
+                  {t('userSwitcher.passwordPlaceholder')}
+                </button>
+              )}
+              <div className="ml-auto">
+                {!clearConfirm && (
+                  <button onClick={() => setClearConfirm(true)}
+                    title={t('userSwitcher.clearData')}
+                    className="p-1 rounded-md text-[var(--color-muted)] hover:text-[var(--color-coral)]
+                      hover:bg-[var(--color-bg)] transition-colors">
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* ③ New profile */}
           <div className="border-t border-[var(--color-border)]">
             {newStep === 'idle' && (
               <button onClick={() => setNewStep('naming')}
-                className="w-full flex items-center gap-1.5 px-2.5 py-2 text-xs
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm
                   text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-bg)]
                   transition-colors">
-                <Plus size={12} />
+                <Plus size={14} />
                 {t('userSwitcher.newProfile')}
               </button>
             )}
 
             {newStep === 'naming' && (
-              <div className="px-2.5 py-1.5 flex items-center gap-1.5">
+              <div className="px-3 py-2.5 flex items-center gap-2">
                 <input autoFocus value={newName}
                   onChange={e => setNewName(e.target.value)}
                   onKeyDown={e => {
@@ -351,37 +375,39 @@ export default function UserSwitcher() {
                     if (e.key === 'Escape') { setNewStep('idle'); setNewName('') }
                   }}
                   placeholder={t('userSwitcher.newProfilePlaceholder')}
-                  className="flex-1 text-xs px-2 py-1 rounded border border-[var(--color-border)]
+                  className="flex-1 text-sm px-2.5 py-1.5 rounded-lg border border-[var(--color-border)]
                     bg-[var(--color-bg)] focus:outline-none focus:border-[var(--color-accent)]
                     placeholder:text-[var(--color-muted)] min-w-0"
                 />
                 <button onClick={() => { if (newName.trim()) setNewStep('options') }}
                   disabled={!newName.trim()}
-                  className="text-xs px-2 py-1 rounded bg-[var(--color-accent)] text-white
+                  className="text-xs px-3 py-1.5 rounded-lg bg-[var(--color-accent)] text-white
                     disabled:opacity-40 shrink-0">
                   {t('common.next')}
                 </button>
                 <button onClick={() => { setNewStep('idle'); setNewName('') }}
-                  className="p-0.5 text-[var(--color-muted)] shrink-0"><X size={12} /></button>
+                  className="p-1 rounded-md text-[var(--color-muted)] hover:bg-[var(--color-bg)] shrink-0">
+                  <X size={14} />
+                </button>
               </div>
             )}
 
             {newStep === 'options' && (
-              <div className="px-2.5 py-1.5 space-y-1.5">
-                <p className="text-xs text-[var(--color-muted)] truncate">
+              <div className="px-3 py-2.5 space-y-2">
+                <p className="text-xs text-[var(--color-muted)]">
                   {t('userSwitcher.setupProfile', { name: newName })}
                 </p>
-                <div className="flex gap-1.5">
+                <div className="grid grid-cols-2 gap-2">
                   <button onClick={createEmpty} disabled={creating}
-                    className="flex-1 text-xs px-2 py-1 rounded border border-[var(--color-border)]
+                    className="py-2 text-xs font-medium rounded-lg border border-[var(--color-border)]
                       hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]
                       transition-colors disabled:opacity-50">
                     {t('userSwitcher.startEmpty')}
                   </button>
                   <button onClick={() => newImportRef.current?.click()} disabled={creating}
-                    className="flex-1 flex items-center justify-center gap-1 text-xs px-2 py-1 rounded
+                    className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-lg
                       bg-[var(--color-accent)] text-white disabled:opacity-50">
-                    <Upload size={10} />
+                    <Upload size={11} />
                     {creating ? t('userSwitcher.importing') : t('userSwitcher.importBackup')}
                   </button>
                 </div>
