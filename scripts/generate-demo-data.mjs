@@ -159,25 +159,19 @@ async function main() {
   const miRMort = await post('/assets', { name: 'Rental Property Mortgage', assetClass: 'liability', category: 'debt', subKind: 'mortgage', currencyCode: 'USD', pricingMode: 'fixed' }, mi.id)
   console.log('  ✓ accounts + assets created')
 
-  // ── 6. Insert all manual prices ────────────────────────────────────────────
-  console.log('\nInserting historical prices...')
-
+  // ── 6. Insert manual prices (manual/fixed assets only) ────────────────────
+  console.log('\nInserting manual asset prices...')
+  // Gold: monthly historical prices (pricingMode: manual)
   for (let i = 0; i < MONTHS.length; i++) {
     const d = MONTHS[i]
-    await post('/prices/manual', { assetId: yt0050.id,  priceDate: d, price: P_0050[i]  }, yt.id)
-    await post('/prices/manual', { assetId: ch878.id,   priceDate: d, price: P_00878[i] }, ch.id)
-    await post('/prices/manual', { assetId: saVOO.id,   priceDate: d, price: P_VOO[i]   }, sa.id)
-    await post('/prices/manual', { assetId: saETH.id,   priceDate: d, price: P_ETH[i]   }, sa.id)
-    await post('/prices/manual', { assetId: miQQQ.id,   priceDate: d, price: P_QQQ[i]   }, mi.id)
-    await post('/prices/manual', { assetId: miSPY.id,   priceDate: d, price: P_SPY[i]   }, mi.id)
     await post('/prices/manual', { assetId: miGold.id,  priceDate: d, price: P_GOLD[i]  }, mi.id)
   }
-  // Fixed-price real estate (one entry, valid for all historical dates since manual has no time cutoff)
+  // Fixed-price real estate / vehicles (one entry, carries forward indefinitely)
   await post('/prices/manual', { assetId: chHome.id,  priceDate: '2020-03-01', price: 8000000 }, ch.id)
   await post('/prices/manual', { assetId: chCar.id,   priceDate: '2022-06-01', price: 800000  }, ch.id)
   await post('/prices/manual', { assetId: miHome.id,  priceDate: '2019-04-01', price: 950000  }, mi.id)
   await post('/prices/manual', { assetId: miRent.id,  priceDate: '2021-08-01', price: 450000  }, mi.id)
-  console.log('  ✓ prices inserted')
+  console.log('  ✓ manual prices inserted')
 
   // ── 7. Insert FX rates for all months ─────────────────────────────────────
   console.log('Inserting FX rates...')
@@ -187,6 +181,14 @@ async function main() {
     await post('/fx-rates/manual', { fromCurrency: 'JPY', toCurrency: 'TWD', rateDate: d, rate: FX_JPY[i] })
   }
   console.log('  ✓ FX rates inserted')
+
+  // ── 7.5. Backfill market prices from Yahoo Finance ─────────────────────────
+  // Must happen BEFORE the monthly snapshot rebuild loop so daily prices are
+  // available when rebuild-range runs dailySnapshotJob for each date.
+  console.log('\nBackfilling historical market prices from Yahoo Finance...')
+  process.stdout.write(`  fetching ${MONTHS[0]} → ${MONTHS[MONTHS.length - 1]}...`)
+  await post('/snapshots/backfill-prices', { from: MONTHS[0], to: MONTHS[MONTHS.length - 1] }, yt.id)
+  console.log(' ✓')
 
   // ── 8. Monthly iteration: holdings → transactions → snapshot ───────────────
   console.log('\nGenerating 14 months of history...')
@@ -304,16 +306,13 @@ async function main() {
 
   console.log('  ✓ recurring entries created')
 
-  // ── 10. Backfill historical market prices from Yahoo Finance ──────────────
-  // Snapshots are already built per-month above with correct historical quantities.
-  // This step enriches the price data with actual daily Yahoo Finance prices,
-  // replacing the coarse month-end manual prices with real daily data.
-  console.log('\nBackfilling historical prices from Yahoo Finance...')
-  const BACKFILL_FROM = MONTHS[0]
-  const BACKFILL_TO   = MONTHS[MONTHS.length - 1]
-  process.stdout.write(`  fetching prices ${BACKFILL_FROM} → ${BACKFILL_TO}...`)
-  await post('/snapshots/backfill-prices', { from: BACKFILL_FROM, to: BACKFILL_TO }, yt.id)
-  console.log(' ✓')
+  // ── 10. Rebuild snapshots with Yahoo Finance prices ───────────────────────
+  // Now that Yahoo Finance daily prices are in the DB (step 7.5), rebuild all
+  // snapshots again so daily price variation shows up in the charts. Holdings
+  // are still at final (month-13) values at this point, but the per-month
+  // snapshots created in step 8 already captured historical quantities.
+  // This step only fills in any remaining gaps in the snapshot price resolution.
+  console.log('\nAll done — snapshots built with historical holdings + Yahoo Finance prices.')
 
   console.log('\n=== Done! ===')
   console.log(`Created 4 demo users with 14 months of daily history each.`)
