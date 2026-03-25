@@ -292,13 +292,20 @@ export function StackedAssetArea({ currency }: { currency: Currency }) {
   const t = useTranslations('dashboard')
   const tAsset = useTranslations('asset')
   const [range, setRange] = useState<Range>('1y')
+  const [hidden, setHidden] = useState<Set<string>>(new Set())
   const { data } = useCategoryHistory(currency, range)
 
   const assetCats = ['liquid', 'investment', 'fixed', 'receivable']
   const active = assetCats.filter(cat => data?.data.some(d => (d[cat] as number) > 0))
   const hasDebt = data?.data.some(d => (d['debt'] as number) < 0)
+  const allCats = [...active, ...(hasDebt ? ['debt'] : [])]
 
   const getCatLabel = (key: string) => tAsset(`categories.${key}` as any) ?? key
+  const toggle = (cat: string) => setHidden(prev => {
+    const next = new Set(prev)
+    next.has(cat) ? next.delete(cat) : next.add(cat)
+    return next
+  })
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
@@ -319,13 +326,13 @@ export function StackedAssetArea({ currency }: { currency: Currency }) {
               labelStyle={{ color: 'var(--color-text)' }}
               contentStyle={tooltipStyle}
             />
-            {active.map(cat => (
+            {active.filter(cat => !hidden.has(cat)).map(cat => (
               <Area key={cat} type="monotone" dataKey={cat} stackId="a"
                 stroke={CAT_COLOR[cat]} fill={CAT_COLOR[cat]}
                 fillOpacity={0.6} strokeWidth={1.5} dot={false}
                 animationBegin={0} animationDuration={800} />
             ))}
-            {hasDebt && (
+            {hasDebt && !hidden.has('debt') && (
               <Area type="monotone" dataKey="debt"
                 stroke={CAT_COLOR.debt} fill={CAT_COLOR.debt}
                 fillOpacity={0.5} strokeWidth={1.5} dot={false}
@@ -336,18 +343,17 @@ export function StackedAssetArea({ currency }: { currency: Currency }) {
       </div>
 
       <div className="flex gap-3 mt-2 justify-center flex-wrap">
-        {active.map(cat => (
-          <div key={cat} className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-sm" style={{ background: CAT_COLOR[cat] }} />
-            <span className="text-xs text-[var(--color-muted)]">{getCatLabel(cat)}</span>
-          </div>
-        ))}
-        {hasDebt && (
-          <div className="flex items-center gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-sm" style={{ background: CAT_COLOR.debt }} />
-            <span className="text-xs text-[var(--color-muted)]">{getCatLabel('debt')}</span>
-          </div>
-        )}
+        {allCats.map(cat => {
+          const isHidden = hidden.has(cat)
+          return (
+            <button key={cat} onClick={() => toggle(cat)}
+              className="flex items-center gap-1.5 transition-opacity"
+              style={{ opacity: isHidden ? 0.3 : 1 }}>
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ background: CAT_COLOR[cat] }} />
+              <span className="text-xs text-[var(--color-muted)]">{getCatLabel(cat)}</span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )
