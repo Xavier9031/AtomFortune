@@ -1,16 +1,16 @@
 'use client'
 import { useState } from 'react'
 import useSWR, { mutate } from 'swr'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { BASE, fetcher } from '@/lib/api'
 import { fetchWithUser } from '@/lib/user'
 import type { RecurringEntry } from '@/lib/types'
 
 // ── Month/Year picker ────────────────────────────────────────────────────────
 
-function getMonthNames(): string[] {
+function getMonthNames(locale: string): string[] {
   return Array.from({ length: 12 }, (_, i) =>
-    new Intl.DateTimeFormat(undefined, { month: 'short' }).format(new Date(2000, i, 1))
+    new Intl.DateTimeFormat(locale, { month: 'short' }).format(new Date(2000, i, 1))
   )
 }
 
@@ -24,10 +24,11 @@ function parseYM(dateStr: string): { year: number; month: number } {
 }
 
 function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const locale = useLocale()
   const { year, month } = parseYM(value)
   const thisYear = new Date().getFullYear()
   const years = Array.from({ length: 12 }, (_, i) => thisYear - 1 + i)
-  const months = getMonthNames()
+  const months = getMonthNames(locale)
   const sel = `bg-[var(--color-surface)] border border-[var(--color-border)] rounded-lg
     px-2 py-1 text-xs outline-none focus:border-[var(--color-accent)] appearance-none
     cursor-pointer text-[var(--color-text)]`
