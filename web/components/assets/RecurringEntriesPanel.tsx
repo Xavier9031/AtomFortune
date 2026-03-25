@@ -81,7 +81,9 @@ function EntryForm({
               ${type === t
                 ? t === 'income' ? 'bg-green-500/15 text-green-400' : 'bg-red-400/15 text-red-400'
                 : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'}`}>
-            {t === 'income' ? '固定收入' : '固定支出'}
+            {isQuantityMode
+              ? (t === 'income' ? '買入' : '賣出')
+              : (t === 'income' ? '收入' : '支出')}
           </button>
         ))}
       </div>
