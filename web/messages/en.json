@@ -345,7 +345,9 @@
     "profileNameLabel": "Profile Name",
     "profileNamePlaceholder": "e.g. My Portfolio",
     "getStarted": "Get Started",
-    "chooseFile": "Choose Backup File"
+    "chooseFile": "Choose Backup File",
+    "baseCurrencyLabel": "Base Currency",
+    "importDesc": "Choose a backup file (.zip). The profile name will be extracted from the filename automatically."
   },
   "snapshots": {
     "title": "Snapshots",
