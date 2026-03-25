@@ -199,7 +199,7 @@ export default function OnboardingScreen() {
 
           <div className="text-center space-y-2">
             <Image src="/icon-192.png" alt="Atom Fortune" width={72} height={72}
-              className="mx-auto rounded-[20px] shadow-md" />
+              className="mx-auto rounded-[20px]" />
             <div>
               <h1 className="text-2xl font-bold tracking-tight">Atom Fortune</h1>
               <p className="text-sm text-[var(--color-muted)]">{t('onboarding.subtitle')}</p>
@@ -218,7 +218,7 @@ export default function OnboardingScreen() {
                   <UserPlus size={26} className="text-[var(--color-muted)] group-hover:text-[var(--color-accent)] transition-colors" />
                   <div className="text-center">
                     <p className="text-sm font-semibold">{t('onboarding.startFresh')}</p>
-                    <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('onboarding.startFreshDesc')}</p>
+                    <p className="text-xs text-[var(--color-muted)] mt-0.5 min-h-[2.25rem] flex items-start justify-center">{t('onboarding.startFreshDesc')}</p>
                   </div>
                 </button>
                 <button onClick={() => navigateTo('import')}
@@ -228,7 +228,7 @@ export default function OnboardingScreen() {
                   <Upload size={26} className="text-[var(--color-muted)] group-hover:text-[var(--color-accent)] transition-colors" />
                   <div className="text-center">
                     <p className="text-sm font-semibold">{t('onboarding.importBackup')}</p>
-                    <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('onboarding.importBackupDesc')}</p>
+                    <p className="text-xs text-[var(--color-muted)] mt-0.5 min-h-[2.25rem] flex items-start justify-center">{t('onboarding.importBackupDesc')}</p>
                   </div>
                 </button>
               </div>
