@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.4](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.3...atomfortune-v0.0.4) (2026-03-25)
+
+
+### Features
+
+* onboarding screen when no profiles; allow deleting last profile ([46d08a9](https://github.com/Xavier9031/AtomFortune/commit/46d08a937c7ef098928eb86d38903e2d30ab4c26))
+
 ## [0.0.3](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.2...atomfortune-v0.0.3) (2026-03-25)
 
 
