@@ -27,9 +27,7 @@ export default function UserSwitcher() {
   const [modalUser, setModalUser] = useState<UserRecord | null>(null)
   const [exportPw, setExportPw] = useState('')
   const [importPw, setImportPw] = useState('')
-  const [clearWord, setClearWord] = useState('')
   const [importing, setImporting] = useState(false)
-  const [clearing, setClearing] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -59,8 +57,8 @@ export default function UserSwitcher() {
 
   function closeModal() {
     setModalUser(null)
-    setExportPw(''); setImportPw(''); setClearWord('')
-    setImporting(false); setClearing(false); setDeleteConfirm(false)
+    setExportPw(''); setImportPw('')
+    setImporting(false); setDeleteConfirm(false)
   }
 
   function openModal(u: UserRecord) {
@@ -165,19 +163,6 @@ export default function UserSwitcher() {
     if (modalImportRef.current) modalImportRef.current.value = ''
   }
 
-  async function handleClear(userId: string) {
-    setClearing(true)
-    try {
-      const res = await fetch(`${BASE}/backup/reset`, {
-        method: 'DELETE',
-        headers: { 'x-user-id': userId },
-      })
-      if (res.ok) {
-        closeModal()
-        if (userId === activeId) window.location.reload()
-      }
-    } catch { setClearing(false) }
-  }
 
   async function handleDeleteProfile(id: string) {
     const res = await fetch(`${BASE}/users/${id}`, { method: 'DELETE' })
@@ -193,7 +178,6 @@ export default function UserSwitcher() {
 
   const activeUser = users.find(u => u.id === activeId)
   const initial = (activeUser?.name ?? 'D').charAt(0).toUpperCase()
-  const CONFIRM_WORD = t('userSwitcher.clearConfirmWord')
 
   return (
       <div className="relative mx-2 mb-4" ref={dropdownRef}>
@@ -433,71 +417,38 @@ export default function UserSwitcher() {
                 </button>
               </div>
 
-              {/* Danger zone */}
-              <div className="px-5 py-4 space-y-4">
-                {/* Clear data */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Trash2 size={14} className="text-[var(--color-coral)] shrink-0" />
-                    <p className="text-sm font-medium text-[var(--color-coral)]">{t('userSwitcher.clearData')}</p>
-                  </div>
-                  <p className="text-xs text-[var(--color-muted)]">{t('userSwitcher.clearConfirm')}</p>
-                  {/* Confirmation word shown as static label */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-[var(--color-muted)]">{t('common.confirm')}：</span>
-                    <code className="text-xs px-2 py-1 rounded-md bg-[var(--color-bg)]
-                      border border-[var(--color-border)] font-mono text-[var(--color-text)] select-all">
-                      {CONFIRM_WORD}
-                    </code>
-                  </div>
-                  <input
-                    value={clearWord}
-                    onChange={e => setClearWord(e.target.value)}
-                    placeholder={t('userSwitcher.clearTypePlaceholder')}
-                    className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--color-border)]
-                      focus:border-[var(--color-coral)] bg-[var(--color-bg)] focus:outline-none
-                      placeholder:text-[var(--color-muted)]"
-                  />
-                  <button onClick={() => handleClear(modalUser.id)}
-                    disabled={clearing || clearWord !== CONFIRM_WORD}
-                    className="w-full py-2 text-sm font-medium rounded-lg
-                      bg-[var(--color-coral)] text-white disabled:opacity-30 transition-opacity">
-                    {clearing ? t('userSwitcher.clearing') : t('userSwitcher.clearData')}
-                  </button>
-                </div>
-
-                {/* Delete profile (non-active only) */}
-                {modalUser.id !== activeId && (
-                  <div className="pt-2 border-t border-[var(--color-border)]">
-                    {deleteConfirm ? (
-                      <div className="space-y-2">
-                        <p className="text-xs text-[var(--color-coral)]">
-                          {t('settings.deleteProfileConfirm', { name: modalUser.name })}
-                        </p>
-                        <div className="grid grid-cols-2 gap-2">
-                          <button onClick={() => handleDeleteProfile(modalUser.id)}
-                            className="py-2 text-sm font-medium rounded-lg
-                              bg-[var(--color-coral)] text-white hover:opacity-90 transition-opacity">
-                            {t('common.delete')}
-                          </button>
-                          <button onClick={() => setDeleteConfirm(false)}
-                            className="py-2 text-sm font-medium rounded-lg border border-[var(--color-border)]
-                              hover:bg-[var(--color-bg)] transition-colors">
-                            {t('common.cancel')}
-                          </button>
-                        </div>
+              {/* Delete profile — available as long as there's more than one profile */}
+              {users.length > 1 && (
+                <div className="px-5 py-4">
+                  {deleteConfirm ? (
+                    <div className="space-y-3">
+                      <p className="text-sm text-[var(--color-coral)]">
+                        {t('settings.deleteProfileConfirm', { name: modalUser.name })}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button onClick={() => handleDeleteProfile(modalUser.id)}
+                          className="py-2 text-sm font-medium rounded-lg
+                            bg-[var(--color-coral)] text-white hover:opacity-90 transition-opacity">
+                          {t('common.delete')}
+                        </button>
+                        <button onClick={() => setDeleteConfirm(false)}
+                          className="py-2 text-sm font-medium rounded-lg border border-[var(--color-border)]
+                            hover:bg-[var(--color-bg)] transition-colors">
+                          {t('common.cancel')}
+                        </button>
                       </div>
-                    ) : (
-                      <button onClick={() => setDeleteConfirm(true)}
-                        className="w-full py-2 text-sm font-medium rounded-lg border border-[var(--color-border)]
-                          text-[var(--color-muted)] hover:text-[var(--color-coral)]
-                          hover:border-[var(--color-coral)]/40 transition-colors">
-                        {t('common.delete')} profile
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+                    </div>
+                  ) : (
+                    <button onClick={() => setDeleteConfirm(true)}
+                      className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium
+                        rounded-lg border border-[var(--color-border)] text-[var(--color-muted)]
+                        hover:text-[var(--color-coral)] hover:border-[var(--color-coral)]/40 transition-colors">
+                      <Trash2 size={14} />
+                      {t('common.delete')} profile
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
