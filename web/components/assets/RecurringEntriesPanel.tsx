@@ -117,9 +117,7 @@ function EntryForm({
               placeholder="0"
               className="flex-1 text-right bg-transparent text-2xl font-bold outline-none tabular-nums
                 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-            <input value={currencyCode} maxLength={4}
-              onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
-              className="w-11 bg-transparent text-sm font-semibold text-[var(--color-muted)] text-center outline-none pb-0.5" />
+            <span className="w-11 bg-transparent text-sm font-semibold text-[var(--color-muted)] text-center pb-0.5">{currencyCode}</span>
           </>
         )}
       </div>
@@ -234,7 +232,7 @@ function useFormState(defaults?: Partial<RecurringEntry>) {
   }
 }
 
-export function RecurringEntriesPanel({ assetId, accountId, unit }: { assetId: string; accountId?: string; unit?: string | null }) {
+export function RecurringEntriesPanel({ assetId, accountId, unit, currencyCode: assetCurrencyCode }: { assetId: string; accountId?: string; unit?: string | null; currencyCode?: string }) {
   const t = useTranslations()
   const swrKey = `${BASE}/recurring-entries?assetId=${assetId}${accountId ? `&accountId=${accountId}` : ''}`
   const { data: entries, mutate: revalidate } = useSWR<RecurringEntry[]>(swrKey, fetcher)
@@ -242,7 +240,7 @@ export function RecurringEntriesPanel({ assetId, accountId, unit }: { assetId: s
   const [showForm, setShowForm] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
 
-  const create = useFormState()
+  const create = useFormState({ currencyCode: assetCurrencyCode ?? 'TWD' })
   const edit = useFormState()
 
   async function handleCreate() {
