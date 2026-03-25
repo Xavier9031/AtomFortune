@@ -88,7 +88,7 @@ backupRouter.get('/export', async (c) => {
   let fileEntry: Record<string, Uint8Array>
   let baseFilename: string
 
-  const safeName = (userRow?.name ?? 'backup').replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]/g, '_')
+  const safeName = (userRow?.name ?? 'backup').replace(/[^a-zA-Z0-9_-]/g, '_')
   if (password) {
     baseFilename = `AF-${safeName}-${date}.enc`
     fileEntry = { [baseFilename]: encryptBackup(jsonStr, password) }
@@ -100,7 +100,7 @@ backupRouter.get('/export', async (c) => {
   const zipped = zipSync(fileEntry)
   const zipFilename = baseFilename.replace(/\.(json|enc)$/, '.zip')
 
-  c.header('Content-Disposition', `attachment; filename="${zipFilename}"`)
+  c.header('Content-Disposition', `attachment; filename="backup.zip"; filename*=UTF-8''${encodeURIComponent(zipFilename)}`)
   c.header('Content-Type', 'application/zip')
   return c.body(zipped.buffer as ArrayBuffer)
 })

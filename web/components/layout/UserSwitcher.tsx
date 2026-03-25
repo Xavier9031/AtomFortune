@@ -379,7 +379,7 @@ export default function UserSwitcher() {
         {/* ── Profile management panel ── inside dropdownRef so clicks don't close dropdown */}
         {modalUser && (
           <div
-            className="fixed bottom-4 left-[232px] w-80 z-[100] bg-[var(--color-surface)]
+            className="fixed bottom-4 left-[232px] w-80 z-[200] bg-[var(--color-surface)]
               border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden"
           >
             {/* Header */}
