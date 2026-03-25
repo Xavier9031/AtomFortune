@@ -17,6 +17,7 @@ export const AssetUpdateSchema = z.object({
   symbol: z.string().optional(),
   market: z.string().optional(),
   unit: z.string().optional(),
+  pricingMode: z.enum(['market', 'fixed', 'manual']).optional(),
 })
 
 export type AssetCreateInput = z.infer<typeof AssetCreateSchema>

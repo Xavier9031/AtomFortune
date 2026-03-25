@@ -50,7 +50,7 @@ export class AssetsService {
     if (!existing) throw new HTTPException(404, { message: 'Asset not found' })
     return this.repo.update(id, userId, {
       name: data.name, symbol: data.symbol ?? undefined, market: data.market ?? undefined,
-      unit: data.unit ?? undefined,
+      unit: data.unit ?? undefined, pricingMode: data.pricingMode ?? undefined,
     })
   }
 
