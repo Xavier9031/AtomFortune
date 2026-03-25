@@ -1,6 +1,6 @@
 import { eq, and, gte, lte, desc } from 'drizzle-orm'
 import { assets, holdings, prices, fxRates, snapshotItems, users } from '../db/schema'
-import { fetchMarketPrices } from './pricing.service'
+import { fetchMarketPrices, fetchHistoricalPricesForAssets } from './pricing.service'
 import { fetchFxRates } from './fx.service'
 import type { DrizzleDB } from '../db/client'
 
@@ -54,10 +54,10 @@ export async function resolvePrice(
 }
 
 export async function resolveFxRate(
-  tx: DrizzleDB, currencyCode: string, today: string
+  tx: DrizzleDB, currencyCode: string, today: string, maxLookbackDays = 7
 ): Promise<number> {
   if (currencyCode === 'TWD') return 1.0
-  const cutoff = formatDate(new Date(new Date(today + 'T00:00:00Z').getTime() - 7 * 86400_000))
+  const cutoff = formatDate(new Date(new Date(today + 'T00:00:00Z').getTime() - maxLookbackDays * 86400_000))
   const rows = await tx
     .select({ rate: fxRates.rate })
     .from(fxRates)
@@ -105,7 +105,31 @@ export type SnapshotJobResult = {
   snapshotItemsWritten: number
 }
 
-export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date()): Promise<SnapshotJobResult> {
+export async function backfillHistoricalPrices(db: DrizzleDB, fromDate: string, toDate: string) {
+  const marketAssets = await getMarketAssets(db)
+  const historicalData = await fetchHistoricalPricesForAssets(marketAssets, fromDate, toDate)
+  let total = 0
+  const byAsset: { assetId: string; symbol: string; count: number }[] = []
+  for (const [assetId, pricesByDate] of historicalData) {
+    let count = 0
+    for (const [date, price] of pricesByDate) {
+      await db.insert(prices)
+        .values({ assetId, priceDate: date, price: String(price), source: 'yahoo-finance2-historical' })
+        .onConflictDoNothing()
+      count++
+    }
+    total += count
+    const asset = marketAssets.find(a => a.id === assetId)
+    byAsset.push({ assetId, symbol: asset?.symbol ?? '', count })
+  }
+  return { total, byAsset }
+}
+
+export async function dailySnapshotJob(
+  db: DrizzleDB,
+  snapshotDate = new Date(),
+  options: { fxLookbackDays?: number } = {}
+): Promise<SnapshotJobResult> {
   const today = formatDate(snapshotDate)
 
   const marketAssets = await getMarketAssets(db)
@@ -150,7 +174,7 @@ export async function dailySnapshotJob(db: DrizzleDB, snapshotDate = new Date())
     for (const h of holdingRows) {
       const price = await resolvePrice(db, h.assetId, h.pricingMode, today)
       if (price === null) { missingAssets.push(h.assetId); continue }
-      const fxRate = await resolveFxRate(db, h.currencyCode, today)
+      const fxRate = await resolveFxRate(db, h.currencyCode, today, options.fxLookbackDays ?? 7)
       const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
       const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
       resolvedItems.push({

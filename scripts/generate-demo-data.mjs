@@ -289,8 +289,16 @@ async function main() {
 
   console.log('  ✓ recurring entries created')
 
+  // ── 10. Backfill daily snapshots for the full date range ───────────────────
+  console.log('\nBackfilling daily snapshots (this may take a few minutes)...')
+  const BACKFILL_FROM = MONTHS[0]
+  const BACKFILL_TO   = MONTHS[MONTHS.length - 1]
+  process.stdout.write(`  backfilling ${BACKFILL_FROM} → ${BACKFILL_TO}...`)
+  await post('/snapshots/backfill', { from: BACKFILL_FROM, to: BACKFILL_TO }, yt.id)
+  console.log(' ✓')
+
   console.log('\n=== Done! ===')
-  console.log(`Created 4 demo users with 14 months of history each.`)
+  console.log(`Created 4 demo users with 14 months of daily history each.`)
   console.log(`\nUser IDs:`)
   console.log(`  雅婷:   ${yt.id}`)
   console.log(`  建宏:   ${ch.id}`)

@@ -1,5 +1,5 @@
 import { db } from '../../db/client'
-import { dailySnapshotJob } from '../../jobs/snapshot.job'
+import { dailySnapshotJob, backfillHistoricalPrices } from '../../jobs/snapshot.job'
 import * as repo from './snapshots.repository'
 
 type RangeParam = '30d' | '1y' | 'all'
@@ -30,7 +30,35 @@ export async function rebuildRange(from: string, to: string) {
     current.setDate(current.getDate() + 1)
   }
   for (const date of dates) {
-    await dailySnapshotJob(db, new Date(date))
+    await dailySnapshotJob(db, new Date(date), { fxLookbackDays: 31 })
   }
   return { rebuilt: dates.length, missingAssets: [] as string[] }
+}
+
+export async function backfill(from: string, to: string) {
+  // 1. Fetch historical market prices from Yahoo Finance
+  let pricesResult: Awaited<ReturnType<typeof backfillHistoricalPrices>> | null = null
+  try {
+    pricesResult = await backfillHistoricalPrices(db, from, to)
+    console.log(`[backfill] Inserted ${pricesResult.total} historical price records`)
+  } catch (err) {
+    console.warn('[backfill] Historical price fetch failed (continuing):', err)
+  }
+
+  // 2. Rebuild snapshot for every day in range with extended FX lookback
+  const dates: string[] = []
+  const current = new Date(from)
+  const end = new Date(to)
+  while (current <= end) {
+    dates.push(current.toISOString().slice(0, 10))
+    current.setDate(current.getDate() + 1)
+  }
+  for (const date of dates) {
+    await dailySnapshotJob(db, new Date(date), { fxLookbackDays: 31 })
+  }
+
+  return {
+    pricesBackfilled: pricesResult,
+    snapshotsRebuilt: dates.length,
+  }
 }
