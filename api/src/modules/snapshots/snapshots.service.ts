@@ -35,6 +35,11 @@ export async function rebuildRange(from: string, to: string) {
   return { rebuilt: dates.length, missingAssets: [] as string[] }
 }
 
+export async function backfillPricesOnly(from: string, to: string) {
+  const result = await backfillHistoricalPrices(db, from, to)
+  return result
+}
+
 export async function backfill(from: string, to: string) {
   // 1. Fetch historical market prices from Yahoo Finance
   let pricesResult: Awaited<ReturnType<typeof backfillHistoricalPrices>> | null = null

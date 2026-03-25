@@ -31,7 +31,7 @@ async function getAllUsers(db: DrizzleDB) {
 
 // Precious metal prices are quoted per troy ounce; convert grams to oz for value calc
 function getUnitMultiplier(subKind: string | null, unit: string | null): number {
-  if (subKind === 'precious_metal' && unit === '公克') return 1 / 31.1035
+  if (subKind === 'precious_metal' && (unit === 'gram' || unit === '公克')) return 1 / 31.1035
   return 1
 }
 

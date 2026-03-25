@@ -69,6 +69,18 @@ snapshotsRouter.post('/trigger', async (c) => {
   return c.json(result)
 })
 
+snapshotsRouter.post('/backfill-prices',
+  zValidator('json', z.object({
+    from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+    to:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  }).refine(d => d.from <= d.to, { message: 'from must be ≤ to' })),
+  async (c) => {
+    const { from, to } = c.req.valid('json')
+    const result = await service.backfillPricesOnly(from, to)
+    return c.json(result)
+  }
+)
+
 snapshotsRouter.post('/backfill',
   zValidator('json', z.object({
     from: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

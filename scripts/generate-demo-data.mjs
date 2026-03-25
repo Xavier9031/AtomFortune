@@ -4,6 +4,18 @@
 
 const API = 'http://localhost:8001/api/v1'
 
+// ─── Date helpers ─────────────────────────────────────────────────────────────
+function addDays(dateStr, n) {
+  const d = new Date(dateStr + 'T00:00:00Z')
+  d.setUTCDate(d.getUTCDate() + n)
+  return d.toISOString().slice(0, 10)
+}
+
+function firstOfMonth(endOfMonthStr) {
+  // '2025-01-31' → '2025-01-01'
+  return endOfMonthStr.slice(0, 8) + '01'
+}
+
 // ─── Monthly snapshot end-dates ──────────────────────────────────────────────
 const MONTHS = [
   '2024-12-31', '2025-01-31', '2025-02-28', '2025-03-31',
@@ -253,9 +265,12 @@ async function main() {
     await post('/transactions', { assetId: miQQQ.id, accountId: miBrok.id, txnType: 'buy', quantity: qqqBuy, txnDate: d20, note: 'DCA' }, mi.id)
     await post('/transactions', { assetId: miSPY.id, accountId: miBrok.id, txnType: 'buy', quantity: spyBuy, txnDate: d20, note: 'DCA' }, mi.id)
 
-    // ── Trigger snapshot for this month ────────────────────────────────────
-    process.stdout.write(`    triggering snapshot ${d}...`)
-    await post(`/snapshots/trigger?date=${d}`, undefined, yt.id)
+    // ── Rebuild daily snapshots for this month with current holdings ───────
+    // Holdings are set to month[i] values above, so all daily snapshots for
+    // this month will correctly use the historically accurate quantities.
+    const monthFrom = i === 0 ? firstOfMonth(d) : addDays(MONTHS[i - 1], 1)
+    process.stdout.write(`    rebuilding snapshots ${monthFrom} → ${d}...`)
+    await post('/snapshots/rebuild-range', { from: monthFrom, to: d }, yt.id)
     console.log(' ✓')
   }
 
@@ -289,12 +304,15 @@ async function main() {
 
   console.log('  ✓ recurring entries created')
 
-  // ── 10. Backfill daily snapshots for the full date range ───────────────────
-  console.log('\nBackfilling daily snapshots (this may take a few minutes)...')
+  // ── 10. Backfill historical market prices from Yahoo Finance ──────────────
+  // Snapshots are already built per-month above with correct historical quantities.
+  // This step enriches the price data with actual daily Yahoo Finance prices,
+  // replacing the coarse month-end manual prices with real daily data.
+  console.log('\nBackfilling historical prices from Yahoo Finance...')
   const BACKFILL_FROM = MONTHS[0]
   const BACKFILL_TO   = MONTHS[MONTHS.length - 1]
-  process.stdout.write(`  backfilling ${BACKFILL_FROM} → ${BACKFILL_TO}...`)
-  await post('/snapshots/backfill', { from: BACKFILL_FROM, to: BACKFILL_TO }, yt.id)
+  process.stdout.write(`  fetching prices ${BACKFILL_FROM} → ${BACKFILL_TO}...`)
+  await post('/snapshots/backfill-prices', { from: BACKFILL_FROM, to: BACKFILL_TO }, yt.id)
   console.log(' ✓')
 
   console.log('\n=== Done! ===')
