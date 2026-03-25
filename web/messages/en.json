@@ -327,7 +327,9 @@
     "export": "Export",
     "import": "Import",
     "clearData": "Clear data",
-    "clearConfirm": "Clear all data for this profile?",
+    "clearConfirm": "This cannot be undone. Type the confirmation phrase to continue:",
+    "clearConfirmWord": "DELETE ALL DATA",
+    "clearConfirmPlaceholder": "Type \"DELETE ALL DATA\"",
     "clearing": "Clearing\u2026"
   },
   "snapshots": {

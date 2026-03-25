@@ -327,7 +327,9 @@
     "export": "匯出",
     "import": "匯入",
     "clearData": "清空資料",
-    "clearConfirm": "清除此個人檔案的所有資料？",
+    "clearConfirm": "此操作無法復原。請輸入確認文字以繼續：",
+    "clearConfirmWord": "確定刪除資料",
+    "clearConfirmPlaceholder": "輸入「確定刪除資料」",
     "clearing": "清除中\u2026"
   },
   "snapshots": {

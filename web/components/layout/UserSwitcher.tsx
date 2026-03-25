@@ -30,6 +30,7 @@ export default function UserSwitcher() {
   const [showPassword, setShowPassword] = useState(false)
   const [importing, setImporting] = useState(false)
   const [clearConfirm, setClearConfirm] = useState(false)
+  const [clearWord, setClearWord] = useState('')
   const [clearing, setClearing] = useState(false)
 
   const dropdownRef = useRef<HTMLDivElement>(null)
@@ -56,7 +57,7 @@ export default function UserSwitcher() {
     setNewStep('idle'); setNewName(''); setCreating(false)
     setEditingId(null); setEditingName('')
     setDeletingId(null)
-    setClearConfirm(false)
+    setClearConfirm(false); setClearWord('')
     setShowPassword(false); setDataPassword('')
   }
 
@@ -285,19 +286,31 @@ export default function UserSwitcher() {
 
             {/* Export / Import buttons */}
             {clearConfirm ? (
-              <div className="flex items-center gap-2">
-                <span className="flex-1 text-xs text-[var(--color-coral)]">
-                  {t('userSwitcher.clearConfirm')}
-                </span>
-                <button onClick={handleClear} disabled={clearing}
-                  className="text-xs px-2.5 py-1 rounded-lg bg-[var(--color-coral)] text-white
-                    disabled:opacity-50 shrink-0">
-                  {clearing ? t('userSwitcher.clearing') : t('common.confirm')}
-                </button>
-                <button onClick={() => setClearConfirm(false)}
-                  className="p-1 rounded-md text-[var(--color-muted)] hover:bg-[var(--color-bg)] shrink-0">
-                  <X size={12} />
-                </button>
+              <div className="space-y-2">
+                <p className="text-xs text-[var(--color-coral)]">{t('userSwitcher.clearConfirm')}</p>
+                <input
+                  autoFocus
+                  value={clearWord}
+                  onChange={e => setClearWord(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Escape') { setClearConfirm(false); setClearWord('') } }}
+                  placeholder={t('userSwitcher.clearConfirmPlaceholder')}
+                  className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-[var(--color-coral)]/50
+                    bg-[var(--color-bg)] focus:outline-none focus:border-[var(--color-coral)]
+                    placeholder:text-[var(--color-muted)]"
+                />
+                <div className="flex gap-2">
+                  <button onClick={handleClear}
+                    disabled={clearing || clearWord !== t('userSwitcher.clearConfirmWord')}
+                    className="flex-1 text-xs py-1.5 rounded-lg bg-[var(--color-coral)] text-white
+                      disabled:opacity-30 transition-opacity">
+                    {clearing ? t('userSwitcher.clearing') : t('userSwitcher.clearData')}
+                  </button>
+                  <button onClick={() => { setClearConfirm(false); setClearWord('') }}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-[var(--color-border)]
+                      hover:bg-[var(--color-bg)] transition-colors">
+                    {t('common.cancel')}
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-2">
