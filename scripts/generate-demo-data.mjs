@@ -265,13 +265,13 @@ async function main() {
   // Ya-Ting
   await post('/recurring-entries', { type: 'income',  amount: 45000, currencyCode: 'TWD', dayOfMonth: 5,  label: '每月薪資', assetId: ytCash.id, accountId: ytBank.id, effectiveFrom: '2024-12-01' }, yt.id)
   await post('/recurring-entries', { type: 'expense', amount: 12000, currencyCode: 'TWD', dayOfMonth: 1,  label: '房租', assetId: ytCash.id, accountId: ytBank.id, effectiveFrom: '2024-12-01' }, yt.id)
-  await post('/recurring-entries', { type: 'expense', amount: 3000,  currencyCode: 'TWD', dayOfMonth: 15, label: '定期定額 0050 ETF', assetId: yt0050.id, accountId: ytBrok.id, effectiveFrom: '2024-12-01' }, yt.id)
+  await post('/recurring-entries', { type: 'income',  amount: 0, quantity: 19,  currencyCode: 'TWD', dayOfMonth: 15, label: '定期定額', assetId: yt0050.id, accountId: ytBrok.id, effectiveFrom: '2024-12-01' }, yt.id)
 
   // 建宏
   await post('/recurring-entries', { type: 'income',  amount: 85000, currencyCode: 'TWD', dayOfMonth: 5,  label: '每月薪資', assetId: chCash.id, accountId: chBank.id, effectiveFrom: '2024-12-01' }, ch.id)
   await post('/recurring-entries', { type: 'expense', amount: 28000, currencyCode: 'TWD', dayOfMonth: 1,  label: '玉山房貸月繳', assetId: chCash.id, accountId: chBank.id, effectiveFrom: '2024-12-01' }, ch.id)
   await post('/recurring-entries', { type: 'expense', amount: 8875,  currencyCode: 'TWD', dayOfMonth: 1,  label: '中信車貸月繳', assetId: chCash.id, accountId: chBank.id, effectiveFrom: '2024-12-01' }, ch.id)
-  await post('/recurring-entries', { type: 'expense', amount: 5000,  currencyCode: 'TWD', dayOfMonth: 15, label: '定期定額 00878 ETF', assetId: ch878.id, accountId: chBrok.id, effectiveFrom: '2024-12-01' }, ch.id)
+  await post('/recurring-entries', { type: 'income',  amount: 0, quantity: 213, currencyCode: 'TWD', dayOfMonth: 15, label: '定期定額', assetId: ch878.id, accountId: chBrok.id, effectiveFrom: '2024-12-01' }, ch.id)
 
   // Sarah
   await post('/recurring-entries', { type: 'income',  amount: 6500, currencyCode: 'USD', dayOfMonth: 15, label: 'Monthly salary', assetId: saCash.id, accountId: saBank.id, effectiveFrom: '2024-12-01' }, sa.id)

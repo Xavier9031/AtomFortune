@@ -15,6 +15,13 @@
       "when": 1774336961577,
       "tag": "0001_multi_user",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1774336971577,
+      "tag": "0002_recurring_quantity",
+      "breakpoints": true
     }
   ]
 }

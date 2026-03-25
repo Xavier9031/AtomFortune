@@ -23,7 +23,7 @@ export class RecurringEntriesRepository {
   async create(data: {
     userId: string
     assetId?: string; accountId?: string
-    type: string; amount: number; currencyCode: string
+    type: string; amount: number; quantity?: number; currencyCode: string
     dayOfMonth: number; label?: string
     effectiveFrom: string; effectiveTo?: string
   }) {
@@ -33,6 +33,7 @@ export class RecurringEntriesRepository {
       accountId: data.accountId,
       type: data.type,
       amount: String(data.amount),
+      quantity: data.quantity != null ? String(data.quantity) : undefined,
       currencyCode: data.currencyCode,
       dayOfMonth: data.dayOfMonth,
       label: data.label,
@@ -43,13 +44,14 @@ export class RecurringEntriesRepository {
   }
 
   async update(id: string, userId: string, data: Partial<{
-    type: string; amount: number; currencyCode: string
+    type: string; amount: number; quantity: number | null; currencyCode: string
     dayOfMonth: number; label: string | null
     effectiveFrom: string; effectiveTo: string | null
   }>) {
     const set: Record<string, unknown> = { updatedAt: new Date().toISOString() }
     if (data.type !== undefined) set.type = data.type
     if (data.amount !== undefined) set.amount = String(data.amount)
+    if ('quantity' in data) set.quantity = data.quantity != null ? String(data.quantity) : null
     if (data.currencyCode !== undefined) set.currencyCode = data.currencyCode
     if (data.dayOfMonth !== undefined) set.dayOfMonth = data.dayOfMonth
     if ('label' in data) set.label = data.label

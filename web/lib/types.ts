@@ -83,6 +83,7 @@ export interface RecurringEntry {
   accountId: string | null
   type: 'income' | 'expense'
   amount: string
+  quantity: string | null
   currencyCode: string
   dayOfMonth: number
   label: string | null

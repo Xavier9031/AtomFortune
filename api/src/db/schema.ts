@@ -105,6 +105,7 @@ export const recurringEntries = sqliteTable('recurringEntries', {
   accountId: text('accountId').references(() => accounts.id, { onDelete: 'cascade' }),
   type: text('type').notNull(),
   amount: numeric('amount').notNull(),
+  quantity: numeric('quantity'),
   currencyCode: text('currencyCode').notNull().default('TWD'),
   dayOfMonth: integer('dayOfMonth').notNull().default(1),
   label: text('label'),

@@ -42,6 +42,7 @@ function MonthYearPicker({ value, onChange }: { value: string; onChange: (v: str
 interface EntryFormProps {
   type: 'income' | 'expense'; setType: (v: 'income' | 'expense') => void
   amount: string; setAmount: (v: string) => void
+  quantity: string; setQuantity: (v: string) => void
   currencyCode: string; setCurrencyCode: (v: string) => void
   dayOfMonth: number; setDayOfMonth: (v: number) => void
   label: string; setLabel: (v: string) => void
@@ -53,15 +54,21 @@ interface EntryFormProps {
   onCancel: () => void
   saving: boolean
   saveLabel?: string
+  unit?: string | null
 }
 
 function EntryForm({
-  type, setType, amount, setAmount, currencyCode, setCurrencyCode,
+  type, setType, amount, setAmount, quantity, setQuantity, currencyCode, setCurrencyCode,
   dayOfMonth, setDayOfMonth, label, setLabel,
   showAdvanced, setShowAdvanced, effectiveFrom, setEffectiveFrom,
   hasEndDate, setHasEndDate, effectiveTo, setEffectiveTo,
-  onSave, onCancel, saving, saveLabel = '儲存',
+  onSave, onCancel, saving, saveLabel = '儲存', unit,
 }: EntryFormProps) {
+  const isQuantityMode = !!unit
+  const canSave = isQuantityMode
+    ? (!!quantity && Number(quantity) > 0)
+    : (!!amount && Number(amount) > 0)
+
   return (
     <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl overflow-hidden"
       style={{ animation: 'bubbleIn 0.2s cubic-bezier(0.34,1.4,0.64,1) both' }}>
@@ -79,17 +86,31 @@ function EntryForm({
         ))}
       </div>
 
-      {/* Amount */}
+      {/* Amount or Quantity */}
       <div className="flex items-baseline gap-2 px-4 pt-3 pb-2">
-        <input type="number" value={amount} min="0" autoFocus
-          onFocus={e => e.target.select()}
-          onChange={e => setAmount(e.target.value)}
-          placeholder="0"
-          className="flex-1 text-right bg-transparent text-2xl font-bold outline-none tabular-nums
-            [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-        <input value={currencyCode} maxLength={4}
-          onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
-          className="w-11 bg-transparent text-sm font-semibold text-[var(--color-muted)] text-center outline-none pb-0.5" />
+        {isQuantityMode ? (
+          <>
+            <input type="number" value={quantity} min="0" autoFocus
+              onFocus={e => e.target.select()}
+              onChange={e => setQuantity(e.target.value)}
+              placeholder="0"
+              className="flex-1 text-right bg-transparent text-2xl font-bold outline-none tabular-nums
+                [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+            <span className="w-11 bg-transparent text-sm font-semibold text-[var(--color-muted)] text-center pb-0.5">{unit}</span>
+          </>
+        ) : (
+          <>
+            <input type="number" value={amount} min="0" autoFocus
+              onFocus={e => e.target.select()}
+              onChange={e => setAmount(e.target.value)}
+              placeholder="0"
+              className="flex-1 text-right bg-transparent text-2xl font-bold outline-none tabular-nums
+                [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
+            <input value={currencyCode} maxLength={4}
+              onChange={e => setCurrencyCode(e.target.value.toUpperCase())}
+              className="w-11 bg-transparent text-sm font-semibold text-[var(--color-muted)] text-center outline-none pb-0.5" />
+          </>
+        )}
       </div>
 
       {/* Day + label */}
@@ -143,7 +164,7 @@ function EntryForm({
           className="flex-1 py-2.5 text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors border-r border-[var(--color-border)]">
           取消
         </button>
-        <button onClick={onSave} disabled={!amount || Number(amount) <= 0 || saving}
+        <button onClick={onSave} disabled={!canSave || saving}
           className="flex-1 py-2.5 text-xs font-semibold text-[var(--color-accent)] disabled:opacity-40 transition-opacity">
           {saving ? '儲存中…' : saveLabel}
         </button>
@@ -158,6 +179,7 @@ function useFormState(defaults?: Partial<RecurringEntry>) {
   const now = new Date().toISOString().slice(0, 10)
   const [type, setType] = useState<'income' | 'expense'>((defaults?.type as 'income' | 'expense') ?? 'income')
   const [amount, setAmount] = useState(defaults?.amount ? String(Number(defaults.amount)) : '')
+  const [quantity, setQuantity] = useState(defaults?.quantity ? String(Number(defaults.quantity)) : '')
   const [currencyCode, setCurrencyCode] = useState(defaults?.currencyCode ?? 'TWD')
   const [dayOfMonth, setDayOfMonth] = useState(defaults?.dayOfMonth ?? 1)
   const [label, setLabel] = useState(defaults?.label ?? '')
@@ -168,7 +190,7 @@ function useFormState(defaults?: Partial<RecurringEntry>) {
   const [saving, setSaving] = useState(false)
 
   function reset() {
-    setType('income'); setAmount(''); setCurrencyCode('TWD')
+    setType('income'); setAmount(''); setQuantity(''); setCurrencyCode('TWD')
     setDayOfMonth(1); setLabel(''); setShowAdvanced(false)
     setEffectiveFrom(now); setHasEndDate(false); setEffectiveTo('')
   }
@@ -176,6 +198,7 @@ function useFormState(defaults?: Partial<RecurringEntry>) {
   function fill(entry: RecurringEntry) {
     setType(entry.type as 'income' | 'expense')
     setAmount(String(Number(entry.amount)))
+    setQuantity(entry.quantity ? String(Number(entry.quantity)) : '')
     setCurrencyCode(entry.currencyCode)
     setDayOfMonth(entry.dayOfMonth)
     setLabel(entry.label ?? '')
@@ -186,20 +209,21 @@ function useFormState(defaults?: Partial<RecurringEntry>) {
   }
 
   return {
-    type, setType, amount, setAmount, currencyCode, setCurrencyCode,
+    type, setType, amount, setAmount, quantity, setQuantity, currencyCode, setCurrencyCode,
     dayOfMonth, setDayOfMonth, label, setLabel,
     showAdvanced, setShowAdvanced, effectiveFrom, setEffectiveFrom,
     hasEndDate, setHasEndDate, effectiveTo, setEffectiveTo,
     saving, setSaving, reset, fill,
     payload: {
-      type, amount: Number(amount), currencyCode, dayOfMonth,
+      type, amount: Number(amount), quantity: quantity ? Number(quantity) : undefined,
+      currencyCode, dayOfMonth,
       label: label || undefined, effectiveFrom,
       effectiveTo: hasEndDate && effectiveTo ? effectiveTo : undefined,
     },
   }
 }
 
-export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string; accountId?: string }) {
+export function RecurringEntriesPanel({ assetId, accountId, unit }: { assetId: string; accountId?: string; unit?: string | null }) {
   const swrKey = `${BASE}/recurring-entries?assetId=${assetId}${accountId ? `&accountId=${accountId}` : ''}`
   const { data: entries, mutate: revalidate } = useSWR<RecurringEntry[]>(swrKey, fetcher)
 
@@ -210,7 +234,8 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
   const edit = useFormState()
 
   async function handleCreate() {
-    if (!create.amount || Number(create.amount) <= 0) return
+    const validAmount = unit ? (!!create.quantity && Number(create.quantity) > 0) : (!!create.amount && Number(create.amount) > 0)
+    if (!validAmount) return
     create.setSaving(true)
     await fetchWithUser(`${BASE}/recurring-entries`, {
       method: 'POST',
@@ -222,7 +247,8 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
   }
 
   async function handleUpdate() {
-    if (!edit.amount || Number(edit.amount) <= 0) return
+    const validAmount = unit ? (!!edit.quantity && Number(edit.quantity) > 0) : (!!edit.amount && Number(edit.amount) > 0)
+    if (!validAmount) return
     edit.setSaving(true)
     await fetchWithUser(`${BASE}/recurring-entries/${editingId}`, {
       method: 'PATCH',
@@ -268,6 +294,7 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
             onCancel={() => { setShowForm(false); create.reset() }}
             saving={create.saving}
             saveLabel="建立"
+            unit={unit}
           />
         </div>
       )}
@@ -291,7 +318,10 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
                     ${!isActive ? 'opacity-40' : ''}`}>
                   <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${entry.type === 'income' ? 'bg-green-500' : 'bg-red-400'}`} />
                   <span className={`font-semibold tabular-nums shrink-0 ${entry.type === 'income' ? 'text-green-500' : 'text-red-400'}`}>
-                    {entry.type === 'income' ? '+' : '-'}{Number(entry.amount).toLocaleString()} {entry.currencyCode}
+                    {entry.type === 'income' ? '+' : '-'}
+                    {entry.quantity != null
+                      ? `${Number(entry.quantity).toLocaleString()} ${unit ?? ''}`
+                      : `${Number(entry.amount).toLocaleString()} ${entry.currencyCode}`}
                   </span>
                   <span className="text-xs text-[var(--color-muted)] shrink-0">每月{entry.dayOfMonth}日</span>
                   {entry.label && <span className="text-xs text-[var(--color-muted)] truncate">{entry.label}</span>}
@@ -313,6 +343,7 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
                         onCancel={() => setEditingId(null)}
                         saving={edit.saving}
                         saveLabel="儲存"
+                        unit={unit}
                       />
                     </div>
                   </>
