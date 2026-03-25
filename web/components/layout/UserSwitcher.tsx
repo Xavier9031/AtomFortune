@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useTranslations } from 'next-intl'
 import { ChevronDown, Plus, Check, Pencil, Trash2, Upload, X, Download, MoreHorizontal } from 'lucide-react'
 import { BASE } from '@/lib/api'
@@ -78,19 +79,22 @@ export default function UserSwitcher() {
   const [deleteWord, setDeleteWord] = useState('')
 
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const portalRef = useRef<HTMLDivElement>(null)
   const modalImportRef = useRef<HTMLInputElement>(null)
   const newImportRef = useRef<HTMLInputElement>(null)
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     setActiveId(getActiveUserId())
     fetchUsers()
   }, [])
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        closeDropdown()
-      }
+      const inDropdown = dropdownRef.current?.contains(e.target as Node)
+      const inPortal = portalRef.current?.contains(e.target as Node)
+      if (!inDropdown && !inPortal) closeDropdown()
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -376,9 +380,10 @@ export default function UserSwitcher() {
         <input ref={newImportRef} type="file" accept=".zip" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) handleNewImportFile(f) }} />
 
-        {/* ── Profile management panel ── inside dropdownRef so clicks don't close dropdown */}
-        {modalUser && (
+        {/* ── Profile management panel ── portaled to body to escape stacking context */}
+        {mounted && modalUser && createPortal(
           <div
+            ref={portalRef}
             className="fixed bottom-4 left-[232px] w-80 z-[200] bg-[var(--color-surface)]
               border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden"
           >
@@ -539,7 +544,8 @@ export default function UserSwitcher() {
                 </div>
               )}
             </div>
-          </div>
+          </div>,
+          document.body
         )}
 
         {/* Hidden file input for modal import */}
