@@ -4,6 +4,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { RefreshCw } from 'lucide-react'
 import { BASE } from '@/lib/api'
 import { fetchWithUser } from '@/lib/user'
+import { translateUnit } from '@/lib/utils'
 import type { SnapshotItem } from '@/lib/types'
 
 interface SnapshotGrouped { category: string; items: SnapshotItem[] }
@@ -15,9 +16,10 @@ function fmtAmount(value: number, currency: string, locale: string) {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: decimals }).format(value) + ' ' + currency
 }
 
-function fmtQty(quantity: number, unit: string | null, locale: string) {
+function fmtQty(quantity: number, unit: string | null, locale: string, t: (key: string) => string) {
   const decimals = Number.isInteger(quantity) ? 0 : 4
-  return new Intl.NumberFormat(locale, { maximumFractionDigits: decimals }).format(quantity) + (unit ? ' ' + unit : '')
+  const unitLabel = unit ? translateUnit(unit, t) : ''
+  return new Intl.NumberFormat(locale, { maximumFractionDigits: decimals }).format(quantity) + (unitLabel ? ' ' + unitLabel : '')
 }
 
 function fmtTWD(v: number, locale: string) {
@@ -94,7 +96,7 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
                             </>
                           ) : (
                             <>
-                              <div>{fmtQty(item.quantity, item.unit, locale)}</div>
+                              <div>{fmtQty(item.quantity, item.unit, locale, t)}</div>
                               <div className="text-xs text-[var(--color-muted)]">{fmtTWD(item.valueInBase, locale)}</div>
                             </>
                           )}

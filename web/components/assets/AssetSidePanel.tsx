@@ -28,8 +28,8 @@ const PRECIOUS_METALS = [
 ]
 
 const UNIT_OPTIONS = [
-  { value: '公克', tKey: 'assets.units.gram' as const },
-  { value: '盎司', tKey: 'assets.units.ounce' as const },
+  { value: 'gram', tKey: 'assets.units.gram' as const },
+  { value: 'ounce', tKey: 'assets.units.ounce' as const },
 ]
 
 const ASSET_GROUPS: AssetGroup[] = [
@@ -77,20 +77,20 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
   const [pendingKind, setPendingKind] = useState<AssetKindItem | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null)
   const [selectedMetal, setSelectedMetal] = useState<typeof PRECIOUS_METALS[number] | null>(null)
-  const [form, setForm] = useState({ name: '', symbol: '', currencyCode: 'TWD', unit: '公克' })
+  const [form, setForm] = useState({ name: '', symbol: '', currencyCode: 'TWD', unit: 'gram' })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!open) return
     if (asset) {
       setView('form')
-      setForm({ name: asset.name, symbol: asset.symbol ?? '', currencyCode: asset.currencyCode, unit: asset.unit ?? '公克' })
+      setForm({ name: asset.name, symbol: asset.symbol ?? '', currencyCode: asset.currencyCode, unit: asset.unit ?? 'gram' })
     } else {
       setView('kindPicker')
       setPendingKind(null)
       setSelectedTicker(null)
       setSelectedMetal(null)
-      setForm({ name: '', symbol: '', currencyCode: 'TWD', unit: '公克' })
+      setForm({ name: '', symbol: '', currencyCode: 'TWD', unit: 'gram' })
     }
   }, [open, asset])
 
@@ -105,7 +105,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
         ...p,
         name: t(item.labelKey as Parameters<typeof t>[0]),
         currencyCode: 'TWD',
-        unit: isLiquid ? 'TWD' : (item.subKind === 'precious_metal' ? '公克' : ''),
+        unit: isLiquid ? 'TWD' : (item.subKind === 'precious_metal' ? 'gram' : ''),
       }))
       setView('form')
     }
@@ -119,7 +119,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
       name: ticker.name,
       symbol: ticker.symbol,
       currencyCode: ticker.type === 'crypto' || ticker.country === 'US' ? 'USD' : 'TWD',
-      unit: ticker.type === 'crypto' ? ticker.symbol.toUpperCase() : '股',
+      unit: ticker.type === 'crypto' ? ticker.symbol.toUpperCase() : 'shares',
     }))
     setView('form')
   }

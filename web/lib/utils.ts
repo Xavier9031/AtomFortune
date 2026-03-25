@@ -19,13 +19,28 @@ export function formatValue(value: number, currency: string): string {
 
 export const UNIT_I18N_KEYS = new Set(['shares', 'gram', 'ounce', 'unit'])
 
-export function getHoldingUnit(h: { unit?: string | null; symbol?: string | null; currencyCode: string }): string {
+// Legacy locale-specific values → canonical i18n keys
+const LEGACY_UNIT_MAP: Record<string, string> = {
+  '股': 'shares',
+  '公克': 'gram',
+  '盎司': 'ounce',
+}
+
+// subKinds that always use 'shares' regardless of stored unit
+const SUBKIND_UNIT: Record<string, string> = {
+  stock: 'shares',
+  etf: 'shares',
+}
+
+export function getHoldingUnit(h: { subKind?: string | null; unit?: string | null; symbol?: string | null; currencyCode: string }): string {
+  if (h.subKind && SUBKIND_UNIT[h.subKind]) return SUBKIND_UNIT[h.subKind]
   return h.unit ?? h.symbol ?? h.currencyCode
 }
 
 export function translateUnit(raw: string, t: (key: string) => string): string {
-  if (UNIT_I18N_KEYS.has(raw)) return t(`assets.units.${raw}`)
-  return raw
+  const canonical = LEGACY_UNIT_MAP[raw] ?? raw
+  if (UNIT_I18N_KEYS.has(canonical)) return t(`assets.units.${canonical}`)
+  return canonical
 }
 
 const CAT_COLORS: Record<string, string> = {

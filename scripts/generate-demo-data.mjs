@@ -101,7 +101,7 @@ async function main() {
   const ytBrok  = await post('/accounts', { name: '元大證券', institution: '元大', accountType: 'broker' }, yt.id)
 
   const ytCash  = await post('/assets', { name: '台幣活存', assetClass: 'asset', category: 'liquid', subKind: 'bank_account', currencyCode: 'TWD', pricingMode: 'fixed' }, yt.id)
-  const yt0050  = await post('/assets', { name: '元大台灣50 ETF', assetClass: 'asset', category: 'investment', subKind: 'etf', symbol: '0050', market: 'TWSE', currencyCode: 'TWD', pricingMode: 'market', unit: '股' }, yt.id)
+  const yt0050  = await post('/assets', { name: '元大台灣50 ETF', assetClass: 'asset', category: 'investment', subKind: 'etf', symbol: '0050', market: 'TWSE', currencyCode: 'TWD', pricingMode: 'market', unit: 'shares' }, yt.id)
   console.log('  ✓ accounts + assets created')
 
   // ── 3. Setup: 建宏 ─────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ async function main() {
   const chProp  = await post('/accounts', { name: '資產負債帳戶', accountType: 'other' }, ch.id)
 
   const chCash  = await post('/assets', { name: '台幣薪轉活存', assetClass: 'asset', category: 'liquid', subKind: 'bank_account', currencyCode: 'TWD', pricingMode: 'fixed' }, ch.id)
-  const ch878   = await post('/assets', { name: '國泰永豐高股息ETF (00878)', assetClass: 'asset', category: 'investment', subKind: 'etf', symbol: '00878', market: 'TWSE', currencyCode: 'TWD', pricingMode: 'market', unit: '股' }, ch.id)
+  const ch878   = await post('/assets', { name: '國泰永豐高股息ETF (00878)', assetClass: 'asset', category: 'investment', subKind: 'etf', symbol: '00878', market: 'TWSE', currencyCode: 'TWD', pricingMode: 'market', unit: 'shares' }, ch.id)
   const chHome  = await post('/assets', { name: '永和自住房產', assetClass: 'asset', category: 'fixed', subKind: 'real_estate', currencyCode: 'TWD', pricingMode: 'manual', unit: '戶' }, ch.id)
   const chCar   = await post('/assets', { name: '個人車輛', assetClass: 'asset', category: 'fixed', subKind: 'vehicle', currencyCode: 'TWD', pricingMode: 'manual', unit: '輛' }, ch.id)
   const chMort  = await post('/assets', { name: '玉山房貸', assetClass: 'liability', category: 'debt', subKind: 'mortgage', currencyCode: 'TWD', pricingMode: 'fixed' }, ch.id)
@@ -140,7 +140,7 @@ async function main() {
   const miCash  = await post('/assets', { name: 'USD Checking', assetClass: 'asset', category: 'liquid', subKind: 'bank_account', currencyCode: 'USD', pricingMode: 'fixed' }, mi.id)
   const miQQQ   = await post('/assets', { name: 'Invesco QQQ Trust (QQQ)', assetClass: 'asset', category: 'investment', subKind: 'etf', symbol: 'QQQ', currencyCode: 'USD', pricingMode: 'market', unit: 'shares' }, mi.id)
   const miSPY   = await post('/assets', { name: 'SPDR S&P 500 ETF (SPY)', assetClass: 'asset', category: 'investment', subKind: 'etf', symbol: 'SPY', currencyCode: 'USD', pricingMode: 'market', unit: 'shares' }, mi.id)
-  const miGold  = await post('/assets', { name: 'Gold Bullion', assetClass: 'asset', category: 'investment', subKind: 'precious_metal', currencyCode: 'USD', pricingMode: 'manual', unit: '盎司' }, mi.id)
+  const miGold  = await post('/assets', { name: 'Gold Bullion', assetClass: 'asset', category: 'investment', subKind: 'precious_metal', currencyCode: 'USD', pricingMode: 'manual', unit: 'ounce' }, mi.id)
   const miHome  = await post('/assets', { name: 'Primary Residence', assetClass: 'asset', category: 'fixed', subKind: 'real_estate', currencyCode: 'USD', pricingMode: 'manual', unit: 'unit' }, mi.id)
   const miRent  = await post('/assets', { name: 'Rental Property', assetClass: 'asset', category: 'fixed', subKind: 'real_estate', currencyCode: 'USD', pricingMode: 'manual', unit: 'unit' }, mi.id)
   const miPMort = await post('/assets', { name: 'Primary Home Mortgage', assetClass: 'liability', category: 'debt', subKind: 'mortgage', currencyCode: 'USD', pricingMode: 'fixed' }, mi.id)

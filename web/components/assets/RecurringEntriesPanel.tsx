@@ -4,6 +4,7 @@ import useSWR, { mutate } from 'swr'
 import { useTranslations, useLocale } from 'next-intl'
 import { BASE, fetcher } from '@/lib/api'
 import { fetchWithUser } from '@/lib/user'
+import { translateUnit } from '@/lib/utils'
 import type { RecurringEntry } from '@/lib/types'
 
 // ── Month/Year picker ────────────────────────────────────────────────────────
@@ -107,7 +108,7 @@ function EntryForm({
               placeholder="0"
               className="flex-1 text-right bg-transparent text-2xl font-bold outline-none tabular-nums
                 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none" />
-            <span className="w-11 bg-transparent text-sm font-semibold text-[var(--color-muted)] text-center pb-0.5">{unit}</span>
+            <span className="w-11 bg-transparent text-sm font-semibold text-[var(--color-muted)] text-center pb-0.5">{unit ? translateUnit(unit, t) : ''}</span>
           </>
         ) : (
           <>
@@ -330,7 +331,7 @@ export function RecurringEntriesPanel({ assetId, accountId, unit, currencyCode: 
                   <span className={`font-semibold tabular-nums shrink-0 ${entry.type === 'income' ? 'text-green-500' : 'text-red-400'}`}>
                     {entry.type === 'income' ? '+' : '-'}
                     {entry.quantity != null
-                      ? `${Number(entry.quantity).toLocaleString()} ${unit ?? ''}`
+                      ? `${Number(entry.quantity).toLocaleString()} ${unit ? translateUnit(unit, t) : ''}`
                       : `${Number(entry.amount).toLocaleString()} ${entry.currencyCode}`}
                   </span>
                   <span className="text-xs text-[var(--color-muted)] shrink-0">{t('recurringEntries.monthlyOnDay')}{entry.dayOfMonth}{t('recurringEntries.daySuffix')}</span>

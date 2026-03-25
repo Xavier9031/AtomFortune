@@ -29,8 +29,8 @@ const PRECIOUS_METALS = [
 ]
 
 const UNIT_OPTIONS = [
-  { value: '公克', tKey: 'assets.units.gram' as const },
-  { value: '盎司', tKey: 'assets.units.ounce' as const },
+  { value: 'gram', tKey: 'assets.units.gram' as const },
+  { value: 'ounce', tKey: 'assets.units.ounce' as const },
 ]
 
 const ASSET_GROUPS: AssetGroup[] = [
@@ -149,7 +149,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   const [newAssetName, setNewAssetName] = useState('')
   const [newAssetSymbol, setNewAssetSymbol] = useState('')
   const [newAssetCurrency, setNewAssetCurrency] = useState('TWD')
-  const [newAssetUnit, setNewAssetUnit] = useState('公克')
+  const [newAssetUnit, setNewAssetUnit] = useState('gram')
   const [savingAsset, setSavingAsset] = useState(false)
 
   const { data: accounts, mutate: mutateAccounts } = useSWR<Account[]>(`${BASE}/accounts`, fetcher)
@@ -191,7 +191,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     setNewAssetName(ticker.name)
     setNewAssetSymbol(ticker.symbol)
     setNewAssetCurrency(ticker.type === 'crypto' || ticker.country === 'US' ? 'USD' : 'TWD')
-    setNewAssetUnit(ticker.type === 'crypto' ? ticker.symbol.toUpperCase() : '股')
+    setNewAssetUnit(ticker.type === 'crypto' ? ticker.symbol.toUpperCase() : 'shares')
     pushView('assetForm')
   }
 
@@ -215,7 +215,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
       const created: Asset = await res.json()
       await mutateAssets()
       setSelectedAsset(created.id)
-      setNewAssetName(''); setNewAssetSymbol(''); setSelectedTicker(null); setNewAssetUnit('公克')
+      setNewAssetName(''); setNewAssetSymbol(''); setSelectedTicker(null); setNewAssetUnit('gram')
       resetViews()
     } finally { setSavingAsset(false) }
   }
@@ -632,7 +632,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                           setSelectedTicker(null)
                           setSelectedPreciousMetal(null)
                           setNewAssetName(t(item.labelKey as Parameters<typeof t>[0]))
-                          setNewAssetSymbol(''); setNewAssetCurrency('TWD'); setNewAssetUnit('公克')
+                          setNewAssetSymbol(''); setNewAssetCurrency('TWD'); setNewAssetUnit('gram')
                           if (item.useTicker) {
                             pushView('assetTickerSearch')
                           } else {
