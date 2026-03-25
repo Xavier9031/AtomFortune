@@ -24,7 +24,8 @@ export default function OnboardingScreen() {
   const t = useTranslations()
   const locale = useLocale()
   const { setCurrency } = useCurrency()
-  const [visible, setVisible] = useState(false)
+  // Start as 'loading' (covers the app) → 'show' if no users, 'hide' if users exist
+  const [status, setStatus] = useState<'loading' | 'show' | 'hide'>('loading')
   const [step, setStep] = useState<Step>('choose')
   const [name, setName] = useState('')
   const [baseCurrency, setBaseCurrency] = useState<Currency>('TWD')
@@ -37,8 +38,8 @@ export default function OnboardingScreen() {
     setDark(document.documentElement.dataset.theme === 'dark')
     fetch(`${BASE}/users`)
       .then(r => r.json())
-      .then((users: { id: string }[]) => { if (!users.length) setVisible(true) })
-      .catch(() => {})
+      .then((users: { id: string }[]) => setStatus(users.length ? 'hide' : 'show'))
+      .catch(() => setStatus('hide'))
   }, [])
 
   function navigateTo(newStep: Step) { setStep(newStep) }
@@ -97,17 +98,15 @@ export default function OnboardingScreen() {
     } finally { setLoading(false) }
   }
 
-  if (!visible) return null
+  if (status === 'hide') return null
+
+  // 'loading': solid cover while checking users; 'show': full onboarding UI
+  if (status === 'loading') {
+    return <div className="fixed inset-0 z-[300] bg-[var(--color-bg)]" />
+  }
 
   return (
     <div className="fixed inset-0 z-[300] bg-[var(--color-bg)] flex items-center justify-center p-8">
-      <style>{`
-        @keyframes stepIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0);    }
-        }
-        .step-enter { animation: stepIn 240ms cubic-bezier(0.16,1,0.3,1) both; }
-      `}</style>
       <div className="w-full max-w-xl flex gap-8 items-center">
 
         {/* Left panel: language, theme, currency */}
