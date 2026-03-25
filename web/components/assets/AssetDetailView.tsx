@@ -6,6 +6,7 @@ import useSWR from 'swr'
 import { Settings } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { BASE, fetcher } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 import { formatValue, getHoldingUnit, translateUnit } from '@/lib/utils'
 import { ManualPriceModal } from './ManualPriceModal'
 import type { Asset, Holding, Transaction } from '@/lib/types'
@@ -39,7 +40,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
 
   async function handleSave() {
     setSaving(true)
-    await fetch(`${BASE}/assets/${initial.id}`, {
+    await fetchWithUser(`${BASE}/assets/${initial.id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: name.trim(), symbol: symbol.trim() || undefined }),
     })

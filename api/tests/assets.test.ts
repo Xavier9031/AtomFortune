@@ -1,15 +1,17 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import app from '../src/index'
-import { cleanDb, closeDb } from './helpers/db'
+import { cleanDb, closeDb, seedTestUser } from './helpers/db'
 
-beforeEach(() => cleanDb())
+const USER_HEADER = { 'x-user-id': 'default-user' }
+
+beforeEach(async () => { cleanDb(); await seedTestUser() })
 afterAll(() => closeDb())
 
 describe('POST /api/v1/assets', () => {
   it('creates an asset and returns 201', async () => {
     const res = await app.request('/api/v1/assets', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({
         name: 'AAPL', assetClass: 'asset', category: 'investment',
         subKind: 'stock', symbol: 'AAPL', market: 'NASDAQ',
@@ -25,7 +27,7 @@ describe('POST /api/v1/assets', () => {
   it('returns 422 for invalid assetClass/category combo', async () => {
     const res = await app.request('/api/v1/assets', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({
         name: 'Bad', assetClass: 'liability', category: 'investment',
         subKind: 'stock', currencyCode: 'TWD', pricingMode: 'fixed',
@@ -37,22 +39,45 @@ describe('POST /api/v1/assets', () => {
 
 describe('GET /api/v1/assets', () => {
   it('returns empty array when no assets', async () => {
-    const res = await app.request('/api/v1/assets')
+    const res = await app.request('/api/v1/assets', { headers: USER_HEADER })
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual([])
+  })
+
+  it('only returns assets belonging to the requesting user', async () => {
+    // Create asset for the default test user
+    await app.request('/api/v1/assets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...USER_HEADER },
+      body: JSON.stringify({ name: 'Mine', assetClass: 'asset', category: 'investment',
+        subKind: 'stock', currencyCode: 'USD', pricingMode: 'market' }),
+    })
+    // Create user B and their asset
+    const userB = await seedTestUser('User B')
+    await app.request('/api/v1/assets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-user-id': userB.id },
+      body: JSON.stringify({ name: 'Theirs', assetClass: 'asset', category: 'investment',
+        subKind: 'stock', currencyCode: 'USD', pricingMode: 'market' }),
+    })
+    // Default user should only see their own asset
+    const res = await app.request('/api/v1/assets', { headers: USER_HEADER })
+    const body = await res.json()
+    expect(body).toHaveLength(1)
+    expect(body[0].name).toBe('Mine')
   })
 })
 
 describe('PATCH /api/v1/assets/:id', () => {
   it('updates mutable fields name/symbol/market', async () => {
     const create = await app.request('/api/v1/assets', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ name: 'TSLA', assetClass: 'asset', category: 'investment',
         subKind: 'stock', currencyCode: 'USD', pricingMode: 'market' }),
     })
     const { id } = await create.json()
     const res = await app.request(`/api/v1/assets/${id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ name: 'Tesla Inc', symbol: 'TSLA', market: 'NASDAQ' }),
     })
     expect(res.status).toBe(200)
@@ -63,12 +88,12 @@ describe('PATCH /api/v1/assets/:id', () => {
 describe('DELETE /api/v1/assets/:id', () => {
   it('deletes an asset and returns 204', async () => {
     const create = await app.request('/api/v1/assets', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ name: 'DEL', assetClass: 'asset', category: 'liquid',
         subKind: 'bank_account', currencyCode: 'TWD', pricingMode: 'fixed' }),
     })
     const { id } = await create.json()
-    const res = await app.request(`/api/v1/assets/${id}`, { method: 'DELETE' })
+    const res = await app.request(`/api/v1/assets/${id}`, { method: 'DELETE', headers: USER_HEADER })
     expect(res.status).toBe(204)
   })
 })

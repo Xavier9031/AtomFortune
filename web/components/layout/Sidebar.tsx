@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { useState, useEffect } from 'react'
 import { LayoutDashboard, Wallet, Briefcase, Building2, Camera, Settings, FlaskConical } from 'lucide-react'
+import UserSwitcher from './UserSwitcher'
 
 const NAV_ITEMS = [
   { href: '/',          key: 'nav.dashboard',  Icon: LayoutDashboard },
@@ -45,6 +46,8 @@ export default function Sidebar() {
       <Link href="/settings" className={linkClass('/settings')}>
         <Settings size={16} />{t('nav.settings')}
       </Link>
+      <div className="flex-1" />
+      <UserSwitcher />
     </nav>
   )
 }

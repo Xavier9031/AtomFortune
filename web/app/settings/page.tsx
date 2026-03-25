@@ -2,12 +2,11 @@
 import { useState, useEffect, useRef, useTransition } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Download, Upload, Clock, FlaskConical, Trash2 } from 'lucide-react'
+import { Clock, FlaskConical } from 'lucide-react'
 import { setLocale } from '@/app/actions/setLocale'
 import { setTheme } from '@/app/actions/setTheme'
 import { setExperimental } from '@/app/actions/setExperimental'
 import { SUPPORTED_LOCALES } from '@/lib/locales'
-import { BASE } from '@/lib/api'
 
 export default function SettingsPage() {
   const t = useTranslations()
@@ -18,12 +17,6 @@ export default function SettingsPage() {
   const resolveRef = useRef<(() => void) | null>(null)
   const [dark, setDark] = useState(false)
   const [experimental, setExperimentalState] = useState(false)
-  const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null)
-  const [importing, setImporting] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [resetConfirm, setResetConfirm] = useState('')
-  const [resetting, setResetting] = useState(false)
-  const [resetMsg, setResetMsg] = useState<{ ok: boolean; text: string } | null>(null)
   const schedule = process.env.NEXT_PUBLIC_SNAPSHOT_SCHEDULE ?? '0 22 * * *'
 
   useEffect(() => {
@@ -52,53 +45,6 @@ export default function SettingsPage() {
     html.dataset.theme = checked ? 'dark' : 'light'
     await setTheme(checked ? 'dark' : 'light')
     setTimeout(() => html.classList.remove('theme-changing'), 350)
-  }
-
-  function handleExport() {
-    window.open(`${BASE}/backup/export`, '_blank')
-  }
-
-  async function handleImport(file: File) {
-    setImporting(true)
-    setImportMsg(null)
-    try {
-      const form = new FormData()
-      form.append('file', file)
-      const res = await fetch(`${BASE}/backup/import`, { method: 'POST', body: form })
-      const json = await res.json()
-      if (!res.ok) {
-        setImportMsg({ ok: false, text: `${t('settings.importError')}: ${json.error}` })
-      } else {
-        const c = json.imported
-        setImportMsg({ ok: true, text: t('settings.importSuccess', {
-          assets: c.assets, accounts: c.accounts, holdings: c.holdings,
-          transactions: c.transactions, snapshotItems: c.snapshotItems,
-        }) })
-      }
-    } catch (err) {
-      setImportMsg({ ok: false, text: `${t('settings.importError')}: ${err instanceof Error ? err.message : String(err)}` })
-    } finally {
-      setImporting(false)
-      if (fileRef.current) fileRef.current.value = ''
-    }
-  }
-
-  async function handleReset() {
-    setResetting(true)
-    setResetMsg(null)
-    try {
-      const res = await fetch(`${BASE}/backup/reset`, { method: 'DELETE' })
-      if (res.ok) {
-        setResetMsg({ ok: true, text: t('settings.resetSuccess') })
-        setResetConfirm('')
-      } else {
-        setResetMsg({ ok: false, text: t('settings.resetError') })
-      }
-    } catch {
-      setResetMsg({ ok: false, text: t('settings.resetError') })
-    } finally {
-      setResetting(false)
-    }
   }
 
   async function handleLocale(next: string) {
@@ -161,40 +107,6 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Backup & Restore */}
-      <section className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
-        <div className="px-5 py-3 border-b border-[var(--color-border)]">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-muted)]">
-            {t('settings.sectionBackup')}
-          </h2>
-        </div>
-        <div className="px-5 py-4 space-y-4">
-          <p className="text-sm text-[var(--color-muted)]">{t('settings.backupDesc')}</p>
-          <div className="flex gap-3">
-            <button onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                bg-[var(--color-accent)] text-white hover:opacity-90 transition-opacity">
-              <Download size={14} />
-              {t('settings.exportButton')}
-            </button>
-            <button onClick={() => fileRef.current?.click()} disabled={importing}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-                border border-[var(--color-border)] hover:border-[var(--color-accent)]
-                hover:text-[var(--color-accent)] transition-colors disabled:opacity-50">
-              <Upload size={14} />
-              {importing ? t('settings.importing') : t('settings.importButton')}
-            </button>
-          </div>
-          <input ref={fileRef} type="file" accept=".zip" className="hidden"
-            onChange={e => { const f = e.target.files?.[0]; if (f) handleImport(f) }} />
-          {importMsg && (
-            <p className={`text-xs ${importMsg.ok ? 'text-[var(--color-accent)]' : 'text-[var(--color-coral)]'}`}>
-              {importMsg.text}
-            </p>
-          )}
-        </div>
-      </section>
-
       {/* System */}
       <section className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
         <div className="px-5 py-3 border-b border-[var(--color-border)]">
@@ -233,47 +145,6 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* Danger Zone */}
-      <section className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-coral)] overflow-hidden">
-        <div className="px-5 py-3 border-b border-[var(--color-coral)]">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-coral)]">
-            {t('settings.sectionDanger')}
-          </h2>
-        </div>
-        <div className="px-5 py-4 space-y-3">
-          <div className="flex items-start gap-3">
-            <Trash2 size={14} className="mt-0.5 text-[var(--color-coral)] shrink-0" />
-            <div>
-              <p className="text-sm font-medium">{t('settings.resetTitle')}</p>
-              <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('settings.resetDesc')}</p>
-            </div>
-          </div>
-          <input
-            type="text"
-            value={resetConfirm}
-            onChange={e => { setResetConfirm(e.target.value); setResetMsg(null) }}
-            placeholder={t('settings.resetConfirmPlaceholder')}
-            className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--color-border)]
-              bg-[var(--color-bg)] placeholder:text-[var(--color-muted)] focus:outline-none
-              focus:border-[var(--color-coral)]"
-          />
-          <button
-            onClick={handleReset}
-            disabled={resetting || resetConfirm !== t('settings.resetConfirmWord')}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
-              bg-[var(--color-coral)] text-white hover:opacity-90 transition-opacity
-              disabled:opacity-40 disabled:cursor-not-allowed">
-            <Trash2 size={14} />
-            {resetting ? t('settings.resetting') : t('settings.resetButton')}
-          </button>
-          {resetMsg && (
-            <p className={`text-xs ${resetMsg.ok ? 'text-[var(--color-accent)]' : 'text-[var(--color-coral)]'}`}>
-              {resetMsg.text}
-            </p>
-          )}
         </div>
       </section>
 

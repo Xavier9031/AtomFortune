@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import type { Context } from 'hono'
 import { zValidator } from '@hono/zod-validator'
 import { db } from '../../db/client'
 import { AccountsRepository } from './accounts.repository'
@@ -7,6 +8,10 @@ import { AssetsRepository } from '../assets/assets.repository'
 import { HoldingsRepository } from '../holdings/holdings.repository'
 import { AccountCreateSchema, AccountUpdateSchema, BalanceSetSchema } from './accounts.schema'
 
+function getUserId(c: Context): string | null {
+  return c.req.header('x-user-id') ?? null
+}
+
 const accountsController = new Hono()
 const service = new AccountsService(
   new AccountsRepository(db),
@@ -14,18 +19,34 @@ const service = new AccountsService(
   new HoldingsRepository(db),
 )
 
-accountsController.get('/', async (c) => c.json(await service.findAll()))
+accountsController.get('/', async (c) => {
+  const userId = getUserId(c)
+  if (!userId) return c.json({ error: 'Missing X-User-Id header' }, 400)
+  return c.json(await service.findAll(userId))
+})
+
 accountsController.post('/', zValidator('json', AccountCreateSchema), async (c) => {
-  return c.json(await service.createAccount(c.req.valid('json')), 201)
+  const userId = getUserId(c)
+  if (!userId) return c.json({ error: 'Missing X-User-Id header' }, 400)
+  return c.json(await service.createAccount(userId, c.req.valid('json')), 201)
 })
+
 accountsController.patch('/:id', zValidator('json', AccountUpdateSchema), async (c) => {
-  return c.json(await service.updateAccount(c.req.param('id'), c.req.valid('json')))
+  const userId = getUserId(c)
+  if (!userId) return c.json({ error: 'Missing X-User-Id header' }, 400)
+  return c.json(await service.updateAccount(c.req.param('id'), userId, c.req.valid('json')))
 })
+
 accountsController.patch('/:id/balance', zValidator('json', BalanceSetSchema), async (c) => {
-  return c.json(await service.setBalance(c.req.param('id'), c.req.valid('json').balance, c.req.valid('json').currencyCode))
+  const userId = getUserId(c)
+  if (!userId) return c.json({ error: 'Missing X-User-Id header' }, 400)
+  return c.json(await service.setBalance(userId, c.req.param('id'), c.req.valid('json').balance, c.req.valid('json').currencyCode))
 })
+
 accountsController.delete('/:id', async (c) => {
-  await service.deleteAccount(c.req.param('id'))
+  const userId = getUserId(c)
+  if (!userId) return c.json({ error: 'Missing X-User-Id header' }, 400)
+  await service.deleteAccount(c.req.param('id'), userId)
   return c.body(null, 204)
 })
 

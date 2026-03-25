@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { BASE } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 import type { Ticker } from '@/lib/types'
 
 interface Props {
@@ -25,7 +26,7 @@ export function TickerSearch({ onSelect, onBack, defaultMarket = 'TW' }: Props) 
       setLoading(true)
       try {
         const url = `${BASE}/tickers/search?q=${encodeURIComponent(query)}&country=${market}`
-        const res = await fetch(url)
+        const res = await fetchWithUser(url)
         setResults(res.ok ? await res.json() : [])
       } finally {
         setLoading(false)

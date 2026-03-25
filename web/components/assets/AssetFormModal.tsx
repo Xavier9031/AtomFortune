@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { BASE } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 import { CATEGORY_BY_CLASS, SUB_KIND_BY_CATEGORY, DEFAULT_PRICING_MODE } from '@/lib/assetTaxonomy'
 import type { Asset, AssetClass, Category, SubKind, PricingMode } from '@/lib/types'
 
@@ -49,7 +50,7 @@ export function AssetFormModal({ open, asset, onClose }: Props) {
     const body = isEdit
       ? { name: form.name, symbol: form.symbol || undefined, market: form.market || undefined }
       : { ...form, symbol: form.symbol || undefined, market: form.market || undefined }
-    await fetch(url, {
+    await fetchWithUser(url, {
       method: isEdit ? 'PATCH' : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

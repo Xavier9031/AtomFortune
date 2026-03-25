@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import useSWR, { mutate as globalMutate } from 'swr'
 import { BASE, fetcher } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 import { RecurringEntriesPanel } from '@/components/assets/RecurringEntriesPanel'
 import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker, Transaction } from '@/lib/types'
 import { TickerSearch } from '@/components/assets/TickerSearch'
@@ -71,8 +72,8 @@ const DEFAULT_PRICING: Record<string, PricingMode> = {
   vehicle: 'manual', other: 'manual',
 }
 
-// Hold-to-confirm delete button: hover 3 s to arm, then click to fire
-function HoldDeleteButton({ onConfirm, label }: { onConfirm: () => void; label: string }) {
+// Hold-to-confirm delete button: hover 2.5 s to arm, then click to fire
+function HoldDeleteButton({ onConfirm, label, readyLabel }: { onConfirm: () => void; label: string; readyLabel: string }) {
   const [hovering, setHovering] = useState(false)
   const [ready, setReady] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -108,7 +109,7 @@ function HoldDeleteButton({ onConfirm, label }: { onConfirm: () => void; label: 
         }}
       />
       <span className="relative z-10 font-medium">
-        {ready ? '確認刪除' : label}
+        {ready ? readyLabel : label}
       </span>
     </button>
   )
@@ -171,7 +172,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     if (!newAccName.trim() || !pendingAccType) return
     setSavingAccount(true)
     try {
-      const res = await fetch(`${BASE}/accounts`, {
+      const res = await fetchWithUser(`${BASE}/accounts`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newAccName.trim(), accountType: pendingAccType.type,
           institution: newAccInstitution.trim() || undefined }),
@@ -198,7 +199,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     if (!newAssetName.trim() || !pendingAssetKind) return
     setSavingAsset(true)
     try {
-      const res = await fetch(`${BASE}/assets`, {
+      const res = await fetchWithUser(`${BASE}/assets`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: newAssetName.trim(),
@@ -225,18 +226,18 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
       ? Number(holding!.quantity) + (adjustSign === '-' ? -inputVal : inputVal)
       : inputVal
     if (mode === 'add' && isLiquidAccount) {
-      await fetch(`${BASE}/accounts/${selectedAccount}/balance`, {
+      await fetchWithUser(`${BASE}/accounts/${selectedAccount}/balance`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ balance: bal, currencyCode: liquidCurrency }),
       })
     } else if (mode === 'edit' && isLiquidHolding) {
-      await fetch(`${BASE}/accounts/${holding!.accountId}/balance`, {
+      await fetchWithUser(`${BASE}/accounts/${holding!.accountId}/balance`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ balance: bal, currencyCode: liquidCurrency }),
       })
       const delta = bal - Number(holding!.quantity)
       if (delta !== 0) {
-        await fetch(`${BASE}/transactions`, {
+        await fetchWithUser(`${BASE}/transactions`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             assetId: holding!.assetId, accountId: holding!.accountId,
@@ -250,7 +251,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
     } else {
       const assetId = selectedAsset || holding!.assetId
       const accountId = selectedAccount || holding!.accountId
-      await fetch(`${BASE}/holdings/${assetId}/${accountId}`, {
+      await fetchWithUser(`${BASE}/holdings/${assetId}/${accountId}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ quantity: bal }),
       })
@@ -258,7 +259,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
       const delta = bal - prevQty
       if (delta !== 0) {
         const txnType = mode === 'add' ? 'buy' : delta > 0 ? 'buy' : 'sell'
-        await fetch(`${BASE}/transactions`, {
+        await fetchWithUser(`${BASE}/transactions`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             assetId, accountId, txnType,
@@ -278,7 +279,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
 
   async function handleDelete() {
     if (!confirm(t('holdings.deleteConfirm', { name: holding!.assetName }))) return
-    await fetch(`${BASE}/holdings/${holding!.assetId}/${holding!.accountId}`, { method: 'DELETE' })
+    await fetchWithUser(`${BASE}/holdings/${holding!.assetId}/${holding!.accountId}`, { method: 'DELETE' })
     globalMutate(`${BASE}/holdings`)
     handleClose()
   }
@@ -408,7 +409,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                 className="flex-1 bg-[var(--color-accent)] text-white rounded-xl py-3 font-medium disabled:opacity-40">
                 {t('holdings.update')}
               </button>
-              <HoldDeleteButton onConfirm={handleDelete} label={t('common.delete')} />
+              <HoldDeleteButton onConfirm={handleDelete} label={t('common.delete')} readyLabel={t('common.confirmDelete')} />
             </div>
             <RecurringEntriesPanel assetId={holding.assetId} accountId={holding.accountId} />
             <HoldingTransactions assetId={holding.assetId} accountId={holding.accountId} />

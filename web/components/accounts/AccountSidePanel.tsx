@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { BASE } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 import type { Account, AccountType } from '@/lib/types'
 import { ACC_GROUPS, type AccTypeItem } from '@/lib/accountTypes'
 
@@ -34,7 +35,7 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
     if (!account) return
     if (holdingsCount > 0) { alert(t('account.deleteBlockedByHoldings')); return }
     if (!confirm(t('account.deleteConfirm'))) return
-    const res = await fetch(`${BASE}/accounts/${account.id}`, { method: 'DELETE' })
+    const res = await fetchWithUser(`${BASE}/accounts/${account.id}`, { method: 'DELETE' })
     if (!res.ok) alert(t('account.deleteFailed'))
     else onClose()
   }
@@ -48,7 +49,7 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
         note: form.note.trim() || undefined,
       }
       if (!account) body.accountType = pendingType!.type
-      await fetch(url, {
+      await fetchWithUser(url, {
         method: account ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })

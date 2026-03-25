@@ -1,9 +1,14 @@
 import useSWR from 'swr'
 import type { Currency, DashboardSummary, AllocationData, NetWorthHistory, CategoryHistory, LiveDashboard, RecurringEntry } from './types'
+import { getActiveUserId } from './user'
 
 export const BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8000/api/v1'
-export const fetcher = (url: string) =>
-  fetch(url).then(r => { if (!r.ok) throw new Error(r.statusText); return r.json() })
+export const fetcher = (url: string) => {
+  const userId = getActiveUserId()
+  return fetch(url, {
+    headers: { 'x-user-id': userId },
+  }).then(r => { if (!r.ok) throw new Error(r.statusText); return r.json() })
+}
 
 export const useDashboardSummary = (currency: Currency) =>
   useSWR<DashboardSummary>(`${BASE}/dashboard/summary?displayCurrency=${currency}`, fetcher)

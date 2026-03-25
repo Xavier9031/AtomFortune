@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import useSWR, { mutate } from 'swr'
 import { BASE, fetcher } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 import type { RecurringEntry } from '@/lib/types'
 
 // ── Month/Year picker ────────────────────────────────────────────────────────
@@ -211,7 +212,7 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
   async function handleCreate() {
     if (!create.amount || Number(create.amount) <= 0) return
     create.setSaving(true)
-    await fetch(`${BASE}/recurring-entries`, {
+    await fetchWithUser(`${BASE}/recurring-entries`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ assetId, accountId: accountId || undefined, ...create.payload }),
@@ -223,7 +224,7 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
   async function handleUpdate() {
     if (!edit.amount || Number(edit.amount) <= 0) return
     edit.setSaving(true)
-    await fetch(`${BASE}/recurring-entries/${editingId}`, {
+    await fetchWithUser(`${BASE}/recurring-entries/${editingId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(edit.payload),
@@ -233,7 +234,7 @@ export function RecurringEntriesPanel({ assetId, accountId }: { assetId: string;
   }
 
   async function handleDelete(id: string) {
-    await fetch(`${BASE}/recurring-entries/${id}`, { method: 'DELETE' })
+    await fetchWithUser(`${BASE}/recurring-entries/${id}`, { method: 'DELETE' })
     if (editingId === id) setEditingId(null)
     revalidate(); mutate(`${BASE}/recurring-entries`)
   }

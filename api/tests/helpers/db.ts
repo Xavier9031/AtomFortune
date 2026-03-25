@@ -2,6 +2,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { sql } from 'drizzle-orm'
 import path from 'path'
 import { db } from '../../src/db/client'
+import { users } from '../../src/db/schema'
 
 // Run migrations once when test suite loads
 migrate(db, { migrationsFolder: path.join(__dirname, '../../drizzle') })
@@ -18,6 +19,15 @@ export function cleanDb() {
   db.run(sql`DELETE FROM accounts`)
   db.run(sql`DELETE FROM assets`)
   db.run(sql`DELETE FROM tickers`)
+  db.run(sql`DELETE FROM users`)
+}
+
+export async function seedTestUser(name?: string): Promise<{ id: string; name: string }> {
+  const values = name
+    ? { name }                       // auto-generate UUID via schema $defaultFn
+    : { id: 'default-user', name: 'Default' }  // backward-compat for existing tests
+  const [user] = await testDb.insert(users).values(values).returning()
+  return user
 }
 
 export function closeDb() {

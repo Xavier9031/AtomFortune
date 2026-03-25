@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { RefreshCw } from 'lucide-react'
 import { BASE } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 import type { SnapshotItem } from '@/lib/types'
 
 interface SnapshotGrouped { category: string; items: SnapshotItem[] }
@@ -50,7 +51,7 @@ export function SnapshotsList({ dates, onRebuild, onExpand }: Props) {
     setExpanded(date)
     onExpand(date)
     if (!details[date]) {
-      const res = await fetch(`${BASE}/snapshots/${date}`)
+      const res = await fetchWithUser(`${BASE}/snapshots/${date}`)
       const data = await res.json()
       const grouped = groupByCategory(data.items as SnapshotItem[])
       setDetails(prev => ({ ...prev, [date]: grouped }))

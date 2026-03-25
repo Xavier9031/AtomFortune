@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql, max } from 'drizzle-orm'
+import { and, desc, eq, gte, sql } from 'drizzle-orm'
 import { assets, accounts, snapshotItems } from '../../db/schema'
 import type { DrizzleDB } from '../../db/client'
 
@@ -10,8 +10,9 @@ function rangeToDate(range: RangeParam): string | null {
   return null
 }
 
-export async function getSnapshotHistory(db: DrizzleDB, range: RangeParam) {
+export async function getSnapshotHistory(db: DrizzleDB, userId: string, range: RangeParam) {
   const cutoff = rangeToDate(range)
+  const userFilter = eq(snapshotItems.userId, userId)
   const base = db
     .select({
       snapshotDate: snapshotItems.snapshotDate,
@@ -23,15 +24,15 @@ export async function getSnapshotHistory(db: DrizzleDB, range: RangeParam) {
     .orderBy(desc(snapshotItems.snapshotDate))
 
   return cutoff
-    ? base.where(gte(snapshotItems.snapshotDate, cutoff))
-    : base
+    ? base.where(and(userFilter, gte(snapshotItems.snapshotDate, cutoff)))
+    : base.where(userFilter)
 }
 
-export async function getSnapshotItemsByAsset(db: DrizzleDB, assetId: string, range: RangeParam) {
+export async function getSnapshotItemsByAsset(db: DrizzleDB, userId: string, assetId: string, range: RangeParam) {
   const cutoff = rangeToDate(range)
   const condition = cutoff
-    ? and(eq(snapshotItems.assetId, assetId), gte(snapshotItems.snapshotDate, cutoff))
-    : eq(snapshotItems.assetId, assetId)
+    ? and(eq(snapshotItems.userId, userId), eq(snapshotItems.assetId, assetId), gte(snapshotItems.snapshotDate, cutoff))
+    : and(eq(snapshotItems.userId, userId), eq(snapshotItems.assetId, assetId))
 
   return db
     .select({
@@ -44,7 +45,7 @@ export async function getSnapshotItemsByAsset(db: DrizzleDB, assetId: string, ra
     .orderBy(desc(snapshotItems.snapshotDate))
 }
 
-export async function getSnapshotByDate(db: DrizzleDB, date: string) {
+export async function getSnapshotByDate(db: DrizzleDB, userId: string, date: string) {
   const rows = await db
     .select({
       snapshotDate: snapshotItems.snapshotDate,
@@ -58,7 +59,7 @@ export async function getSnapshotByDate(db: DrizzleDB, date: string) {
     .from(snapshotItems)
     .innerJoin(assets, eq(snapshotItems.assetId, assets.id))
     .innerJoin(accounts, eq(snapshotItems.accountId, accounts.id))
-    .where(eq(snapshotItems.snapshotDate, date))
+    .where(and(eq(snapshotItems.userId, userId), eq(snapshotItems.snapshotDate, date)))
 
   if (!rows.length) return null
 

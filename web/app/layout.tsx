@@ -6,6 +6,7 @@ import { getLocale, getMessages } from 'next-intl/server'
 import { CurrencyProvider } from '@/context/CurrencyContext'
 import Sidebar from '@/components/layout/Sidebar'
 import TopBar from '@/components/layout/TopBar'
+import ClientInit from '@/components/ClientInit'
 
 export const metadata: Metadata = {
   title: 'Atom Fortune',
@@ -22,6 +23,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={locale} data-theme={theme} data-experimental={experimental ? 'true' : undefined}>
       <body>
+        <ClientInit />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <CurrencyProvider>
             <TopBar />

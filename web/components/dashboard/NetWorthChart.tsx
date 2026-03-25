@@ -6,6 +6,7 @@ import {
   CartesianGrid, Legend,
 } from 'recharts'
 import { BASE } from '@/lib/api'
+import { fetchWithUser } from '@/lib/user'
 import { useNetWorthHistory, useCategoryHistory } from '@/lib/api'
 import type { Currency } from '@/lib/types'
 
@@ -48,7 +49,7 @@ function TriggerButton() {
   async function trigger() {
     setStatus('loading')
     try {
-      await fetch(`${BASE.replace('/api/v1', '')}/snapshots/trigger`, { method: 'POST' })
+      await fetchWithUser(`${BASE}/snapshots/trigger`, { method: 'POST' })
       setStatus('done')
       setTimeout(() => window.location.reload(), 1000)
     } catch {

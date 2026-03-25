@@ -17,6 +17,7 @@ import { dashboardRouter } from './modules/dashboard/dashboard.controller'
 import { tickersRouter, tickersService } from './modules/tickers/tickers.controller'
 import { backupRouter } from './modules/backup/backup.controller'
 import recurringEntriesController from './modules/recurring-entries/recurring-entries.controller'
+import usersController from './modules/users/users.controller'
 import path from 'path'
 
 const app = new Hono()
@@ -36,6 +37,7 @@ app.route('/api/v1/dashboard', dashboardRouter)
 app.route('/api/v1/tickers', tickersRouter)
 app.route('/api/v1/backup', backupRouter)
 app.route('/api/v1/recurring-entries', recurringEntriesController)
+app.route('/api/v1/users', usersController)
 
 // Manual trigger endpoint for dev/debug
 app.post('/snapshots/trigger', async (c) => {

@@ -5,7 +5,7 @@ import { holdings, assets, accounts, snapshotItems } from '../../db/schema'
 export class HoldingsRepository {
   constructor(private db: DrizzleDB) {}
 
-  async findAll(accountId?: string) {
+  async findAll(userId: string, accountId?: string) {
     const query = this.db
       .select({
         assetId: holdings.assetId,
@@ -33,19 +33,25 @@ export class HoldingsRepository {
       .innerJoin(assets, eq(holdings.assetId, assets.id))
       .innerJoin(accounts, eq(holdings.accountId, accounts.id))
 
-    if (accountId) return query.where(eq(holdings.accountId, accountId))
-    return query
+    if (accountId) {
+      return query.where(and(eq(holdings.userId, userId), eq(holdings.accountId, accountId)))
+    }
+    return query.where(eq(holdings.userId, userId))
   }
 
-  findOne(assetId: string, accountId: string) {
+  findOne(userId: string, assetId: string, accountId: string) {
     return this.db.select().from(holdings)
-      .where(and(eq(holdings.assetId, assetId), eq(holdings.accountId, accountId)))
+      .where(and(
+        eq(holdings.assetId, assetId),
+        eq(holdings.accountId, accountId),
+        eq(holdings.userId, userId),
+      ))
       .then(r => r[0] ?? null)
   }
 
-  upsert(assetId: string, accountId: string, quantity: string) {
+  upsert(userId: string, assetId: string, accountId: string, quantity: string) {
     return this.db.insert(holdings)
-      .values({ assetId, accountId, quantity })
+      .values({ userId, assetId, accountId, quantity })
       .onConflictDoUpdate({
         target: [holdings.assetId, holdings.accountId],
         set: { quantity, updatedAt: new Date().toISOString() },
@@ -53,9 +59,13 @@ export class HoldingsRepository {
       .returning().then(r => r[0])
   }
 
-  delete(assetId: string, accountId: string) {
+  delete(userId: string, assetId: string, accountId: string) {
     return this.db.delete(holdings)
-      .where(and(eq(holdings.assetId, assetId), eq(holdings.accountId, accountId)))
+      .where(and(
+        eq(holdings.assetId, assetId),
+        eq(holdings.accountId, accountId),
+        eq(holdings.userId, userId),
+      ))
       .returning().then(r => r[0] ?? null)
   }
 }

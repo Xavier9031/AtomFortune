@@ -15,15 +15,16 @@ export class AssetsService {
     private pricesRepo: PricesRepository,
   ) {}
 
-  async findAll() { return this.repo.findAll() }
-  async findById(id: string) { return this.repo.findById(id) }
+  async findAll(userId: string) { return this.repo.findAll(userId) }
+  async findById(id: string, userId: string) { return this.repo.findById(id, userId) }
 
-  async createAsset(data: AssetCreateInput) {
+  async createAsset(userId: string, data: AssetCreateInput) {
     if (data.assetClass === 'asset' && !ASSET_CATEGORIES.includes(data.category as any))
       throw new HTTPException(422, { message: 'Invalid category for assetClass=asset' })
     if (data.assetClass === 'liability' && !LIABILITY_CATEGORIES.includes(data.category as any))
       throw new HTTPException(422, { message: 'category must be debt for liability' })
     const asset = await this.repo.create({
+      userId,
       name: data.name, assetClass: data.assetClass, category: data.category,
       subKind: data.subKind, symbol: data.symbol ?? null, market: data.market ?? null,
       currencyCode: data.currencyCode, pricingMode: data.pricingMode,
@@ -44,18 +45,18 @@ export class AssetsService {
     return asset
   }
 
-  async updateAsset(id: string, data: AssetUpdateInput) {
-    const existing = await this.repo.findById(id)
+  async updateAsset(id: string, userId: string, data: AssetUpdateInput) {
+    const existing = await this.repo.findById(id, userId)
     if (!existing) throw new HTTPException(404, { message: 'Asset not found' })
-    return this.repo.update(id, {
+    return this.repo.update(id, userId, {
       name: data.name, symbol: data.symbol ?? undefined, market: data.market ?? undefined,
       unit: data.unit ?? undefined,
     })
   }
 
-  async deleteAsset(id: string) {
-    const existing = await this.repo.findById(id)
+  async deleteAsset(id: string, userId: string) {
+    const existing = await this.repo.findById(id, userId)
     if (!existing) throw new HTTPException(404, { message: 'Asset not found' })
-    return this.repo.delete(id)
+    return this.repo.delete(id, userId)
   }
 }
