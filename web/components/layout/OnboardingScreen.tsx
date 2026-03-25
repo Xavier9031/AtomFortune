@@ -53,8 +53,11 @@ export default function OnboardingScreen() {
 
   async function handleTheme(isDark: boolean) {
     setDark(isDark)
-    document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
+    const html = document.documentElement
+    html.classList.add('theme-changing')
+    html.dataset.theme = isDark ? 'dark' : 'light'
     await setTheme(isDark ? 'dark' : 'light')
+    setTimeout(() => html.classList.remove('theme-changing'), 350)
   }
 
   async function handleCreate() {
