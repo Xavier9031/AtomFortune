@@ -485,7 +485,7 @@ export default function UserSwitcher() {
                           if (e.key === 'Escape') { setDeleteConfirm(false); setDeleteWord('') }
                           if (e.key === 'Enter' && deleteWord === modalUser.name) handleDeleteProfile(modalUser.id)
                         }}
-                        placeholder={t('common.confirmDelete') + '…'}
+                        placeholder={modalUser.name}
                         className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--color-border)]
                           focus:border-red-400 bg-[var(--color-bg)] focus:outline-none
                           placeholder:text-[var(--color-muted)]"
