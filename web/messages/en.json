@@ -333,7 +333,8 @@
     "clearConfirmPlaceholder": "Type \"DELETE ALL DATA\"",
     "clearTypePlaceholder": "Type here to confirm",
     "clearing": "Clearing\u2026",
-    "deleteProfile": "Delete Profile"
+    "deleteProfile": "Delete Profile",
+    "typeToConfirm": "Type to confirm deletion:"
   },
   "snapshots": {
     "title": "Snapshots",

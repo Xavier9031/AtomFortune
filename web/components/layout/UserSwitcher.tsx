@@ -471,7 +471,7 @@ export default function UserSwitcher() {
                     /* Step 2: type profile name to confirm */
                     <div className="space-y-3">
                       <p className="text-xs text-[var(--color-muted)]">
-                        {t('common.confirm')}：輸入&nbsp;
+                        {t('userSwitcher.typeToConfirm')}&nbsp;
                         <code className="px-1.5 py-0.5 rounded bg-[var(--color-bg)]
                           border border-[var(--color-border)] font-mono text-[var(--color-text)] select-all">
                           {modalUser.name}

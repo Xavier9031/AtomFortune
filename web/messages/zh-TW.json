@@ -333,7 +333,8 @@
     "clearConfirmPlaceholder": "輸入「確定刪除資料」",
     "clearTypePlaceholder": "在此輸入",
     "clearing": "清除中\u2026",
-    "deleteProfile": "刪除個人檔案"
+    "deleteProfile": "刪除個人檔案",
+    "typeToConfirm": "請輸入以下名稱確認刪除："
   },
   "snapshots": {
     "title": "快照紀錄",
