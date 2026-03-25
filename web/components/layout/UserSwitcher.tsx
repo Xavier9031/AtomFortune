@@ -64,7 +64,6 @@ export default function UserSwitcher() {
   }
 
   function openModal(u: UserRecord) {
-    closeDropdown()
     setModalUser(u)
   }
 
@@ -182,7 +181,7 @@ export default function UserSwitcher() {
 
   async function handleDeleteProfile(id: string) {
     const res = await fetch(`${BASE}/users/${id}`, { method: 'DELETE' })
-    if (res.status === 204) {
+    if (res.ok) {
       const rem = users.filter(u => u.id !== id)
       setUsers(rem); closeModal()
       if (id === activeId && rem.length > 0) {
@@ -197,7 +196,6 @@ export default function UserSwitcher() {
   const CONFIRM_WORD = t('userSwitcher.clearConfirmWord')
 
   return (
-    <>
       <div className="relative mx-2 mb-4" ref={dropdownRef}>
 
         {/* ── Trigger ────────────────────────────────────────────────────── */}
@@ -347,16 +345,12 @@ export default function UserSwitcher() {
         {/* Hidden file input for new profile import */}
         <input ref={newImportRef} type="file" accept=".zip" className="hidden"
           onChange={e => { const f = e.target.files?.[0]; if (f) handleNewImportFile(f) }} />
-      </div>
 
-      {/* ── Profile management modal ──────────────────────────────────────── */}
-      {modalUser && (
-        <div className="fixed inset-0 z-[200]" onClick={closeModal}>
-          {/* Panel: anchored bottom-left, just above the sidebar trigger area */}
+        {/* ── Profile management panel ── inside dropdownRef so clicks don't close dropdown */}
+        {modalUser && (
           <div
-            className="absolute bottom-4 left-[232px] w-80 bg-[var(--color-surface)]
+            className="fixed bottom-4 left-[232px] w-80 z-[100] bg-[var(--color-surface)]
               border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden"
-            onClick={e => e.stopPropagation()}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-5 py-4
@@ -506,15 +500,14 @@ export default function UserSwitcher() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Hidden file input for modal import */}
-      <input ref={modalImportRef} type="file" accept=".zip" className="hidden"
-        onChange={e => {
-          const f = e.target.files?.[0]
-          if (f && modalUser) handleImportFile(f, modalUser.id)
-        }} />
-    </>
+        {/* Hidden file input for modal import */}
+        <input ref={modalImportRef} type="file" accept=".zip" className="hidden"
+          onChange={e => {
+            const f = e.target.files?.[0]
+            if (f && modalUser) handleImportFile(f, modalUser.id)
+          }} />
+      </div>
   )
 }
