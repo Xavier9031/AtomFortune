@@ -1,6 +1,7 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useTransition } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import { UserPlus, Upload, Moon, Sun } from 'lucide-react'
 import Image from 'next/image'
 import { BASE } from '@/lib/api'
@@ -23,7 +24,19 @@ function nameFromFilename(filename: string): string {
 export default function OnboardingScreen() {
   const t = useTranslations()
   const locale = useLocale()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const wasPending = useRef(false)
+  const resolveVT = useRef<(() => void) | null>(null)
   const { setCurrency } = useCurrency()
+
+  useEffect(() => {
+    if (wasPending.current && !isPending) {
+      wasPending.current = false
+      resolveVT.current?.()
+      resolveVT.current = null
+    }
+  }, [isPending])
   // Start as 'loading' (covers the app) → 'show' if no users, 'hide' if users exist
   const [status, setStatus] = useState<'loading' | 'show' | 'hide'>('loading')
   const [step, setStep] = useState<Step>('choose')
@@ -47,8 +60,17 @@ export default function OnboardingScreen() {
   function reset() { navigateTo('choose'); setName(''); setImportPw('') }
 
   async function handleLocale(loc: string) {
-    await setLocale(loc)
-    window.location.reload()
+    if (!document.startViewTransition) {
+      await setLocale(loc)
+      wasPending.current = true
+      startTransition(() => router.refresh())
+      return
+    }
+    document.startViewTransition(() => new Promise<void>((resolve) => {
+      resolveVT.current = resolve
+      wasPending.current = true
+      setLocale(loc).then(() => startTransition(() => router.refresh()))
+    }))
   }
 
   async function handleTheme(isDark: boolean) {
