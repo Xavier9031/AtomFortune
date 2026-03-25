@@ -110,7 +110,7 @@ export default function OnboardingScreen() {
       <div className="w-full max-w-xl flex gap-8 items-center">
 
         {/* Left panel: language, theme, currency */}
-        <div className="w-40 flex-shrink-0 space-y-6">
+        <div className="w-40 flex-shrink-0 space-y-6 ob-panel-left">
 
           <div className="space-y-2">
             <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--color-muted)]">
@@ -167,10 +167,10 @@ export default function OnboardingScreen() {
         </div>
 
         {/* Divider */}
-        <div className="self-stretch w-px bg-[var(--color-border)]" />
+        <div className="self-stretch w-px bg-[var(--color-border)] ob-divider" />
 
         {/* Right panel: logo + animated step flow */}
-        <div className="flex-1 flex flex-col items-center gap-7">
+        <div className="flex-1 flex flex-col items-center gap-7 ob-panel-right">
 
           <div className="text-center space-y-2">
             <Image src="/icon-192.png" alt="Atom Fortune" width={72} height={72}

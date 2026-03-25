@@ -125,7 +125,7 @@ export default function TopBar() {
   }
 
   return (
-    <header className="h-14 flex items-center justify-between px-6 border-b border-border bg-surface">
+    <header className="h-14 sticky top-0 z-10 flex items-center justify-between px-6 border-b border-border bg-surface">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160" className="h-7 w-auto" aria-label="Atom Fortune">
         <g transform="translate(174,80)" fill="none" stroke="#2A8B8B" strokeWidth="2.2">
           <ellipse rx="38" ry="18" transform="rotate(0)"/>

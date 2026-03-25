@@ -32,7 +32,7 @@ export default function Sidebar() {
     ${path === href ? 'bg-accent text-white' : 'text-[var(--color-text)] hover:bg-bg'}`
 
   return (
-    <nav className="w-56 min-h-screen bg-surface border-r border-border flex flex-col pt-6 gap-1">
+    <nav className="w-56 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto bg-surface border-r border-border flex flex-col pt-6 gap-1">
       {NAV_ITEMS.map(({ href, key, Icon }) => (
         <Link key={href} href={href} className={linkClass(href)}>
           <Icon size={16} />{t(key)}
