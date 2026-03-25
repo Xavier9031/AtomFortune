@@ -17,4 +17,9 @@ export class PricesService {
       throw new HTTPException(422, { message: 'Manual price entry only for pricingMode=manual assets' })
     return this.repo.upsert(data.assetId, data.priceDate, String(data.price), 'manual')
   }
+
+  async seedBulk(items: Array<{ assetId: string; priceDate: string; price: number }>) {
+    const mapped = items.map(i => ({ assetId: i.assetId, priceDate: i.priceDate, price: String(i.price), source: 'demo-seed' }))
+    return this.repo.seedBulk(mapped)
+  }
 }

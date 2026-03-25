@@ -22,4 +22,17 @@ export class PricesRepository {
       })
       .returning().then(r => r[0])
   }
+
+  async seedBulk(items: Array<{ assetId: string; priceDate: string; price: string; source: string }>) {
+    const now = new Date().toISOString()
+    for (const item of items) {
+      await this.db.insert(prices)
+        .values(item)
+        .onConflictDoUpdate({
+          target: [prices.assetId, prices.priceDate],
+          set: { price: item.price, source: item.source, updatedAt: now },
+        })
+    }
+    return items.length
+  }
 }

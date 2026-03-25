@@ -17,7 +17,7 @@ export async function getDetail(userId: string, date: string) {
 }
 
 export async function rebuildDate(date: string) {
-  await dailySnapshotJob(db, new Date(date))
+  await dailySnapshotJob(db, new Date(date), { skipPriceFetch: true })
   return { rebuilt: 1, missingAssets: [] as string[] }
 }
 
@@ -30,7 +30,7 @@ export async function rebuildRange(from: string, to: string) {
     current.setDate(current.getDate() + 1)
   }
   for (const date of dates) {
-    await dailySnapshotJob(db, new Date(date), { fxLookbackDays: 31 })
+    await dailySnapshotJob(db, new Date(date), { fxLookbackDays: 31, skipPriceFetch: true })
   }
   return { rebuilt: dates.length, missingAssets: [] as string[] }
 }
@@ -59,7 +59,7 @@ export async function backfill(from: string, to: string) {
     current.setDate(current.getDate() + 1)
   }
   for (const date of dates) {
-    await dailySnapshotJob(db, new Date(date), { fxLookbackDays: 31 })
+    await dailySnapshotJob(db, new Date(date), { fxLookbackDays: 31, skipPriceFetch: true })
   }
 
   return {

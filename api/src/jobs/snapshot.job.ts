@@ -128,17 +128,19 @@ export async function backfillHistoricalPrices(db: DrizzleDB, fromDate: string, 
 export async function dailySnapshotJob(
   db: DrizzleDB,
   snapshotDate = new Date(),
-  options: { fxLookbackDays?: number } = {}
+  options: { fxLookbackDays?: number; skipPriceFetch?: boolean } = {}
 ): Promise<SnapshotJobResult> {
   const today = formatDate(snapshotDate)
 
   const marketAssets = await getMarketAssets(db)
   let pricesMap = new Map<string, number>()
-  try {
-    pricesMap = await fetchMarketPrices(marketAssets)
-    await upsertPrices(db, pricesMap, today)
-  } catch (err) {
-    console.warn('Market price fetch failed:', err)
+  if (!options.skipPriceFetch) {
+    try {
+      pricesMap = await fetchMarketPrices(marketAssets)
+      await upsertPrices(db, pricesMap, today)
+    } catch (err) {
+      console.warn('Market price fetch failed:', err)
+    }
   }
 
   const priceResults = marketAssets.map(a => ({
@@ -150,12 +152,14 @@ export async function dailySnapshotJob(
   }))
 
   let fxStatus: 'ok' | 'failed' = 'failed'
-  try {
-    const rates = await fetchFxRates()
-    await upsertFxRates(db, rates, today)
-    fxStatus = 'ok'
-  } catch (err) {
-    console.warn('FX rate refresh failed:', err)
+  if (!options.skipPriceFetch) {
+    try {
+      const rates = await fetchFxRates()
+      await upsertFxRates(db, rates, today)
+      fxStatus = 'ok'
+    } catch (err) {
+      console.warn('FX rate refresh failed:', err)
+    }
   }
 
   let snapshotItemsWritten = 0

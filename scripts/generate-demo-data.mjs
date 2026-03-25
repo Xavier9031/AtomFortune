@@ -65,6 +65,41 @@ const MI_GOLD   = 30  // oz, constant
 const MI_PMORT  = [658000,656000,654000,652000,650000,648000,646000,644000,642000,640000,638000,636000,634000,632000]
 const MI_RMORT  = [316500,316000,315500,315000,314500,314000,313500,313000,312500,312000,311500,311000,310500,310000]
 
+// ─── Synthetic daily price generator ─────────────────────────────────────────
+// Generates daily prices by linear interpolation between monthly anchors + noise.
+// Returns [{ assetId, priceDate, price }] for every calendar day in MONTHS range.
+function generateDailyPrices(assetId, monthlyPrices, months, dailyVol = 0.008) {
+  const entries = []
+  let prevPrice = monthlyPrices[0]
+
+  for (let i = 0; i < months.length; i++) {
+    const monthEnd = months[i]
+    const monthStart = i === 0 ? firstOfMonth(monthEnd) : addDays(months[i - 1], 1)
+    const targetPrice = monthlyPrices[i]
+
+    // Count calendar days in this segment
+    const msPerDay = 86400000
+    const startMs = new Date(monthStart + 'T00:00:00Z').getTime()
+    const endMs   = new Date(monthEnd   + 'T00:00:00Z').getTime()
+    const totalDays = Math.round((endMs - startMs) / msPerDay) + 1
+
+    let current = monthStart
+    for (let d = 0; d < totalDays; d++) {
+      const progress = totalDays > 1 ? d / (totalDays - 1) : 1
+      const trend = prevPrice + (targetPrice - prevPrice) * progress
+      // Small ±dailyVol noise for realistic daily variation
+      const noise = 1 + (Math.random() * 2 - 1) * dailyVol
+      const price = Math.round(trend * noise * 10000) / 10000
+      entries.push({ assetId, priceDate: current, price })
+      current = addDays(current, 1)
+    }
+
+    prevPrice = targetPrice
+  }
+
+  return entries
+}
+
 // ─── API helpers ─────────────────────────────────────────────────────────────
 async function call(method, path, body, userId) {
   const headers = { 'Content-Type': 'application/json' }
@@ -182,13 +217,25 @@ async function main() {
   }
   console.log('  ✓ FX rates inserted')
 
-  // ── 7.5. Backfill market prices from Yahoo Finance ─────────────────────────
-  // Must happen BEFORE the monthly snapshot rebuild loop so daily prices are
-  // available when rebuild-range runs dailySnapshotJob for each date.
-  console.log('\nBackfilling historical market prices from Yahoo Finance...')
-  process.stdout.write(`  fetching ${MONTHS[0]} → ${MONTHS[MONTHS.length - 1]}...`)
-  await post('/snapshots/backfill-prices', { from: MONTHS[0], to: MONTHS[MONTHS.length - 1] }, yt.id)
-  console.log(' ✓')
+  // ── 7.5. Seed synthetic daily prices for all market assets ───────────────
+  // Yahoo Finance historical API returns flat prices; we generate realistic
+  // daily variation via linear interpolation between monthly anchors + noise.
+  // Must happen BEFORE the monthly snapshot rebuild loop.
+  console.log('\nSeeding synthetic daily market prices...')
+  const marketPriceMap = [
+    [yt0050.id,  P_0050 ],
+    [ch878.id,   P_00878],
+    [saVOO.id,   P_VOO  ],
+    [saETH.id,   P_ETH  ],
+    [miQQQ.id,   P_QQQ  ],
+    [miSPY.id,   P_SPY  ],
+  ]
+  for (const [assetId, prices] of marketPriceMap) {
+    const entries = generateDailyPrices(assetId, prices, MONTHS)
+    process.stdout.write(`  seeding ${entries.length} daily prices for asset ${assetId.slice(0, 8)}...`)
+    await post('/prices/seed', entries)
+    console.log(' ✓')
+  }
 
   // ── 8. Monthly iteration: holdings → transactions → snapshot ───────────────
   console.log('\nGenerating 14 months of history...')
