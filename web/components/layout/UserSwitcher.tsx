@@ -470,13 +470,13 @@ export default function UserSwitcher() {
                   {deleteConfirm ? (
                     /* Step 2: type profile name to confirm */
                     <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-[var(--color-muted)] shrink-0">{t('common.confirm')}：</span>
-                        <code className="text-xs px-2 py-1 rounded-md bg-[var(--color-bg)]
+                      <p className="text-xs text-[var(--color-muted)]">
+                        {t('common.confirm')}：輸入&nbsp;
+                        <code className="px-1.5 py-0.5 rounded bg-[var(--color-bg)]
                           border border-[var(--color-border)] font-mono text-[var(--color-text)] select-all">
                           {modalUser.name}
                         </code>
-                      </div>
+                      </p>
                       <input
                         autoFocus
                         value={deleteWord}
@@ -485,7 +485,7 @@ export default function UserSwitcher() {
                           if (e.key === 'Escape') { setDeleteConfirm(false); setDeleteWord('') }
                           if (e.key === 'Enter' && deleteWord === modalUser.name) handleDeleteProfile(modalUser.id)
                         }}
-                        placeholder={modalUser.name}
+                        placeholder={t('userSwitcher.clearTypePlaceholder')}
                         className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--color-border)]
                           focus:border-red-400 bg-[var(--color-bg)] focus:outline-none
                           placeholder:text-[var(--color-muted)]"
