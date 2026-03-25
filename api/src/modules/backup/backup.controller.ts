@@ -5,7 +5,7 @@ import crypto from 'crypto'
 import { db } from '../../db/client'
 import {
   assets, accounts, holdings, transactions,
-  prices, fxRates, snapshotItems, recurringEntries,
+  prices, fxRates, snapshotItems, recurringEntries, users,
 } from '../../db/schema'
 
 export const backupRouter = new Hono()
@@ -53,9 +53,11 @@ backupRouter.get('/export', async (c) => {
   const date = new Date().toISOString().slice(0, 10)
 
   const [
+    userRow,
     assetRows, accountRows, holdingRows, txnRows,
     priceRows, fxRows, snapshotRows, recurringRows,
   ] = await Promise.all([
+    db.select({ name: users.name }).from(users).where(eq(users.id, userId)).then(r => r[0]),
     db.select().from(assets).where(eq(assets.userId, userId)),
     db.select().from(accounts).where(eq(accounts.userId, userId)),
     db.select().from(holdings).where(eq(holdings.userId, userId)),
@@ -86,11 +88,12 @@ backupRouter.get('/export', async (c) => {
   let fileEntry: Record<string, Uint8Array>
   let baseFilename: string
 
+  const safeName = (userRow?.name ?? 'backup').replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]/g, '_')
   if (password) {
-    baseFilename = `atomfortune-backup-${date}.enc`
+    baseFilename = `AF-${safeName}-${date}.enc`
     fileEntry = { [baseFilename]: encryptBackup(jsonStr, password) }
   } else {
-    baseFilename = `atomfortune-backup-${date}.json`
+    baseFilename = `AF-${safeName}-${date}.json`
     fileEntry = { [baseFilename]: strToU8(jsonStr) }
   }
 
