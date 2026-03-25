@@ -26,6 +26,7 @@ export default function OnboardingScreen() {
   const { setCurrency } = useCurrency()
   const [visible, setVisible] = useState(false)
   const [step, setStep] = useState<Step>('choose')
+  const [transitioning, setTransitioning] = useState(false)
   const [name, setName] = useState('')
   const [baseCurrency, setBaseCurrency] = useState<Currency>('TWD')
   const [importPw, setImportPw] = useState('')
@@ -41,7 +42,15 @@ export default function OnboardingScreen() {
       .catch(() => {})
   }, [])
 
-  function reset() { setStep('choose'); setName(''); setImportPw('') }
+  function navigateTo(newStep: Step) {
+    setTransitioning(true)
+    setTimeout(() => {
+      setStep(newStep)
+      requestAnimationFrame(() => setTransitioning(false))
+    }, 160)
+  }
+
+  function reset() { navigateTo('choose'); setName(''); setImportPw('') }
 
   async function handleLocale(loc: string) {
     await setLocale(loc)
@@ -90,6 +99,7 @@ export default function OnboardingScreen() {
       if (importPw) headers['x-backup-password'] = importPw
       await fetch(`${BASE}/backup/import`, { method: 'POST', headers, body: form })
       setActiveUserId(user.id)
+      setCurrency(baseCurrency)
       window.location.reload()
     } finally { setLoading(false) }
   }
@@ -97,138 +107,169 @@ export default function OnboardingScreen() {
   if (!visible) return null
 
   return (
-    <div className="fixed inset-0 z-[300] bg-[var(--color-bg)] flex flex-col">
+    <div className="fixed inset-0 z-[300] bg-[var(--color-bg)] flex items-center justify-center p-8">
+      <div className="w-full max-w-xl flex gap-8 items-center">
 
-      {/* Top bar: language + theme */}
-      <div className="flex items-center justify-between px-6 py-4">
-        <div className="flex rounded-lg overflow-hidden border border-[var(--color-border)]">
-          {SUPPORTED_LOCALES.map(loc => (
-            <button key={loc} onClick={() => handleLocale(loc)}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors
-                ${loc === locale
-                  ? 'bg-[var(--color-accent)] text-white'
-                  : 'hover:bg-[var(--color-bg)] text-[var(--color-muted)]'}`}>
-              {loc === 'zh-TW' ? '繁中' : 'EN'}
-            </button>
-          ))}
+        {/* Left panel: language, theme, currency */}
+        <div className="w-40 flex-shrink-0 space-y-6">
+
+          <div className="space-y-2">
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--color-muted)]">
+              {t('settings.language')}
+            </p>
+            <div className="flex rounded-xl overflow-hidden border border-[var(--color-border)]">
+              {SUPPORTED_LOCALES.map(loc => (
+                <button key={loc} onClick={() => handleLocale(loc)}
+                  className={`flex-1 py-2 text-xs font-medium transition-colors duration-150
+                    ${loc === locale
+                      ? 'bg-[var(--color-accent)] text-white'
+                      : 'text-[var(--color-muted)] hover:bg-[var(--color-surface)]'}`}>
+                  {loc === 'zh-TW' ? '繁中' : 'EN'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--color-muted)]">
+              {t('settings.sectionAppearance')}
+            </p>
+            <div className="flex rounded-xl overflow-hidden border border-[var(--color-border)]">
+              <button onClick={() => handleTheme(false)}
+                className={`flex-1 flex items-center justify-center py-2 transition-colors duration-150
+                  ${!dark ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)] hover:bg-[var(--color-surface)]'}`}>
+                <Sun size={13} />
+              </button>
+              <button onClick={() => handleTheme(true)}
+                className={`flex-1 flex items-center justify-center py-2 transition-colors duration-150
+                  ${dark ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-muted)] hover:bg-[var(--color-surface)]'}`}>
+                <Moon size={13} />
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--color-muted)]">
+              {t('onboarding.baseCurrencyLabel')}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {POPULAR_CURRENCIES.map(c => (
+                <button key={c} onClick={() => setBaseCurrency(c)}
+                  className={`px-2 py-1 rounded-lg text-[11px] font-mono font-medium border transition-colors duration-150
+                    ${baseCurrency === c
+                      ? 'bg-[var(--color-accent)] border-[var(--color-accent)] text-white'
+                      : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]'}`}>
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
         </div>
-        <button onClick={() => handleTheme(!dark)}
-          className="p-2 rounded-lg border border-[var(--color-border)]
-            hover:bg-[var(--color-surface)] transition-colors text-[var(--color-muted)]">
-          {dark ? <Sun size={16} /> : <Moon size={16} />}
-        </button>
-      </div>
 
-      {/* Centered content */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-sm space-y-8">
+        {/* Divider */}
+        <div className="self-stretch w-px bg-[var(--color-border)]" />
 
-          {/* Logo + title */}
-          <div className="text-center space-y-3">
+        {/* Right panel: logo + animated step flow */}
+        <div className="flex-1 flex flex-col items-center gap-7">
+
+          <div className="text-center space-y-2">
             <Image src="/icon-192.png" alt="Atom Fortune" width={72} height={72}
               className="mx-auto rounded-[20px] shadow-md" />
-            <div className="space-y-1">
+            <div>
               <h1 className="text-2xl font-bold tracking-tight">Atom Fortune</h1>
               <p className="text-sm text-[var(--color-muted)]">{t('onboarding.subtitle')}</p>
             </div>
           </div>
 
-          {/* Step: choose */}
-          {step === 'choose' && (
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setStep('fresh')}
-                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2
-                  border-[var(--color-border)] hover:border-[var(--color-accent)]
-                  hover:text-[var(--color-accent)] transition-all duration-200 group">
-                <UserPlus size={26} className="text-[var(--color-muted)] group-hover:text-[var(--color-accent)] transition-colors" />
-                <div className="text-center">
-                  <p className="text-sm font-semibold">{t('onboarding.startFresh')}</p>
-                  <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('onboarding.startFreshDesc')}</p>
-                </div>
-              </button>
-              <button onClick={() => setStep('import')}
-                className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2
-                  border-[var(--color-border)] hover:border-[var(--color-accent)]
-                  hover:text-[var(--color-accent)] transition-all duration-200 group">
-                <Upload size={26} className="text-[var(--color-muted)] group-hover:text-[var(--color-accent)] transition-colors" />
-                <div className="text-center">
-                  <p className="text-sm font-semibold">{t('onboarding.importBackup')}</p>
-                  <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('onboarding.importBackupDesc')}</p>
-                </div>
-              </button>
-            </div>
-          )}
+          {/* Animated step content */}
+          <div className="w-full" style={{
+            opacity: transitioning ? 0 : 1,
+            transform: transitioning ? 'translateY(6px)' : 'translateY(0)',
+            transition: 'opacity 160ms ease, transform 160ms ease',
+          }}>
 
-          {/* Step: start fresh */}
-          {step === 'fresh' && (
-            <div className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">{t('onboarding.profileNameLabel')}</label>
-                <input autoFocus value={name} onChange={e => setName(e.target.value)}
-                  onKeyDown={e => { if (e.key === 'Enter') handleCreate() }}
-                  placeholder={t('onboarding.profileNamePlaceholder')}
-                  className="w-full text-sm px-3 py-2.5 rounded-xl border border-[var(--color-border)]
-                    bg-[var(--color-surface)] focus:outline-none focus:border-[var(--color-accent)]
-                    placeholder:text-[var(--color-muted)]"
-                />
+            {step === 'choose' && (
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => navigateTo('fresh')}
+                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2
+                    border-[var(--color-border)] hover:border-[var(--color-accent)]
+                    hover:text-[var(--color-accent)] transition-all duration-200 group">
+                  <UserPlus size={26} className="text-[var(--color-muted)] group-hover:text-[var(--color-accent)] transition-colors" />
+                  <div className="text-center">
+                    <p className="text-sm font-semibold">{t('onboarding.startFresh')}</p>
+                    <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('onboarding.startFreshDesc')}</p>
+                  </div>
+                </button>
+                <button onClick={() => navigateTo('import')}
+                  className="flex flex-col items-center gap-3 p-5 rounded-2xl border-2
+                    border-[var(--color-border)] hover:border-[var(--color-accent)]
+                    hover:text-[var(--color-accent)] transition-all duration-200 group">
+                  <Upload size={26} className="text-[var(--color-muted)] group-hover:text-[var(--color-accent)] transition-colors" />
+                  <div className="text-center">
+                    <p className="text-sm font-semibold">{t('onboarding.importBackup')}</p>
+                    <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('onboarding.importBackupDesc')}</p>
+                  </div>
+                </button>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">{t('onboarding.baseCurrencyLabel')}</label>
-                <div className="flex flex-wrap gap-2">
-                  {POPULAR_CURRENCIES.map(c => (
-                    <button key={c} onClick={() => setBaseCurrency(c)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-mono font-medium border transition-colors
-                        ${baseCurrency === c
-                          ? 'bg-[var(--color-accent)] border-[var(--color-accent)] text-white'
-                          : 'border-[var(--color-border)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]'}`}>
-                      {c}
-                    </button>
-                  ))}
+            )}
+
+            {step === 'fresh' && (
+              <div className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">{t('onboarding.profileNameLabel')}</label>
+                  <input autoFocus value={name} onChange={e => setName(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleCreate() }}
+                    placeholder={t('onboarding.profileNamePlaceholder')}
+                    className="w-full text-sm px-3 py-2.5 rounded-xl border border-[var(--color-border)]
+                      bg-[var(--color-surface)] focus:outline-none focus:border-[var(--color-accent)]
+                      placeholder:text-[var(--color-muted)]"
+                  />
                 </div>
+                <button onClick={handleCreate} disabled={!name.trim() || loading}
+                  className="w-full py-2.5 rounded-xl bg-[var(--color-accent)] text-white
+                    font-medium disabled:opacity-40 transition-opacity">
+                  {loading ? t('common.loading') : t('onboarding.getStarted')}
+                </button>
+                <button onClick={reset}
+                  className="w-full text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors">
+                  ← {t('common.back')}
+                </button>
               </div>
-              <button onClick={handleCreate} disabled={!name.trim() || loading}
-                className="w-full py-2.5 rounded-xl bg-[var(--color-accent)] text-white
-                  font-medium disabled:opacity-40 transition-opacity">
-                {loading ? t('common.loading') : t('onboarding.getStarted')}
-              </button>
-              <button onClick={reset}
-                className="w-full text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors">
-                ← {t('common.back')}
-              </button>
-            </div>
-          )}
+            )}
 
-          {/* Step: import */}
-          {step === 'import' && (
-            <div className="space-y-4">
-              <p className="text-xs text-[var(--color-muted)]">{t('onboarding.importDesc')}</p>
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-[var(--color-muted)]">
-                  {t('settings.importPassword')}
-                </label>
-                <input type="password" value={importPw} onChange={e => setImportPw(e.target.value)}
-                  placeholder={t('settings.importPasswordPlaceholder')}
-                  className="w-full text-sm px-3 py-2.5 rounded-xl border border-[var(--color-border)]
-                    bg-[var(--color-surface)] focus:outline-none focus:border-[var(--color-accent)]
-                    placeholder:text-[var(--color-muted)]"
-                />
+            {step === 'import' && (
+              <div className="space-y-4">
+                <p className="text-xs text-[var(--color-muted)]">{t('onboarding.importDesc')}</p>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-[var(--color-muted)]">
+                    {t('settings.importPassword')}
+                  </label>
+                  <input type="password" value={importPw} onChange={e => setImportPw(e.target.value)}
+                    placeholder={t('settings.importPasswordPlaceholder')}
+                    className="w-full text-sm px-3 py-2.5 rounded-xl border border-[var(--color-border)]
+                      bg-[var(--color-surface)] focus:outline-none focus:border-[var(--color-accent)]
+                      placeholder:text-[var(--color-muted)]"
+                  />
+                </div>
+                <button onClick={() => fileRef.current?.click()} disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
+                    bg-[var(--color-accent)] text-white font-medium disabled:opacity-40 transition-opacity">
+                  <Upload size={16} />
+                  {loading ? t('userSwitcher.importing') : t('onboarding.chooseFile')}
+                </button>
+                <input ref={fileRef} type="file" accept=".zip" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleImport(f) }} />
+                <button onClick={reset}
+                  className="w-full text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors">
+                  ← {t('common.back')}
+                </button>
               </div>
-              <button onClick={() => fileRef.current?.click()} disabled={loading}
-                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl
-                  bg-[var(--color-accent)] text-white font-medium disabled:opacity-40 transition-opacity">
-                <Upload size={16} />
-                {loading ? t('userSwitcher.importing') : t('onboarding.chooseFile')}
-              </button>
-              <input ref={fileRef} type="file" accept=".zip" className="hidden"
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleImport(f) }} />
-              <button onClick={reset}
-                className="w-full text-sm text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors">
-                ← {t('common.back')}
-              </button>
-            </div>
-          )}
+            )}
 
+          </div>
         </div>
+
       </div>
     </div>
   )
