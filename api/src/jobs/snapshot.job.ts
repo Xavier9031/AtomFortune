@@ -43,7 +43,7 @@ export async function resolvePrice(
   // market: only use prices from the last 30 days (stale quotes are misleading)
   const cutoff = pricingMode === 'manual'
     ? '2000-01-01'
-    : formatDate(new Date(Date.now() - 30 * 86400_000))
+    : formatDate(new Date(new Date(today + 'T00:00:00Z').getTime() - 30 * 86400_000))
   const rows = await tx
     .select({ price: prices.price, priceDate: prices.priceDate })
     .from(prices)
