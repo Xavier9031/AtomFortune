@@ -24,7 +24,8 @@
     "add": "新增",
     "search": "搜尋",
     "notFound": "找不到",
-    "next": "下一步"
+    "next": "下一步",
+    "confirmDelete": "確認刪除"
   },
   "accounts": {
     "title": "帳戶管理",
@@ -331,7 +332,8 @@
     "clearConfirmWord": "確定刪除資料",
     "clearConfirmPlaceholder": "輸入「確定刪除資料」",
     "clearTypePlaceholder": "在此輸入",
-    "clearing": "清除中\u2026"
+    "clearing": "清除中\u2026",
+    "deleteProfile": "刪除個人檔案"
   },
   "snapshots": {
     "title": "快照紀錄",

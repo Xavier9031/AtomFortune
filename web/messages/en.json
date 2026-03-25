@@ -24,7 +24,8 @@
     "add": "Add",
     "search": "Search",
     "notFound": "Not found",
-    "next": "Next"
+    "next": "Next",
+    "confirmDelete": "Confirm Delete"
   },
   "accounts": {
     "title": "Accounts",
@@ -331,7 +332,8 @@
     "clearConfirmWord": "DELETE ALL DATA",
     "clearConfirmPlaceholder": "Type \"DELETE ALL DATA\"",
     "clearTypePlaceholder": "Type here to confirm",
-    "clearing": "Clearing\u2026"
+    "clearing": "Clearing\u2026",
+    "deleteProfile": "Delete Profile"
   },
   "snapshots": {
     "title": "Snapshots",

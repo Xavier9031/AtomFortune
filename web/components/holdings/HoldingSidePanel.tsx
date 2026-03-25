@@ -72,8 +72,8 @@ const DEFAULT_PRICING: Record<string, PricingMode> = {
   vehicle: 'manual', other: 'manual',
 }
 
-// Hold-to-confirm delete button: hover 3 s to arm, then click to fire
-function HoldDeleteButton({ onConfirm, label }: { onConfirm: () => void; label: string }) {
+// Hold-to-confirm delete button: hover 2.5 s to arm, then click to fire
+function HoldDeleteButton({ onConfirm, label, readyLabel }: { onConfirm: () => void; label: string; readyLabel: string }) {
   const [hovering, setHovering] = useState(false)
   const [ready, setReady] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -109,7 +109,7 @@ function HoldDeleteButton({ onConfirm, label }: { onConfirm: () => void; label: 
         }}
       />
       <span className="relative z-10 font-medium">
-        {ready ? '確認刪除' : label}
+        {ready ? readyLabel : label}
       </span>
     </button>
   )
@@ -409,7 +409,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                 className="flex-1 bg-[var(--color-accent)] text-white rounded-xl py-3 font-medium disabled:opacity-40">
                 {t('holdings.update')}
               </button>
-              <HoldDeleteButton onConfirm={handleDelete} label={t('common.delete')} />
+              <HoldDeleteButton onConfirm={handleDelete} label={t('common.delete')} readyLabel={t('common.confirmDelete')} />
             </div>
             <RecurringEntriesPanel assetId={holding.assetId} accountId={holding.accountId} />
             <HoldingTransactions assetId={holding.assetId} accountId={holding.accountId} />

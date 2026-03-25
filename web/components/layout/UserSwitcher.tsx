@@ -7,6 +7,52 @@ import { getActiveUserId, setActiveUserId } from '@/lib/user'
 
 type UserRecord = { id: string; name: string }
 
+// Hold-to-confirm delete button: hover 2.5 s to arm, then click to fire
+function HoldDeleteButton({ onConfirm, label, readyLabel }: { onConfirm: () => void; label: string; readyLabel: string }) {
+  const [hovering, setHovering] = useState(false)
+  const [ready, setReady] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
+
+  function enter() {
+    setHovering(true)
+    timer.current = setTimeout(() => setReady(true), 2500)
+  }
+  function leave() {
+    setHovering(false)
+    setReady(false)
+    if (timer.current) { clearTimeout(timer.current); timer.current = null }
+  }
+
+  return (
+    <button
+      onClick={() => ready && onConfirm()}
+      onMouseEnter={enter}
+      onMouseLeave={leave}
+      className={`relative w-full flex items-center justify-center gap-2 py-2 text-sm
+        border rounded-lg overflow-hidden select-none transition-colors duration-300
+        ${ready
+          ? 'border-red-500 bg-red-500 text-white cursor-pointer'
+          : 'border-red-400 text-red-500 cursor-default'}`}>
+      <div
+        className="absolute inset-y-0 left-0 pointer-events-none"
+        style={{
+          width: hovering && !ready ? '115%' : '0%',
+          transition: hovering && !ready ? 'width 2.5s linear' : 'none',
+          background: 'linear-gradient(to right, rgba(251,146,60,0.25) 0%, rgba(239,68,68,0.45) 70%, rgba(239,68,68,0.6) 87%, transparent 100%)',
+          borderRadius: '0 0.375rem 0.375rem 0',
+          boxShadow: hovering && !ready ? '3px 0 16px rgba(239,68,68,0.5)' : 'none',
+        }}
+      />
+      <span className="relative z-10 font-medium flex items-center gap-2">
+        {!ready && <Trash2 size={14} />}
+        {ready ? readyLabel : label}
+      </span>
+    </button>
+  )
+}
+
 export default function UserSwitcher() {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
@@ -28,8 +74,6 @@ export default function UserSwitcher() {
   const [exportPw, setExportPw] = useState('')
   const [importPw, setImportPw] = useState('')
   const [importing, setImporting] = useState(false)
-  const [deleteConfirm, setDeleteConfirm] = useState(false)
-  const [deleteWord, setDeleteWord] = useState('')
 
   const dropdownRef = useRef<HTMLDivElement>(null)
   const modalImportRef = useRef<HTMLInputElement>(null)
@@ -59,7 +103,7 @@ export default function UserSwitcher() {
   function closeModal() {
     setModalUser(null)
     setExportPw(''); setImportPw('')
-    setImporting(false); setDeleteConfirm(false); setDeleteWord('')
+    setImporting(false)
   }
 
   function openModal(u: UserRecord) {
@@ -421,58 +465,11 @@ export default function UserSwitcher() {
               {/* Delete profile — available as long as there's more than one profile */}
               {users.length > 1 && (
                 <div className="px-5 py-4">
-                  {deleteConfirm ? (
-                    /* Step 2: type profile name to confirm */
-                    <div className="space-y-3">
-                      <p className="text-xs text-[var(--color-muted)]">
-                        {t('settings.deleteProfileConfirm', { name: modalUser.name })}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-[var(--color-muted)] shrink-0">{t('common.confirm')}：</span>
-                        <code className="text-xs px-2 py-1 rounded-md bg-[var(--color-bg)]
-                          border border-[var(--color-border)] font-mono text-[var(--color-text)] select-all">
-                          {modalUser.name}
-                        </code>
-                      </div>
-                      <input
-                        autoFocus
-                        value={deleteWord}
-                        onChange={e => setDeleteWord(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Escape') { setDeleteConfirm(false); setDeleteWord('') }
-                          if (e.key === 'Enter' && deleteWord === modalUser.name) handleDeleteProfile(modalUser.id)
-                        }}
-                        placeholder={modalUser.name}
-                        className="w-full text-sm px-3 py-2 rounded-lg border border-[var(--color-border)]
-                          focus:border-[var(--color-coral)] bg-[var(--color-bg)] focus:outline-none
-                          placeholder:text-[var(--color-muted)]"
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <button onClick={() => handleDeleteProfile(modalUser.id)}
-                          disabled={deleteWord !== modalUser.name}
-                          className="py-2 text-sm font-medium rounded-lg
-                            bg-[var(--color-coral)] text-white hover:opacity-90
-                            disabled:opacity-30 transition-opacity">
-                          {t('common.delete')}
-                        </button>
-                        <button onClick={() => { setDeleteConfirm(false); setDeleteWord('') }}
-                          className="py-2 text-sm font-medium rounded-lg border border-[var(--color-border)]
-                            hover:bg-[var(--color-bg)] transition-colors">
-                          {t('common.cancel')}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* Step 1: outlined button, hover fills coral */
-                    <button onClick={() => setDeleteConfirm(true)}
-                      className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium
-                        rounded-lg border border-[var(--color-coral)]/30 text-[var(--color-coral)]/60
-                        hover:bg-[var(--color-coral)] hover:border-[var(--color-coral)] hover:text-white
-                        transition-all duration-300">
-                      <Trash2 size={14} />
-                      {t('common.delete')} profile
-                    </button>
-                  )}
+                  <HoldDeleteButton
+                    onConfirm={() => handleDeleteProfile(modalUser.id)}
+                    label={t('userSwitcher.deleteProfile')}
+                    readyLabel={t('common.confirmDelete')}
+                  />
                 </div>
               )}
             </div>
