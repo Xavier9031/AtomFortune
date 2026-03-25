@@ -238,10 +238,15 @@ export function AnnotatedNetWorth({ currency }: { currency: Currency }) {
   const { data: txns } = useSWR<Transaction[]>(`${BASE}/transactions`, fetcher)
 
   const dataStart = nwData?.data?.[0]?.date
+  // Map snapshot dates by month (YYYY-MM) so transaction dates snap to the nearest snapshot
+  const snapByMonth = new Map<string, string>()
+  for (const d of nwData?.data ?? []) snapByMonth.set(d.date.slice(0, 7), d.date)
+
   const markerDates = [...new Set(
     (txns ?? [])
       .filter(t => !dataStart || t.txnDate >= dataStart)
-      .map(t => t.txnDate)
+      .map(t => snapByMonth.get(t.txnDate.slice(0, 7)))
+      .filter((d): d is string => !!d)
   )]
 
   return (
