@@ -133,10 +133,10 @@ async function main() {
 
   // ── 1. Create users ────────────────────────────────────────────────────────
   console.log('Creating users...')
-  const yt = await post('/users', { name: '雅婷 Lin Ya-Ting' })
-  const ch = await post('/users', { name: '建宏 Chen Chien-Hung' })
-  const sa = await post('/users', { name: 'Sarah Mitchell' })
-  const mi = await post('/users', { name: 'Michael Torres' })
+  const yt = await post('/users', { name: 'demo-雅婷' })
+  const ch = await post('/users', { name: 'demo-建宏' })
+  const sa = await post('/users', { name: 'demo-Sarah' })
+  const mi = await post('/users', { name: 'demo-Michael' })
   console.log(`  ✓ Ya-Ting:  ${yt.id}`)
   console.log(`  ✓ Chien-Hung: ${ch.id}`)
   console.log(`  ✓ Sarah:    ${sa.id}`)
