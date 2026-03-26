@@ -399,13 +399,16 @@ async function main() {
 
   console.log('  ✓ recurring entries created')
 
-  // ── 10. Rebuild snapshots with Yahoo Finance prices ───────────────────────
-  // Now that Yahoo Finance daily prices are in the DB (step 7.5), rebuild all
-  // snapshots again so daily price variation shows up in the charts. Holdings
-  // are still at final (month-13) values at this point, but the per-month
-  // snapshots created in step 8 already captured historical quantities.
-  // This step only fills in any remaining gaps in the snapshot price resolution.
-  console.log('\nAll done — snapshots built with historical holdings + Yahoo Finance prices.')
+  // ── 10. Fill snapshots from last data month up to today ──────────────────
+  // Holdings are still at month-13 (Jan 2026) values. Rebuild all remaining
+  // days so the 30-day view always has data regardless of when the script runs.
+  const today = new Date().toISOString().slice(0, 10)
+  const fillFrom = addDays(MONTHS[MONTHS.length - 1], 1)  // 2026-02-01
+  if (fillFrom <= today) {
+    process.stdout.write(`\nFilling snapshots ${fillFrom} → ${today} (30-day view)...`)
+    await post('/snapshots/rebuild-range', { from: fillFrom, to: today }, yt.id)
+    console.log(' ✓')
+  }
 
   console.log('\n=== Done! ===')
   console.log(`Created 4 demo users with 14 months of daily history each.`)
