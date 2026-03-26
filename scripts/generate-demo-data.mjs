@@ -38,32 +38,33 @@ const FX_USD  = [32.5, 32.8, 32.6, 32.2, 31.8, 31.5, 31.2, 31.0, 31.5, 31.8, 32.
 const FX_JPY  = [0.215, 0.218, 0.220, 0.217, 0.214, 0.212, 0.210, 0.208, 0.212, 0.215, 0.217, 0.219, 0.221, 0.220]
 
 // ─── User 1: 雅婷 (Lin Ya-Ting) — 台灣職場新鮮人, 28歲 ────────────────────────
-// Net: +45K salary - 12K rent - 3K ETF = +30K/month to bank; +19 shares 0050/month
-const YT_BANK = [110000,140000,170000,200000,230000,260000,290000,320000,350000,380000,410000,440000,470000,500000]
-const YT_0050 = [37, 56, 75, 94, 113, 132, 151, 170, 189, 208, 227, 246, 265, 284]
+// Events: Feb失業(無薪), Mar換工作52K, Jun日本旅遊-35K
+const YT_BANK = [110000,140000,128000,165000,202000,239000,241000,278000,315000,352000,389000,426000,463000,500000]
+const YT_0050 = [37, 56, 56, 75, 94, 113, 132, 151, 170, 189, 208, 227, 246, 265]  // Feb: skip DCA (失業)
 
 // ─── User 2: 建宏 (Chen Chien-Hung) — 台灣房貸族, 38歲 ──────────────────────
-// Net: +85K salary - 28K mortgage - 8.875K car - 5K ETF = +43K/month
-const CH_BANK  = [200000,243000,286000,329000,372000,415000,458000,501000,544000,587000,630000,673000,716000,759000]
+// Events: May換新車(車貸重設420K, 月繳12K), Sep颱風修繕-80K
+const CH_BANK  = [200000,243000,286000,329000,372000,412000,452000,492000,532000,492000,532000,572000,612000,652000]
 const CH_00878 = [7500,7713,7926,8139,8352,8565,8778,8991,9204,9417,9630,9843,10056,10269]
 const CH_MORTG = [4500000,4480000,4460000,4440000,4420000,4400000,4380000,4360000,4340000,4320000,4300000,4280000,4260000,4240000]
-const CH_CLOAM = [245000,236125,227250,218375,209500,200625,191750,182875,174000,165125,156250,147375,138500,129625]
+const CH_CLOAM = [245000,236125,227250,218375,209500,420000,408000,396000,384000,372000,360000,348000,336000,324000]  // May: new car loan
 
 // ─── User 3: Sarah Mitchell — 美國上班族, 32歲 ──────────────────────────────
-// Net: +$6500 salary - $1800 rent - $380 loan - $500 ETF = +$3820/month
-const SA_BANK = [15820,19640,23460,27280,31100,34920,38740,42560,46380,50200,54020,57840,61660,65480]
-const SA_VOO  = [18.91,19.84,20.79,21.77,22.81,23.82,24.80,25.75,26.71,27.64,28.55,29.45,30.34,31.22]
-const SA_ETH  = 2.5  // constant
-const SA_LOAN = [18500,18200,17900,17600,17300,17000,16700,16400,16100,15800,15500,15200,14900,14600]
+// Events: Apr停損賣0.5 ETH, Jul換工作薪資8000
+const SA_BANK    = [15820,19640,23460,27280,32200,36020,39840,45160,50480,55800,61120,66440,71760,77080]
+const SA_VOO     = [18.91,19.84,20.79,21.77,22.81,23.82,24.80,25.75,26.71,27.64,28.55,29.45,30.34,31.22]
+const SA_ETH_QTY = [2.5,2.5,2.5,2.5,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0,2.0]  // Apr: sold 0.5 ETH
+const SA_LOAN    = [18500,18200,17900,17600,17300,17000,16700,16400,16100,15800,15500,15200,14900,14600]
 
 // ─── User 4: Michael Torres — 美國成功人士, 45歲 ─────────────────────────────
-// Net: +$12K salary + $2.2K rent income - $3.367K + $1.612K mortgages - $2K ETF = +$7.221K/month
-const MI_BANK   = [42221,49442,56663,63884,71105,78326,85547,92768,99989,107210,114431,121652,128873,136094]
-const MI_QQQ    = [151.92,153.89,155.91,157.99,160.21,162.34,164.39,166.38,168.39,170.33,172.22,174.08,175.91,177.72]
-const MI_SPY    = [101.69,103.42,105.19,107.01,108.95,110.83,112.65,114.43,116.23,117.98,119.69,121.38,123.05,124.70]
-const MI_GOLD   = 30  // oz, constant
-const MI_PMORT  = [658000,656000,654000,652000,650000,648000,646000,644000,642000,640000,638000,636000,634000,632000]
-const MI_RMORT  = [316500,316000,315500,315000,314500,314000,313500,313000,312500,312000,311500,311000,310500,310000]
+// Events: Apr停損賣15 QQQ, Dec出售投資房(+232K net)
+const MI_BANK      = [42221,49442,56663,63884,77855,85076,92297,99518,106739,113960,121181,128402,367000,373000]
+const MI_QQQ       = [151.92,153.89,155.91,157.99,145.21,147.34,149.39,151.38,153.39,155.33,157.22,159.08,160.91,162.72]  // Apr: -15 stop-loss
+const MI_SPY       = [101.69,103.42,105.19,107.01,108.95,110.83,112.65,114.43,116.23,117.98,119.69,121.38,123.05,124.70]
+const MI_GOLD      = 30  // oz, constant
+const MI_PMORT     = [658000,656000,654000,652000,650000,648000,646000,644000,642000,640000,638000,636000,634000,632000]
+const MI_RMORT     = [316500,316000,315500,315000,314500,314000,313500,313000,312500,312000,311500,311000,0,0]  // Dec: paid off at sale
+const MI_RENT_HOLD = [1,1,1,1,1,1,1,1,1,1,1,1,0,0]  // Dec: sold rental property
 
 // ─── Synthetic daily price generator ─────────────────────────────────────────
 // Generates daily prices by linear interpolation between monthly anchors + noise.
@@ -204,8 +205,10 @@ async function main() {
   // Fixed-price real estate / vehicles (one entry, carries forward indefinitely)
   await post('/prices/manual', { assetId: chHome.id,  priceDate: '2020-03-01', price: 8000000 }, ch.id)
   await post('/prices/manual', { assetId: chCar.id,   priceDate: '2022-06-01', price: 800000  }, ch.id)
+  await post('/prices/manual', { assetId: chCar.id,   priceDate: '2025-05-01', price: 1200000 }, ch.id)  // 換新車
   await post('/prices/manual', { assetId: miHome.id,  priceDate: '2019-04-01', price: 950000  }, mi.id)
   await post('/prices/manual', { assetId: miRent.id,  priceDate: '2021-08-01', price: 450000  }, mi.id)
+  await post('/prices/manual', { assetId: miRent.id,  priceDate: '2025-12-01', price: 550000  }, mi.id)  // sale price
   console.log('  ✓ manual prices inserted')
 
   // ── 7. Insert FX rates for all months ─────────────────────────────────────
@@ -259,20 +262,20 @@ async function main() {
     await put(`/holdings/${chCLoan.id}/${chProp.id}`, { quantity: CH_CLOAM[i] }, ch.id)
 
     // Sarah
-    await put(`/holdings/${saCash.id}/${saBank.id}`,  { quantity: SA_BANK[i] }, sa.id)
-    await put(`/holdings/${saVOO.id}/${saBrok.id}`,   { quantity: SA_VOO[i]  }, sa.id)
-    await put(`/holdings/${saETH.id}/${saCryp.id}`,   { quantity: SA_ETH     }, sa.id)
-    await put(`/holdings/${saLoan.id}/${saBank.id}`,  { quantity: SA_LOAN[i] }, sa.id)
+    await put(`/holdings/${saCash.id}/${saBank.id}`,  { quantity: SA_BANK[i]    }, sa.id)
+    await put(`/holdings/${saVOO.id}/${saBrok.id}`,   { quantity: SA_VOO[i]     }, sa.id)
+    await put(`/holdings/${saETH.id}/${saCryp.id}`,   { quantity: SA_ETH_QTY[i] }, sa.id)
+    await put(`/holdings/${saLoan.id}/${saBank.id}`,  { quantity: SA_LOAN[i]    }, sa.id)
 
     // Michael
-    await put(`/holdings/${miCash.id}/${miBank.id}`,   { quantity: MI_BANK[i]  }, mi.id)
-    await put(`/holdings/${miQQQ.id}/${miBrok.id}`,    { quantity: MI_QQQ[i]   }, mi.id)
-    await put(`/holdings/${miSPY.id}/${miBrok.id}`,    { quantity: MI_SPY[i]   }, mi.id)
-    await put(`/holdings/${miGold.id}/${miBrok.id}`,   { quantity: MI_GOLD     }, mi.id)
-    await put(`/holdings/${miHome.id}/${miProp.id}`,   { quantity: 1           }, mi.id)
-    await put(`/holdings/${miRent.id}/${miProp.id}`,   { quantity: 1           }, mi.id)
-    await put(`/holdings/${miPMort.id}/${miLoans.id}`, { quantity: MI_PMORT[i] }, mi.id)
-    await put(`/holdings/${miRMort.id}/${miLoans.id}`, { quantity: MI_RMORT[i] }, mi.id)
+    await put(`/holdings/${miCash.id}/${miBank.id}`,   { quantity: MI_BANK[i]       }, mi.id)
+    await put(`/holdings/${miQQQ.id}/${miBrok.id}`,    { quantity: MI_QQQ[i]        }, mi.id)
+    await put(`/holdings/${miSPY.id}/${miBrok.id}`,    { quantity: MI_SPY[i]        }, mi.id)
+    await put(`/holdings/${miGold.id}/${miBrok.id}`,   { quantity: MI_GOLD          }, mi.id)
+    await put(`/holdings/${miHome.id}/${miProp.id}`,   { quantity: 1                }, mi.id)
+    await put(`/holdings/${miRent.id}/${miProp.id}`,   { quantity: MI_RENT_HOLD[i]  }, mi.id)
+    await put(`/holdings/${miPMort.id}/${miLoans.id}`, { quantity: MI_PMORT[i]      }, mi.id)
+    await put(`/holdings/${miRMort.id}/${miLoans.id}`, { quantity: MI_RMORT[i]      }, mi.id)
 
     // ── Transactions (records only, don't affect snapshot state) ───────────
     const d1  = txnDate(d, 1)
@@ -281,32 +284,68 @@ async function main() {
     const d15 = txnDate(d, 15)
     const d20 = txnDate(d, 20)
 
-    // Ya-Ting
-    await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 12000,  txnDate: d1,  note: '房租' }, yt.id)
-    await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_in',  quantity: 45000,  txnDate: d5,  note: '薪資入帳' }, yt.id)
-    await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 3000,   txnDate: d15, note: '定期定額 0050' }, yt.id)
-    await post('/transactions', { assetId: yt0050.id, accountId: ytBrok.id, txnType: 'buy',          quantity: 19,     txnDate: d15, note: '定期定額' }, yt.id)
+    // ── Ya-Ting ───────────────────────────────────────────────────────────────
+    await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 12000, txnDate: d1, note: '房租' }, yt.id)
+    if (i === 2) {
+      // Feb 2025: 失業 — no salary, no DCA
+      await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 3500, txnDate: d10, note: '求職費用' }, yt.id)
+    } else {
+      const ytSalary = i >= 3 ? 52000 : 45000
+      await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_in',  quantity: ytSalary, txnDate: d5,  note: i === 3 ? '薪資入帳（新工作）' : '薪資入帳' }, yt.id)
+      await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 3000,     txnDate: d15, note: '定期定額 0050' }, yt.id)
+      await post('/transactions', { assetId: yt0050.id, accountId: ytBrok.id, txnType: 'buy',          quantity: 19,       txnDate: d15, note: '定期定額' }, yt.id)
+    }
+    if (i === 6) {
+      // Jun 2025: 日本旅遊
+      await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 35000, txnDate: d10, note: '日本旅遊費用' }, yt.id)
+    }
 
-    // 建宏
-    await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: 28000,  txnDate: d1,  note: '玉山房貸月繳' }, ch.id)
-    await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: 8875,   txnDate: d1,  note: '中信車貸月繳' }, ch.id)
-    await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_in',  quantity: 85000,  txnDate: d5,  note: '薪資入帳' }, ch.id)
-    await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: 5000,   txnDate: d15, note: '定期定額 00878' }, ch.id)
-    await post('/transactions', { assetId: ch878.id,  accountId: chBrok.id, txnType: 'buy',          quantity: 213,    txnDate: d15, note: '定期定額' }, ch.id)
+    // ── 建宏 ───────────────────────────────────────────────────────────────────
+    await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: 28000,          txnDate: d1,  note: '玉山房貸月繳' }, ch.id)
+    await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: i >= 5 ? 12000 : 8875, txnDate: d1, note: i === 5 ? '中信車貸月繳（新車）' : '中信車貸月繳' }, ch.id)
+    await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_in',  quantity: 85000,          txnDate: d5,  note: '薪資入帳' }, ch.id)
+    await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: 5000,           txnDate: d15, note: '定期定額 00878' }, ch.id)
+    await post('/transactions', { assetId: ch878.id,  accountId: chBrok.id, txnType: 'buy',          quantity: 213,            txnDate: d15, note: '定期定額' }, ch.id)
+    if (i === 9) {
+      // Sep 2025: 颱風災損修繕
+      await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: 80000, txnDate: d20, note: '颱風災損修繕費' }, ch.id)
+    }
 
-    // Sarah
-    await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_out', quantity: 1800, txnDate: d1,  note: 'Rent' }, sa.id)
-    await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_out', quantity: 380,  txnDate: d10, note: 'Student loan payment' }, sa.id)
-    await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_in',  quantity: 6500, txnDate: d15, note: 'Salary' }, sa.id)
-    await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_out', quantity: 500,  txnDate: d20, note: 'VOO DCA' }, sa.id)
+    // ── Sarah ────────────────────────────────────────────────────────────────
+    await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_out', quantity: 1800,              txnDate: d1,  note: 'Rent' }, sa.id)
+    await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_out', quantity: 380,               txnDate: d10, note: 'Student loan payment' }, sa.id)
+    await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_in',  quantity: i >= 7 ? 8000 : 6500, txnDate: d15, note: i === 7 ? 'Salary (new job)' : 'Salary' }, sa.id)
+    if (i === 4) {
+      // Apr 2025: Stop-loss ETH sell
+      const ethProceeds = +(0.5 * P_ETH[4]).toFixed(2)
+      await post('/transactions', { assetId: saETH.id,  accountId: saCryp.id, txnType: 'sell',         quantity: 0.5,        txnDate: d10, note: 'Stop-loss: sold 0.5 ETH' }, sa.id)
+      await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_in',  quantity: ethProceeds, txnDate: d10, note: 'ETH sale proceeds' }, sa.id)
+    }
+    await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_out', quantity: 500,               txnDate: d20, note: 'VOO DCA' }, sa.id)
     const vooBuy = +(500 / P_VOO[i]).toFixed(4)
-    await post('/transactions', { assetId: saVOO.id,  accountId: saBrok.id, txnType: 'buy',          quantity: vooBuy, txnDate: d20, note: 'DCA' }, sa.id)
+    await post('/transactions', { assetId: saVOO.id,  accountId: saBrok.id, txnType: 'buy',          quantity: vooBuy,             txnDate: d20, note: 'DCA' }, sa.id)
 
-    // Michael
-    await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_out', quantity: 3367, txnDate: d1,  note: 'Primary mortgage payment' }, mi.id)
-    await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_out', quantity: 1612, txnDate: d1,  note: 'Rental mortgage payment' }, mi.id)
+    // ── Michael ──────────────────────────────────────────────────────────────
+    await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_out', quantity: 3367,  txnDate: d1, note: 'Primary mortgage payment' }, mi.id)
+    if (i < 12) {
+      await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_out', quantity: 1612, txnDate: d1, note: 'Rental mortgage payment' }, mi.id)
+    }
     await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_in',  quantity: 12000, txnDate: d5, note: 'Salary' }, mi.id)
-    await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_in',  quantity: 2200, txnDate: d15, note: 'Rental income' }, mi.id)
+    if (i < 12) {
+      await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_in',  quantity: 2200, txnDate: d15, note: 'Rental income' }, mi.id)
+    }
+    if (i === 4) {
+      // Apr 2025: Stop-loss QQQ sell
+      const qqqProceeds = +(15 * P_QQQ[4]).toFixed(2)
+      await post('/transactions', { assetId: miQQQ.id,  accountId: miBrok.id, txnType: 'sell',        quantity: 15,          txnDate: d10, note: 'Stop-loss: sold 15 QQQ' }, mi.id)
+      await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_in', quantity: qqqProceeds,  txnDate: d10, note: 'QQQ sale proceeds' }, mi.id)
+    }
+    if (i === 12) {
+      // Dec 2025: Sell rental property
+      await post('/transactions', { assetId: miRent.id,  accountId: miProp.id,  txnType: 'sell',         quantity: 1,      txnDate: d10, note: 'Sold rental property' }, mi.id)
+      await post('/transactions', { assetId: miCash.id,  accountId: miBank.id,  txnType: 'transfer_in',  quantity: 550000, txnDate: d10, note: 'Rental property sale proceeds' }, mi.id)
+      await post('/transactions', { assetId: miCash.id,  accountId: miBank.id,  txnType: 'transfer_out', quantity: 318000, txnDate: d10, note: 'Rental mortgage payoff + closing costs' }, mi.id)
+    }
     await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_out', quantity: 1000, txnDate: d20, note: 'QQQ DCA' }, mi.id)
     await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_out', quantity: 1000, txnDate: d20, note: 'SPY DCA' }, mi.id)
     const qqqBuy = +(1000 / P_QQQ[i]).toFixed(4)
