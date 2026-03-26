@@ -159,57 +159,61 @@ backupRouter.post('/import', async (c) => {
     prices: 0, fxRates: 0, snapshotItems: 0, recurringEntries: 0,
   }
 
+  // Remap old UUIDs → new UUIDs so importing to a different user never
+  // collides with existing rows owned by another user.
+  const assetIdMap = new Map<string, string>()
+  const accountIdMap = new Map<string, string>()
+  if (Array.isArray(d.assets)) {
+    for (const row of d.assets) assetIdMap.set(row.id, crypto.randomUUID())
+  }
+  if (Array.isArray(d.accounts)) {
+    for (const row of d.accounts) accountIdMap.set(row.id, crypto.randomUUID())
+  }
+
   db.transaction((tx) => {
     if (Array.isArray(d.assets) && d.assets.length) {
       for (const row of d.assets) {
-        const v = { ...strip(row), userId }
-        tx.insert(assets).values(v)
-          .onConflictDoUpdate({ target: assets.id, set: {
-            name: v.name, assetClass: v.assetClass, category: v.category,
-            subKind: v.subKind, symbol: v.symbol, market: v.market,
-            currencyCode: v.currencyCode, pricingMode: v.pricingMode, unit: v.unit,
-          }}).run()
+        const v = { ...strip(row), id: assetIdMap.get(row.id)!, userId }
+        tx.insert(assets).values(v).run()
       }
       counts.assets = d.assets.length
     }
 
     if (Array.isArray(d.accounts) && d.accounts.length) {
       for (const row of d.accounts) {
-        const v = { ...strip(row), userId }
-        tx.insert(accounts).values(v)
-          .onConflictDoUpdate({ target: accounts.id, set: {
-            name: v.name, institution: v.institution,
-            accountType: v.accountType, note: v.note,
-          }}).run()
+        const v = { ...strip(row), id: accountIdMap.get(row.id)!, userId }
+        tx.insert(accounts).values(v).run()
       }
       counts.accounts = d.accounts.length
     }
 
     if (Array.isArray(d.holdings) && d.holdings.length) {
       for (const row of d.holdings) {
-        const v = { ...strip(row), userId }
-        tx.insert(holdings).values(v)
-          .onConflictDoUpdate({ target: [holdings.assetId, holdings.accountId], set: {
-            quantity: v.quantity,
-          }}).run()
+        const newAssetId = assetIdMap.get(row.assetId)
+        const newAccountId = accountIdMap.get(row.accountId)
+        if (!newAssetId || !newAccountId) continue
+        const v = { ...strip(row), assetId: newAssetId, accountId: newAccountId, userId }
+        tx.insert(holdings).values(v).run()
       }
       counts.holdings = d.holdings.length
     }
 
     if (Array.isArray(d.transactions) && d.transactions.length) {
       for (const row of d.transactions) {
-        const v = { ...strip(row), userId }
-        tx.insert(transactions).values(v)
-          .onConflictDoUpdate({ target: transactions.id, set: {
-            txnType: v.txnType, quantity: v.quantity, txnDate: v.txnDate, note: v.note,
-          }}).run()
+        const newAssetId = assetIdMap.get(row.assetId)
+        const newAccountId = accountIdMap.get(row.accountId)
+        if (!newAssetId || !newAccountId) continue
+        const v = { ...strip(row), id: crypto.randomUUID(), assetId: newAssetId, accountId: newAccountId, userId }
+        tx.insert(transactions).values(v).run()
       }
       counts.transactions = d.transactions.length
     }
 
     if (Array.isArray(d.prices) && d.prices.length) {
       for (const row of d.prices) {
-        const v = strip(row)
+        const newAssetId = assetIdMap.get(row.assetId)
+        if (!newAssetId) continue  // skip prices for assets not in this backup
+        const v = { ...strip(row), assetId: newAssetId }
         tx.insert(prices).values(v)
           .onConflictDoUpdate({ target: [prices.assetId, prices.priceDate], set: {
             price: v.price, source: v.source,
@@ -232,7 +236,10 @@ backupRouter.post('/import', async (c) => {
 
     if (Array.isArray(d.snapshotItems) && d.snapshotItems.length) {
       for (const row of d.snapshotItems) {
-        const v = { ...strip(row), userId }
+        const newAssetId = assetIdMap.get(row.assetId)
+        const newAccountId = accountIdMap.get(row.accountId)
+        if (!newAssetId || !newAccountId) continue
+        const v = { ...strip(row), assetId: newAssetId, accountId: newAccountId, userId }
         tx.insert(snapshotItems).values(v)
           .onConflictDoUpdate({
             target: [snapshotItems.snapshotDate, snapshotItems.assetId, snapshotItems.accountId],
@@ -247,13 +254,12 @@ backupRouter.post('/import', async (c) => {
 
     if (Array.isArray(d.recurringEntries) && d.recurringEntries.length) {
       for (const row of d.recurringEntries) {
-        const v = { ...strip(row), userId }
-        tx.insert(recurringEntries).values(v)
-          .onConflictDoUpdate({ target: recurringEntries.id, set: {
-            type: v.type, amount: v.amount, currencyCode: v.currencyCode,
-            dayOfMonth: v.dayOfMonth, label: v.label,
-            effectiveFrom: v.effectiveFrom, effectiveTo: v.effectiveTo,
-          }}).run()
+        const newAssetId = row.assetId ? assetIdMap.get(row.assetId) : null
+        const newAccountId = row.accountId ? accountIdMap.get(row.accountId) : null
+        if (row.assetId && !newAssetId) continue
+        if (row.accountId && !newAccountId) continue
+        const v = { ...strip(row), id: crypto.randomUUID(), assetId: newAssetId ?? null, accountId: newAccountId ?? null, userId }
+        tx.insert(recurringEntries).values(v).run()
       }
       counts.recurringEntries = d.recurringEntries.length
     }
