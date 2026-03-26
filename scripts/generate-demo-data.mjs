@@ -287,8 +287,8 @@ async function main() {
     // ── Ya-Ting ───────────────────────────────────────────────────────────────
     await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 12000, txnDate: d1, note: '房租' }, yt.id)
     if (i === 2) {
-      // Feb 2025: 失業 — no salary, no DCA
-      await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 3500, txnDate: d10, note: '求職費用' }, yt.id)
+      // Feb 2025: 失業 — no salary, no DCA; job search costs on the 18th
+      await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 3500, txnDate: txnDate(d, 18), note: '求職費用（履歷健檢、面試交通）' }, yt.id)
     } else {
       const ytSalary = i >= 3 ? 52000 : 45000
       await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_in',  quantity: ytSalary, txnDate: d5,  note: i === 3 ? '薪資入帳（新工作）' : '薪資入帳' }, yt.id)
@@ -296,30 +296,35 @@ async function main() {
       await post('/transactions', { assetId: yt0050.id, accountId: ytBrok.id, txnType: 'buy',          quantity: 19,       txnDate: d15, note: '定期定額' }, yt.id)
     }
     if (i === 6) {
-      // Jun 2025: 日本旅遊
-      await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 35000, txnDate: d10, note: '日本旅遊費用' }, yt.id)
+      // Jun 2025: 日本旅遊 (departure Jun 7, back Jun 12; expenses billed Jun 8)
+      await post('/transactions', { assetId: ytCash.id, accountId: ytBank.id, txnType: 'transfer_out', quantity: 35000, txnDate: txnDate(d, 8), note: '日本旅遊（機票 + 住宿 + 消費）' }, yt.id)
     }
 
     // ── 建宏 ───────────────────────────────────────────────────────────────────
     await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: 28000,          txnDate: d1,  note: '玉山房貸月繳' }, ch.id)
-    await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: i >= 5 ? 12000 : 8875, txnDate: d1, note: i === 5 ? '中信車貸月繳（新車）' : '中信車貸月繳' }, ch.id)
+    await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: i >= 5 ? 12000 : 8875, txnDate: d1, note: '中信車貸月繳' }, ch.id)
     await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_in',  quantity: 85000,          txnDate: d5,  note: '薪資入帳' }, ch.id)
     await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: 5000,           txnDate: d15, note: '定期定額 00878' }, ch.id)
     await post('/transactions', { assetId: ch878.id,  accountId: chBrok.id, txnType: 'buy',          quantity: 213,            txnDate: d15, note: '定期定額' }, ch.id)
+    if (i === 5) {
+      // May 2025: 換新車 — car picked up May 12; new loan opened same day
+      await post('/transactions', { assetId: chCar.id,   accountId: chProp.id,  txnType: 'buy',         quantity: 1,      txnDate: txnDate(d, 12), note: '購入新車（Toyota Alphard 2025）' }, ch.id)
+      await post('/transactions', { assetId: chCLoan.id, accountId: chProp.id,  txnType: 'transfer_in', quantity: 420000, txnDate: txnDate(d, 12), note: '取得中信車貸（舊車以折抵方式清償）' }, ch.id)
+    }
     if (i === 9) {
-      // Sep 2025: 颱風災損修繕
-      await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: 80000, txnDate: d20, note: '颱風災損修繕費' }, ch.id)
+      // Sep 2025: 颱風 Krathon 3日登陸，9/4 開始修繕，估價結算 9/8
+      await post('/transactions', { assetId: chCash.id, accountId: chBank.id, txnType: 'transfer_out', quantity: 80000, txnDate: txnDate(d, 8), note: '颱風災損修繕費（海麒麟颱風）' }, ch.id)
     }
 
     // ── Sarah ────────────────────────────────────────────────────────────────
     await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_out', quantity: 1800,              txnDate: d1,  note: 'Rent' }, sa.id)
     await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_out', quantity: 380,               txnDate: d10, note: 'Student loan payment' }, sa.id)
-    await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_in',  quantity: i >= 7 ? 8000 : 6500, txnDate: d15, note: i === 7 ? 'Salary (new job)' : 'Salary' }, sa.id)
+    await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_in',  quantity: i >= 7 ? 8000 : 6500, txnDate: d15, note: i === 7 ? 'Salary (new job — UX lead role)' : 'Salary' }, sa.id)
     if (i === 4) {
-      // Apr 2025: Stop-loss ETH sell
+      // Apr 2025: ETH breaks below key support on Apr 22; stop-loss triggered
       const ethProceeds = +(0.5 * P_ETH[4]).toFixed(2)
-      await post('/transactions', { assetId: saETH.id,  accountId: saCryp.id, txnType: 'sell',         quantity: 0.5,        txnDate: d10, note: 'Stop-loss: sold 0.5 ETH' }, sa.id)
-      await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_in',  quantity: ethProceeds, txnDate: d10, note: 'ETH sale proceeds' }, sa.id)
+      await post('/transactions', { assetId: saETH.id,  accountId: saCryp.id, txnType: 'sell',        quantity: 0.5,        txnDate: txnDate(d, 22), note: 'Stop-loss: ETH broke $2,200 support, sold 0.5 ETH' }, sa.id)
+      await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_in', quantity: ethProceeds, txnDate: txnDate(d, 22), note: 'ETH sale proceeds' }, sa.id)
     }
     await post('/transactions', { assetId: saCash.id, accountId: saBank.id, txnType: 'transfer_out', quantity: 500,               txnDate: d20, note: 'VOO DCA' }, sa.id)
     const vooBuy = +(500 / P_VOO[i]).toFixed(4)
@@ -335,16 +340,18 @@ async function main() {
       await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_in',  quantity: 2200, txnDate: d15, note: 'Rental income' }, mi.id)
     }
     if (i === 4) {
-      // Apr 2025: Stop-loss QQQ sell
+      // Apr 2025: Nasdaq sell-off Apr 7; stop-loss at $450
       const qqqProceeds = +(15 * P_QQQ[4]).toFixed(2)
-      await post('/transactions', { assetId: miQQQ.id,  accountId: miBrok.id, txnType: 'sell',        quantity: 15,          txnDate: d10, note: 'Stop-loss: sold 15 QQQ' }, mi.id)
-      await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_in', quantity: qqqProceeds,  txnDate: d10, note: 'QQQ sale proceeds' }, mi.id)
+      await post('/transactions', { assetId: miQQQ.id,  accountId: miBrok.id, txnType: 'sell',        quantity: 15,         txnDate: txnDate(d, 7), note: 'Stop-loss: Nasdaq sell-off, sold 15 QQQ @ ~$450' }, mi.id)
+      await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_in', quantity: qqqProceeds, txnDate: txnDate(d, 7), note: 'QQQ sale proceeds' }, mi.id)
     }
     if (i === 12) {
-      // Dec 2025: Sell rental property
-      await post('/transactions', { assetId: miRent.id,  accountId: miProp.id,  txnType: 'sell',         quantity: 1,      txnDate: d10, note: 'Sold rental property' }, mi.id)
-      await post('/transactions', { assetId: miCash.id,  accountId: miBank.id,  txnType: 'transfer_in',  quantity: 550000, txnDate: d10, note: 'Rental property sale proceeds' }, mi.id)
-      await post('/transactions', { assetId: miCash.id,  accountId: miBank.id,  txnType: 'transfer_out', quantity: 318000, txnDate: d10, note: 'Rental mortgage payoff + closing costs' }, mi.id)
+      // Dec 2025: Rental property closing Dec 18
+      await post('/transactions', { assetId: miRent.id,  accountId: miProp.id,  txnType: 'sell',         quantity: 1,      txnDate: txnDate(d, 18), note: 'Sold rental property (closing date Dec 18)' }, mi.id)
+      await post('/transactions', { assetId: miCash.id,  accountId: miBank.id,  txnType: 'transfer_in',  quantity: 550000, txnDate: txnDate(d, 18), note: 'Rental property sale proceeds' }, mi.id)
+      await post('/transactions', { assetId: miRMort.id, accountId: miLoans.id, txnType: 'transfer_out', quantity: 311000, txnDate: txnDate(d, 18), note: 'Rental mortgage payoff at closing' }, mi.id)
+      await post('/transactions', { assetId: miCash.id,  accountId: miBank.id,  txnType: 'transfer_out', quantity: 311000, txnDate: txnDate(d, 18), note: 'Rental mortgage payoff' }, mi.id)
+      await post('/transactions', { assetId: miCash.id,  accountId: miBank.id,  txnType: 'transfer_out', quantity: 7000,   txnDate: txnDate(d, 18), note: 'Closing costs & agent fees' }, mi.id)
     }
     await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_out', quantity: 1000, txnDate: d20, note: 'QQQ DCA' }, mi.id)
     await post('/transactions', { assetId: miCash.id, accountId: miBank.id, txnType: 'transfer_out', quantity: 1000, txnDate: d20, note: 'SPY DCA' }, mi.id)
