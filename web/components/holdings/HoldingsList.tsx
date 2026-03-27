@@ -51,16 +51,12 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-            {[
-              t('holdings.columns.assetName'),
-              t('holdings.columns.account'),
-              t('holdings.columns.institution'),
-              t('holdings.columns.type'),
-              t('holdings.columns.quantity'),
-              `${t('holdings.columns.value')} (${currency})`,
-            ].map(h => (
-              <th key={h} className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">{h}</th>
-            ))}
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">{t('holdings.columns.assetName')}</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">{t('holdings.columns.account')}</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{t('holdings.columns.institution')}</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{t('holdings.columns.type')}</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{t('holdings.columns.quantity')}</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{`${t('holdings.columns.value')} (${currency})`}</th>
           </tr>
         </thead>
         <tbody>
@@ -71,22 +67,22 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
                 ${i < holdings.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
               <td className="px-4 py-3 whitespace-nowrap font-medium">{h.assetName}</td>
               <td className="px-4 py-3 whitespace-nowrap">{h.accountName}</td>
-              <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">
+              <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)] hidden md:table-cell">
                 {h.institution ?? '—'}
               </td>
-              <td className="px-4 py-3 whitespace-nowrap">
+              <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell">
                 <span className={`px-2 py-0.5 rounded-full text-xs font-medium
                   ${CATEGORY_COLOR[h.category] ?? 'bg-[var(--color-bg)] text-[var(--color-muted)]'}`}>
                   {t(`asset.subKinds.${h.subKind}` as Parameters<typeof t>[0], { defaultValue: h.subKind })}
                 </span>
               </td>
-              <td className="px-4 py-3 whitespace-nowrap">
+              <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell">
                 {parseFloat(String(h.quantity)).toLocaleString()}
                 <span className="ml-1 text-xs text-[var(--color-muted)]">
                   {translateUnit(getHoldingUnit(h), t)}
                 </span>
               </td>
-              <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">
+              <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)] hidden md:table-cell">
                 {fmtValue(h.latestValueInBase)}
               </td>
             </tr>

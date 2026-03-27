@@ -15,15 +15,11 @@ export function AccountsTable({ accounts, holdingsCount, onEdit }: Props) {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-            {[
-              t('accounts.columns.name'),
-              t('accounts.columns.type'),
-              t('accounts.columns.institution'),
-              t('accounts.columns.note'),
-              t('accounts.columns.holdingsCount'),
-            ].map(h => (
-              <th key={h} className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">{h}</th>
-            ))}
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">{t('accounts.columns.name')}</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">{t('accounts.columns.type')}</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{t('accounts.columns.institution')}</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{t('accounts.columns.note')}</th>
+            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{t('accounts.columns.holdingsCount')}</th>
           </tr>
         </thead>
         <tbody>
@@ -37,9 +33,9 @@ export function AccountsTable({ accounts, holdingsCount, onEdit }: Props) {
                 <td className="px-4 py-3 text-[var(--color-muted)] whitespace-nowrap">
                   {t(`account.types.${a.accountType}` as Parameters<typeof t>[0], { defaultValue: a.accountType })}
                 </td>
-                <td className="px-4 py-3 whitespace-nowrap">{a.institution ?? '—'}</td>
-                <td className="px-4 py-3 text-[var(--color-muted)]">{a.note ?? '—'}</td>
-                <td className="px-4 py-3">{count}</td>
+                <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell">{a.institution ?? '—'}</td>
+                <td className="px-4 py-3 text-[var(--color-muted)] hidden md:table-cell">{a.note ?? '—'}</td>
+                <td className="px-4 py-3 hidden md:table-cell">{count}</td>
               </tr>
             )
           })}
