@@ -47,48 +47,78 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
-            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">{t('holdings.columns.assetName')}</th>
-            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">{t('holdings.columns.account')}</th>
-            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{t('holdings.columns.institution')}</th>
-            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{t('holdings.columns.type')}</th>
-            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{t('holdings.columns.quantity')}</th>
-            <th className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium hidden md:table-cell">{`${t('holdings.columns.value')} (${currency})`}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {holdings.map((h, i) => (
-            <tr key={`${h.assetId}-${h.accountId}`}
-              onClick={() => onRowClick(h)}
-              className={`cursor-pointer hover:bg-[var(--color-bg)] transition-colors
-                ${i < holdings.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
-              <td className="px-4 py-3 whitespace-nowrap font-medium">{h.assetName}</td>
-              <td className="px-4 py-3 whitespace-nowrap">{h.accountName}</td>
-              <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)] hidden md:table-cell">
-                {h.institution ?? '—'}
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell">
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium
-                  ${CATEGORY_COLOR[h.category] ?? 'bg-[var(--color-bg)] text-[var(--color-muted)]'}`}>
-                  {t(`asset.subKinds.${h.subKind}` as Parameters<typeof t>[0], { defaultValue: h.subKind })}
-                </span>
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell">
-                {parseFloat(String(h.quantity)).toLocaleString()}
-                <span className="ml-1 text-xs text-[var(--color-muted)]">
-                  {translateUnit(getHoldingUnit(h), t)}
-                </span>
-              </td>
-              <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)] hidden md:table-cell">
-                {fmtValue(h.latestValueInBase)}
-              </td>
+    <>
+      {/* ── Mobile: card list ── */}
+      <div className="md:hidden space-y-2">
+        {holdings.map(h => (
+          <div key={`${h.assetId}-${h.accountId}`} onClick={() => onRowClick(h)}
+            className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 cursor-pointer
+              active:bg-[var(--color-bg)] transition-colors">
+            <div className="flex justify-between items-start">
+              <div className="min-w-0">
+                <p className="font-medium text-sm truncate">{h.assetName}</p>
+                <p className="text-xs text-[var(--color-muted)] mt-0.5">{h.accountName}{h.institution ? ` · ${h.institution}` : ''}</p>
+              </div>
+              <div className="text-right shrink-0 ml-3">
+                <p className="text-sm font-medium">{fmtValue(h.latestValueInBase)}</p>
+                <p className="text-xs text-[var(--color-muted)]">{currency}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={`px-2 py-0.5 rounded-full text-xs font-medium
+                ${CATEGORY_COLOR[h.category] ?? 'bg-[var(--color-bg)] text-[var(--color-muted)]'}`}>
+                {t(`asset.subKinds.${h.subKind}` as Parameters<typeof t>[0], { defaultValue: h.subKind })}
+              </span>
+              <span className="text-xs text-[var(--color-muted)]">
+                {parseFloat(String(h.quantity)).toLocaleString()} {translateUnit(getHoldingUnit(h), t)}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Desktop: table ── */}
+      <div className="hidden md:block rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
+              {[
+                t('holdings.columns.assetName'),
+                t('holdings.columns.account'),
+                t('holdings.columns.institution'),
+                t('holdings.columns.type'),
+                t('holdings.columns.quantity'),
+                `${t('holdings.columns.value')} (${currency})`,
+              ].map(h => (
+                <th key={h} className="px-4 py-3 text-left text-xs text-[var(--color-muted)] font-medium">{h}</th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {holdings.map((h, i) => (
+              <tr key={`${h.assetId}-${h.accountId}`}
+                onClick={() => onRowClick(h)}
+                className={`cursor-pointer hover:bg-[var(--color-bg)] transition-colors
+                  ${i < holdings.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
+                <td className="px-4 py-3 whitespace-nowrap font-medium">{h.assetName}</td>
+                <td className="px-4 py-3 whitespace-nowrap">{h.accountName}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">{h.institution ?? '—'}</td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium
+                    ${CATEGORY_COLOR[h.category] ?? 'bg-[var(--color-bg)] text-[var(--color-muted)]'}`}>
+                    {t(`asset.subKinds.${h.subKind}` as Parameters<typeof t>[0], { defaultValue: h.subKind })}
+                  </span>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap">
+                  {parseFloat(String(h.quantity)).toLocaleString()}
+                  <span className="ml-1 text-xs text-[var(--color-muted)]">{translateUnit(getHoldingUnit(h), t)}</span>
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">{fmtValue(h.latestValueInBase)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
