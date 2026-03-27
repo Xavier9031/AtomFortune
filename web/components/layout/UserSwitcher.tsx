@@ -268,9 +268,9 @@ export default function UserSwitcher({ variant = 'sidebar' }: { variant?: 'sideb
 
         {/* ── Dropdown ── simple: switch / rename / new profile ────────── */}
         {open && (
-          <div className={`absolute ${variant === 'topbar' ? 'top-full mt-2 w-64' : 'bottom-full left-0 right-0 mb-2'} bg-[var(--color-surface)]
+          <div className={`${variant === 'topbar' ? 'fixed left-3 right-3 mt-1' : 'absolute bottom-full left-0 right-0 mb-2'} bg-[var(--color-surface)]
             border border-[var(--color-border)] rounded-xl shadow-lg overflow-hidden z-50`}
-            style={variant === 'topbar' ? { right: 0 } : undefined}>
+            style={variant === 'topbar' ? { top: '3.5rem' } : undefined}>
 
             <div className="max-h-64 overflow-y-auto py-1">
               {users.map(u => (
