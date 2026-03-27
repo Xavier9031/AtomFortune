@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useTransition } from 'react'
 import { useLocale, useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
 import { Moon, Sun } from 'lucide-react'
+import UserSwitcher from './UserSwitcher'
 import { useCurrency } from '@/context/CurrencyContext'
 import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
 import { setLocale } from '@/app/actions/setLocale'
@@ -126,7 +127,7 @@ export default function TopBar() {
 
   return (
     <header className="h-14 sticky top-0 z-10 flex items-center justify-between px-6 border-b border-border bg-surface">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160" className="h-7 w-auto" aria-label="Atom Fortune">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 160" className="h-5 md:h-7 w-auto" aria-label="Atom Fortune">
         <g transform="translate(174,80)" fill="none" stroke="#2A8B8B" strokeWidth="2.2">
           <ellipse rx="38" ry="18" transform="rotate(0)"/>
           <ellipse rx="38" ry="18" transform="rotate(60)"/>
@@ -145,6 +146,9 @@ export default function TopBar() {
       </svg>
 
       <div className="flex items-center gap-1.5">
+        <div className="md:hidden">
+          <UserSwitcher variant="topbar" />
+        </div>
         <CurrencyPicker value={currency} onChange={v => setCurrency(v as Currency)} />
         <LocaleSwitcher />
         <button

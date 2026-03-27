@@ -182,7 +182,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
     : (pendingKind ? t(pendingKind.labelKey as Parameters<typeof t>[0]) : t('assets.newAssetTitle'))
 
   return (
-    <div className={`fixed inset-y-0 right-0 w-[440px] bg-[var(--color-surface)] shadow-2xl
+    <div className={`fixed inset-y-0 right-0 w-full md:w-[440px] bg-[var(--color-surface)] shadow-2xl
       transform transition-transform duration-300 z-40 flex flex-col
       ${open ? 'translate-x-0' : 'translate-x-full'}`}>
 

@@ -1,17 +1,24 @@
 import './globals.css'
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { cookies } from 'next/headers'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
 import { CurrencyProvider } from '@/context/CurrencyContext'
 import Sidebar from '@/components/layout/Sidebar'
 import TopBar from '@/components/layout/TopBar'
+import BottomNav from '@/components/layout/BottomNav'
 import ClientInit from '@/components/ClientInit'
 import OnboardingScreen from '@/components/layout/OnboardingScreen'
 
 export const metadata: Metadata = {
   title: 'Atom Fortune',
   description: '個人資產淨值追蹤系統',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -31,8 +38,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <TopBar />
             <div className="flex">
               <div className="shrink-0"><Sidebar /></div>
-              <main className="flex-1 p-6 bg-bg min-h-screen">{children}</main>
+              <main className="flex-1 p-4 md:p-6 pb-20 md:pb-6 bg-bg min-h-screen">{children}</main>
             </div>
+            <BottomNav />
           </CurrencyProvider>
         </NextIntlClientProvider>
       </body>

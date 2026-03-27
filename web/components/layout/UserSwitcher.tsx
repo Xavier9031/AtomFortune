@@ -54,7 +54,7 @@ function HoldDeleteButton({ onConfirm, label, readyLabel }: { onConfirm: () => v
   )
 }
 
-export default function UserSwitcher() {
+export default function UserSwitcher({ variant = 'sidebar' }: { variant?: 'sidebar' | 'topbar' }) {
   const t = useTranslations()
   const [open, setOpen] = useState(false)
   const [users, setUsers] = useState<UserRecord[]>([])
@@ -236,29 +236,40 @@ export default function UserSwitcher() {
   const initial = (activeUser?.name ?? 'D').charAt(0).toUpperCase()
 
   return (
-      <div className="relative mx-2 mb-4" ref={dropdownRef}>
+      <div className={variant === 'topbar' ? 'relative' : 'relative mx-2 mb-4'} ref={dropdownRef}>
 
         {/* ── Trigger ────────────────────────────────────────────────────── */}
-        <button
-          onClick={() => { if (open) closeDropdown(); else setOpen(true) }}
-          className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl
-            hover:bg-[var(--color-bg)] text-[var(--color-text)] transition-all duration-200
-            ${switching ? 'opacity-40 scale-95' : 'opacity-100 scale-100'}`}
-        >
-          <span className="w-7 h-7 rounded-full bg-[var(--color-accent)] text-white flex items-center
-            justify-center text-xs font-bold shrink-0">
+        {variant === 'topbar' ? (
+          <button
+            onClick={() => { if (open) closeDropdown(); else setOpen(true) }}
+            className={`w-7 h-7 rounded-full bg-[var(--color-accent)] text-white flex items-center
+              justify-center text-xs font-bold shrink-0 transition-all duration-200
+              ${switching ? 'opacity-40 scale-95' : 'opacity-100 scale-100'}`}
+          >
             {initial}
-          </span>
-          <span className="flex-1 text-left truncate text-sm font-medium">
-            {activeUser?.name ?? t('userSwitcher.defaultUser')}
-          </span>
-          <ChevronDown size={14} className={`shrink-0 text-[var(--color-muted)] transition-transform ${open ? 'rotate-180' : ''}`} />
-        </button>
+          </button>
+        ) : (
+          <button
+            onClick={() => { if (open) closeDropdown(); else setOpen(true) }}
+            className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl
+              hover:bg-[var(--color-bg)] text-[var(--color-text)] transition-all duration-200
+              ${switching ? 'opacity-40 scale-95' : 'opacity-100 scale-100'}`}
+          >
+            <span className="w-7 h-7 rounded-full bg-[var(--color-accent)] text-white flex items-center
+              justify-center text-xs font-bold shrink-0">
+              {initial}
+            </span>
+            <span className="flex-1 text-left truncate text-sm font-medium">
+              {activeUser?.name ?? t('userSwitcher.defaultUser')}
+            </span>
+            <ChevronDown size={14} className={`shrink-0 text-[var(--color-muted)] transition-transform ${open ? 'rotate-180' : ''}`} />
+          </button>
+        )}
 
         {/* ── Dropdown ── simple: switch / rename / new profile ────────── */}
         {open && (
-          <div className="absolute bottom-full left-0 right-0 mb-2 bg-[var(--color-surface)]
-            border border-[var(--color-border)] rounded-xl shadow-lg overflow-hidden z-50">
+          <div className={`absolute ${variant === 'topbar' ? 'top-full right-0 mt-2 w-64' : 'bottom-full left-0 right-0 mb-2'} bg-[var(--color-surface)]
+            border border-[var(--color-border)] rounded-xl shadow-lg overflow-hidden z-50`}>
 
             <div className="max-h-64 overflow-y-auto py-1">
               {users.map(u => (

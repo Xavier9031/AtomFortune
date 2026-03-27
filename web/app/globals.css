@@ -51,6 +51,11 @@ body {
   color: var(--color-text);
 }
 
+/* iPhone safe area for bottom nav */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
 @theme inline {
   --color-bg:             var(--color-bg);
   --color-surface:        var(--color-surface);
