@@ -21,6 +21,12 @@
 
 ---
 
+## Why AtomFortune?
+
+Most people have assets scattered across bank accounts, brokerages, crypto exchanges, real estate, and more — but no single view of the full picture. Traditional bookkeeping apps focus on tracking every daily expense, which is tedious and often abandoned.
+
+AtomFortune takes a different approach: **periodic net worth snapshots**. Instead of logging every transaction, you simply review and update your holdings once a month (or every few months). Market-priced assets update automatically. The result is a clear, long-term view of where you stand financially — without the daily overhead.
+
 ## What is AtomFortune?
 
 A single interface to track everything you own and owe:
