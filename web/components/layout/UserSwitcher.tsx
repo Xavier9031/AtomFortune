@@ -396,8 +396,8 @@ export default function UserSwitcher({ variant = 'sidebar' }: { variant?: 'sideb
         {mounted && modalUser && createPortal(
           <div
             ref={portalRef}
-            className="fixed bottom-4 left-[232px] w-80 z-[200] bg-[var(--color-surface)]
-              border border-[var(--color-border)] rounded-2xl shadow-2xl overflow-hidden"
+            className="fixed z-[200] bg-[var(--color-surface)] border border-[var(--color-border)] shadow-2xl overflow-hidden overflow-y-auto
+              inset-3 rounded-2xl md:inset-auto md:bottom-4 md:left-[232px] md:w-80 md:rounded-2xl"
           >
             {/* Header */}
             <div className="flex items-center gap-2.5 px-5 py-4 border-b border-[var(--color-border)]">
