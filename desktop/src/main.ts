@@ -52,7 +52,7 @@ async function bootstrap(): Promise<void> {
     {
       env: {
         ...process.env,
-        PORT: '3000',
+        PORT: '3100',
         HOSTNAME: '127.0.0.1',
         NODE_ENV: 'production',
         NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8000/api/v1',
@@ -92,7 +92,7 @@ async function bootstrap(): Promise<void> {
 
   // ─── Wait for Next.js to be ready ─────────────────────────────────────────
   try {
-    await waitForPort(3000)
+    await waitForPort(3100)
   } catch (err) {
     dialog.showErrorBox(
       'Startup Error',
@@ -113,7 +113,7 @@ async function bootstrap(): Promise<void> {
     },
   })
 
-  mainWindow.loadURL('http://localhost:3000')
+  mainWindow.loadURL('http://localhost:3100')
   mainWindow.on('closed', () => { mainWindow = null })
 
   // ─── Auto-updater (production builds only) ────────────────────────────────
