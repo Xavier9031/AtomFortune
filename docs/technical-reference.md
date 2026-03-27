@@ -1,118 +1,118 @@
 # Technical Reference
 
-## API 端點總覽
+## API Endpoints
 
-### 資產
+### Assets
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/v1/assets` | 資產列表 |
-| POST | `/api/v1/assets` | 新增資產 |
-| PATCH | `/api/v1/assets/:id` | 更新資產（name / symbol） |
-| DELETE | `/api/v1/assets/:id` | 刪除資產 |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/assets` | List assets |
+| POST | `/api/v1/assets` | Create asset |
+| PATCH | `/api/v1/assets/:id` | Update asset (name / symbol) |
+| DELETE | `/api/v1/assets/:id` | Delete asset |
 
-### 帳戶
+### Accounts
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/v1/accounts` | 帳戶列表 |
-| POST | `/api/v1/accounts` | 新增帳戶 |
-| PATCH | `/api/v1/accounts/:id` | 更新帳戶 |
-| DELETE | `/api/v1/accounts/:id` | 刪除帳戶 |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/accounts` | List accounts |
+| POST | `/api/v1/accounts` | Create account |
+| PATCH | `/api/v1/accounts/:id` | Update account |
+| DELETE | `/api/v1/accounts/:id` | Delete account |
 
-### 持倉
+### Holdings
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/v1/holdings` | 持倉列表（含 latestValueInBase） |
-| PUT | `/api/v1/holdings/:assetId/:accountId` | 設定持倉數量 |
-| DELETE | `/api/v1/holdings/:assetId/:accountId` | 刪除持倉 |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/holdings` | List holdings (includes `latestValueInBase`) |
+| PUT | `/api/v1/holdings/:assetId/:accountId` | Upsert holding quantity |
+| DELETE | `/api/v1/holdings/:assetId/:accountId` | Delete holding |
 
-### 交易紀錄
+### Transactions
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/v1/transactions` | 交易紀錄（支援 `?assetId=&accountId=&from=&to=`） |
-| POST | `/api/v1/transactions` | 新增交易 |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/transactions` | List transactions (`?assetId=&accountId=&from=&to=`) |
+| POST | `/api/v1/transactions` | Create transaction |
 
-### 自動記
+### Recurring Entries
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/v1/recurring-entries` | 自動記列表（支援 `?assetId=&accountId=`） |
-| POST | `/api/v1/recurring-entries` | 新增自動記 |
-| PATCH | `/api/v1/recurring-entries/:id` | 更新自動記 |
-| DELETE | `/api/v1/recurring-entries/:id` | 刪除自動記 |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/recurring-entries` | List recurring entries (`?assetId=&accountId=`) |
+| POST | `/api/v1/recurring-entries` | Create recurring entry |
+| PATCH | `/api/v1/recurring-entries/:id` | Update recurring entry |
+| DELETE | `/api/v1/recurring-entries/:id` | Delete recurring entry |
 
-### 價格 / 匯率
+### Prices / FX Rates
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/v1/prices` | 價格紀錄 |
-| POST | `/api/v1/prices/manual` | 手動輸入價格（manual 資產用） |
-| GET | `/api/v1/fx-rates` | 匯率紀錄（支援 `?from=&to=&fromDate=&toDate=`） |
-| POST | `/api/v1/fx-rates/refresh` | 立即重新抓取匯率 |
-| POST | `/api/v1/fx-rates/manual` | 手動輸入匯率 |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/prices` | List price records (`?assetId=&from=&to=`) |
+| POST | `/api/v1/prices/manual` | Manually set price (for manual-priced assets) |
+| GET | `/api/v1/fx-rates` | List FX rates (`?from=&to=&fromDate=&toDate=`) |
+| POST | `/api/v1/fx-rates/refresh` | Refresh FX rates now |
+| POST | `/api/v1/fx-rates/manual` | Manually set FX rate |
 
-### 快照
+### Snapshots
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/v1/snapshots/history` | 快照日期列表（支援 `?range=30d\|1y\|all`） |
-| GET | `/api/v1/snapshots/items` | 指定資產的快照序列（需 `?assetId=&range=`） |
-| GET | `/api/v1/snapshots/:date` | 指定日期快照明細 |
-| POST | `/api/v1/snapshots/trigger` | 手動觸發快照（支援 `?date=YYYY-MM-DD`） |
-| POST | `/api/v1/snapshots/rebuild/:date` | 重建指定日快照 |
-| POST | `/api/v1/snapshots/rebuild-range` | 批次重建區間（body: `{ from, to }`） |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/snapshots/history` | Snapshot date list (`?range=30d\|1y\|all`) |
+| GET | `/api/v1/snapshots/items` | Snapshot series for an asset (`?assetId=&range=`) |
+| GET | `/api/v1/snapshots/:date` | Snapshot detail for a date |
+| POST | `/api/v1/snapshots/trigger` | Trigger snapshot (`?date=YYYY-MM-DD`) |
+| POST | `/api/v1/snapshots/rebuild/:date` | Rebuild snapshot for a date |
+| POST | `/api/v1/snapshots/rebuild-range` | Rebuild date range (body: `{ from, to }`) |
 
-### 儀表板
+### Dashboard
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/v1/dashboard/summary` | 淨值總覽（含漲跌，支援 `?displayCurrency=`） |
-| GET | `/api/v1/dashboard/allocation` | 分類配置（支援 `?date=&displayCurrency=`） |
-| GET | `/api/v1/dashboard/live` | 即時持倉彙總（支援 `?displayCurrency=`） |
-| GET | `/api/v1/dashboard/net-worth-history` | 淨值歷史（支援 `?range=&displayCurrency=`） |
-| GET | `/api/v1/dashboard/category-history` | 分類歷史（支援 `?range=&displayCurrency=`） |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/dashboard/summary` | Net worth summary with changes (`?displayCurrency=`) |
+| GET | `/api/v1/dashboard/allocation` | Category allocation (`?date=&displayCurrency=`) |
+| GET | `/api/v1/dashboard/live` | Live holdings total (`?displayCurrency=`) |
+| GET | `/api/v1/dashboard/net-worth-history` | Net worth history (`?range=&displayCurrency=`) |
+| GET | `/api/v1/dashboard/category-history` | Category history (`?range=&displayCurrency=`) |
 
-### 使用者
+### Users
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/v1/users` | 使用者列表 |
-| POST | `/api/v1/users` | 新增使用者 |
-| PATCH | `/api/v1/users/:id` | 更新使用者 |
-| DELETE | `/api/v1/users/:id` | 刪除使用者 |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/users` | List users |
+| POST | `/api/v1/users` | Create user |
+| PATCH | `/api/v1/users/:id` | Update user |
+| DELETE | `/api/v1/users/:id` | Delete user |
 
-### 代碼搜尋 / 備份
+### Ticker Search / Backup
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| GET | `/api/v1/tickers/search` | 股票/ETF/加密貨幣代碼搜尋（支援 `?q=&country=TW\|US\|Crypto`） |
-| GET | `/api/v1/backup/export/:userId` | 匯出指定使用者資料為加密 ZIP |
-| POST | `/api/v1/backup/import/:userId` | 匯入 ZIP 還原資料 |
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/tickers/search` | Search stocks/ETFs/crypto (`?q=&country=TW\|US\|Crypto`) |
+| GET | `/api/v1/backup/export/:userId` | Export user data as encrypted ZIP |
+| POST | `/api/v1/backup/import/:userId` | Import ZIP to restore data |
 
-### Tunnel（手機連線）
+### Tunnel (Phone Access)
 
-| 方法 | 路徑 | 說明 |
-|------|------|------|
-| POST | `/api/v1/tunnel/start` | 啟動 Cloudflare Tunnel，回傳公開 URL |
-| POST | `/api/v1/tunnel/stop` | 停止 Tunnel |
-| GET | `/api/v1/tunnel/status` | 查詢 Tunnel 狀態與 URL |
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | `/api/v1/tunnel/start` | Start Cloudflare Tunnel, returns public URL |
+| POST | `/api/v1/tunnel/stop` | Stop tunnel |
+| GET | `/api/v1/tunnel/status` | Get tunnel status and URL |
 
 ---
 
-## 快照機制
+## Snapshot Mechanism
 
-每日 cron job（預設 22:00）執行 `dailySnapshotJob`：
+Daily cron job (default 22:00) runs `dailySnapshotJob`:
 
-1. 抓取所有 `market` 資產的最新市價（yahoo-finance2）
-2. 抓取最新匯率（open.er-api 法幣 + CoinGecko USDT/TWD）
-3. 對每筆持倉計算 `valueInBase`（TWD）= `quantity × price × fxRate`
-4. 寫入 `snapshotItems` 表（30 天內找不到價格則跳過）
-5. 整個過程在同一 DB transaction 內確保原子性
+1. Fetch latest market prices for all `market`-priced assets (yahoo-finance2)
+2. Fetch latest FX rates (open.er-api for fiat + CoinGecko for USDT/TWD)
+3. Calculate `valueInBase` (TWD) = `quantity × price × fxRate` for each holding
+4. Write to `snapshotItems` table (skip if no price found within 30 days)
+5. Entire process runs in a single DB transaction for atomicity
 
-手動觸發（開發補跑）：
+Manual trigger (for backfilling):
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/snapshots/trigger?date=2026-03-22"
@@ -120,56 +120,56 @@ curl -X POST "http://localhost:8000/api/v1/snapshots/trigger?date=2026-03-22"
 
 ---
 
-## 資產分類
+## Asset Classification
 
 ```
-資產 (asset)
-├── liquid（流動資產）
-│   ├── bank_account  → fixed pricing
-│   ├── physical_cash → fixed
-│   ├── e_wallet      → fixed
-│   └── stablecoin    → fixed
-├── investment（投資資產）
-│   ├── stock / etf   → market（yahoo-finance2）
-│   ├── crypto        → market（yahoo-finance2）
-│   ├── fund          → manual
-│   └── precious_metal→ manual
-├── fixed（固定資產）
-│   ├── real_estate   → manual
-│   └── vehicle       → manual
-└── receivable        → fixed
+Assets
+├── liquid
+│   ├── bank_account   → fixed pricing
+│   ├── physical_cash  → fixed
+│   ├── e_wallet       → fixed
+│   └── stablecoin     → fixed
+├── investment
+│   ├── stock / etf    → market (yahoo-finance2)
+│   ├── crypto         → market (yahoo-finance2)
+│   ├── fund           → manual
+│   └── precious_metal → manual
+├── fixed
+│   ├── real_estate    → manual
+│   └── vehicle        → manual
+└── receivable         → fixed
 
-負債 (liability)
+Liabilities
 └── debt
-    ├── credit_card   → fixed
-    ├── mortgage      → fixed
-    └── personal_loan → fixed
+    ├── credit_card    → fixed
+    ├── mortgage       → fixed
+    └── personal_loan  → fixed
 ```
 
 ---
 
-## 環境變數說明
+## Environment Variables
 
-| 變數 | 必填 | 預設值 | 說明 |
-|------|------|--------|------|
-| `DATABASE_PATH` | 否 | `./atomfortune.db` | SQLite 資料庫檔案路徑 |
-| `TEST_DATABASE_PATH` | 否 | — | 測試用 DB（vitest 自動使用） |
-| `BASE_CURRENCY` | 否 | `TWD` | 基準幣別 |
-| `SNAPSHOT_SCHEDULE` | 否 | `0 22 * * *` | 快照 cron 表達式 |
-| `PORT` | 否 | `8000` | API 監聽 port |
-| `API_ORIGIN` | 否 | `http://localhost:8000` | Next.js API proxy 的目標 origin |
-| `WEB_ORIGIN` | 否 | `http://localhost:3000` | Tunnel 指向的 Web origin |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DATABASE_PATH` | No | `./atomfortune.db` | SQLite database file path |
+| `TEST_DATABASE_PATH` | No | — | Test database (used by Vitest) |
+| `BASE_CURRENCY` | No | `TWD` | Base currency for calculations |
+| `SNAPSHOT_SCHEDULE` | No | `0 22 * * *` | Daily snapshot cron expression |
+| `PORT` | No | `8000` | API server port |
+| `API_ORIGIN` | No | `http://localhost:8000` | Target origin for Next.js API proxy |
+| `WEB_ORIGIN` | No | `http://localhost:3000` | Target origin for tunnel |
 
 ---
 
-## 外部資料來源
+## External Data Sources
 
-所有來源均免費、無需 API 金鑰：
+All free, no API keys required:
 
-| 來源 | 用途 |
-|------|------|
-| [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2) | 股票、ETF、加密貨幣市價 |
-| [open.er-api.com](https://www.exchangerate-api.com/docs/free-api) | 法幣匯率（33 種主要幣別） |
-| [CoinGecko API](https://www.coingecko.com/api/documentation) | USDT/TWD 匯率 |
-| [TWSE](https://www.twse.com.tw) | 台股代碼搜尋 |
-| Yahoo Finance Search | 美股/ETF 代碼搜尋 |
+| Source | Usage |
+|--------|-------|
+| [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2) | Stock, ETF, crypto market prices |
+| [open.er-api.com](https://www.exchangerate-api.com/docs/free-api) | Fiat currency exchange rates |
+| [CoinGecko API](https://www.coingecko.com/api/documentation) | USDT/TWD exchange rate + crypto search |
+| [TWSE](https://www.twse.com.tw) | Taiwan stock ticker search |
+| Yahoo Finance Search | US stock/ETF ticker search |

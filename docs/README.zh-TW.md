@@ -173,7 +173,7 @@ cd desktop && npm run dist
 
 ## 文件
 
-- [技術參考](technical-reference.md) — API 端點、Schema、快照機制
+- [Technical Reference](technical-reference.md) — API endpoints, schema, snapshot mechanism
 - [English README](../README.md)
 
 ## 授權
