@@ -51,6 +51,11 @@ body {
   color: var(--color-text);
 }
 
+/* Prevent iOS Safari auto-zoom on input focus (triggers when font-size < 16px) */
+@media (max-width: 767px) {
+  input, select, textarea { font-size: 16px !important; }
+}
+
 /* iPhone safe area for bottom nav */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0px);
