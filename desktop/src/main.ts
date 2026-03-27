@@ -1,11 +1,14 @@
-import { app, BrowserWindow, dialog, Notification, utilityProcess } from 'electron'
+import { app, BrowserWindow, dialog, Menu, Notification, utilityProcess } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import http from 'http'
+import QRCode from 'qrcode'
+import { startTunnel, stopTunnel } from './tunnel'
 
 let mainWindow: BrowserWindow | null = null
 let nextServerProcess: Electron.UtilityProcess | null = null
 let apiServer: any = null
+let qrWindow: BrowserWindow | null = null
 
 // Poll until the given port accepts a connection, then resolve.
 function waitForPort(port: number, timeoutMs = 30_000): Promise<void> {
@@ -31,6 +34,128 @@ function waitForPort(port: number, timeoutMs = 30_000): Promise<void> {
     attempt()
   })
 }
+
+// ─── Share to Phone: Tunnel + QR Code ─────────────────────────────────────────
+
+async function handleShareToPhone(): Promise<void> {
+  if (qrWindow && !qrWindow.isDestroyed()) {
+    qrWindow.focus()
+    return
+  }
+
+  qrWindow = new BrowserWindow({
+    width: 400,
+    height: 480,
+    resizable: false,
+    title: 'AtomFortune',
+    webPreferences: { contextIsolation: true, nodeIntegration: false },
+  })
+
+  // Show loading state
+  qrWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
+<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;background:#1a1916;color:#f8f5f2;font-family:system-ui;margin:0;">
+  <div style="text-align:center">
+    <p style="font-size:18px;">正在建立連線...</p>
+    <p style="color:#888;font-size:14px;">首次使用需下載 Cloudflare Tunnel (~30 MB)</p>
+  </div>
+</body></html>`)}`)
+
+  try {
+    const url = await startTunnel(3100)
+    if (!qrWindow || qrWindow.isDestroyed()) { stopTunnel(); return }
+
+    const qrDataUrl = await QRCode.toDataURL(url, {
+      width: 280,
+      margin: 2,
+      color: { dark: '#f8f5f2', light: '#1a1916' },
+    })
+
+    qrWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
+<html><body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#1a1916;color:#f8f5f2;font-family:system-ui;margin:0;user-select:none;">
+  <h2 style="margin:0 0 20px;">手機掃描連線</h2>
+  <img src="${qrDataUrl}" width="256" height="256" style="border-radius:12px;" />
+  <p style="color:#0a9e9e;margin:16px 24px 0;font-size:13px;word-break:break-all;text-align:center;">${url}</p>
+  <p style="color:#555;font-size:12px;margin-top:12px;">關閉此視窗會停止連線</p>
+</body></html>`)}`)
+  } catch (err: any) {
+    if (qrWindow && !qrWindow.isDestroyed()) qrWindow.close()
+    dialog.showErrorBox('連線失敗', err?.message ?? String(err))
+  }
+
+  qrWindow.on('closed', () => {
+    qrWindow = null
+    stopTunnel()
+  })
+}
+
+// ─── Application Menu ─────────────────────────────────────────────────────────
+
+function buildMenu(): void {
+  const isMac = process.platform === 'darwin'
+
+  const template: Electron.MenuItemConstructorOptions[] = [
+    ...(isMac
+      ? [{
+          label: app.name,
+          submenu: [
+            { role: 'about' as const },
+            { type: 'separator' as const },
+            { role: 'hide' as const },
+            { role: 'hideOthers' as const },
+            { role: 'unhide' as const },
+            { type: 'separator' as const },
+            { role: 'quit' as const },
+          ],
+        }]
+      : []),
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' },
+      ],
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' },
+      ],
+    },
+    {
+      label: 'Tools',
+      submenu: [
+        {
+          label: 'Share to Phone',
+          accelerator: 'CmdOrCtrl+Shift+M',
+          click: handleShareToPhone,
+        },
+      ],
+    },
+    {
+      label: 'Window',
+      submenu: isMac
+        ? [{ role: 'minimize' }, { role: 'zoom' }, { type: 'separator' }, { role: 'front' }]
+        : [{ role: 'minimize' }, { role: 'close' }],
+    },
+  ]
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
+// ─── Bootstrap ────────────────────────────────────────────────────────────────
 
 async function bootstrap(): Promise<void> {
   // ─── CRITICAL: set env vars BEFORE any API module import ──────────────────
@@ -102,6 +227,9 @@ async function bootstrap(): Promise<void> {
     return
   }
 
+  // ─── Menu ────────────────────────────────────────────────────────────────
+  buildMenu()
+
   // ─── Open window ──────────────────────────────────────────────────────────
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -140,6 +268,7 @@ app.commandLine.appendSwitch('disable-http-cache')
 app.on('ready', bootstrap)
 
 app.on('window-all-closed', () => {
+  stopTunnel()
   nextServerProcess?.kill()
   apiServer?.close()
   app.quit()

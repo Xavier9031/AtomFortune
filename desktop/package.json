@@ -11,8 +11,9 @@
     "dist": "npm run build && { electron-builder --mac; ec=$?; cd ../api && npm rebuild; exit $ec; }"
   },
   "dependencies": {
+    "atomfortune-api": "file:../api",
     "electron-updater": "^6.1.0",
-    "atomfortune-api": "file:../api"
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
