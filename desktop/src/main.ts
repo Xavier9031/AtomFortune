@@ -133,6 +133,10 @@ async function bootstrap(): Promise<void> {
   }
 }
 
+// Disable HTTP cache for the locally-served web app — caching localhost
+// responses causes stale JS/CSS to persist across app updates.
+app.commandLine.appendSwitch('disable-http-cache')
+
 app.on('ready', bootstrap)
 
 app.on('window-all-closed', () => {
