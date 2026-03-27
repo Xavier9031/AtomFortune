@@ -75,13 +75,30 @@
 | GET | `/api/v1/dashboard/net-worth-history` | 淨值歷史（支援 `?range=&displayCurrency=`） |
 | GET | `/api/v1/dashboard/category-history` | 分類歷史（支援 `?range=&displayCurrency=`） |
 
+### 使用者
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| GET | `/api/v1/users` | 使用者列表 |
+| POST | `/api/v1/users` | 新增使用者 |
+| PATCH | `/api/v1/users/:id` | 更新使用者 |
+| DELETE | `/api/v1/users/:id` | 刪除使用者 |
+
 ### 代碼搜尋 / 備份
 
 | 方法 | 路徑 | 說明 |
 |------|------|------|
-| GET | `/api/v1/tickers` | 股票/ETF/加密貨幣代碼搜尋（支援 `?q=`） |
-| GET | `/api/v1/backup/export` | 匯出完整資料為 JSON |
-| POST | `/api/v1/backup/import` | 匯入 JSON 還原資料 |
+| GET | `/api/v1/tickers/search` | 股票/ETF/加密貨幣代碼搜尋（支援 `?q=&country=TW\|US\|Crypto`） |
+| GET | `/api/v1/backup/export/:userId` | 匯出指定使用者資料為加密 ZIP |
+| POST | `/api/v1/backup/import/:userId` | 匯入 ZIP 還原資料 |
+
+### Tunnel（手機連線）
+
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| POST | `/api/v1/tunnel/start` | 啟動 Cloudflare Tunnel，回傳公開 URL |
+| POST | `/api/v1/tunnel/stop` | 停止 Tunnel |
+| GET | `/api/v1/tunnel/status` | 查詢 Tunnel 狀態與 URL |
 
 ---
 
@@ -135,13 +152,13 @@ curl -X POST "http://localhost:8000/api/v1/snapshots/trigger?date=2026-03-22"
 
 | 變數 | 必填 | 預設值 | 說明 |
 |------|------|--------|------|
-| `DATABASE_URL` | 是 | — | PostgreSQL 連線字串 |
-| `TEST_DATABASE_URL` | 否 | — | 測試用 DB（vitest 自動使用） |
+| `DATABASE_PATH` | 否 | `./atomfortune.db` | SQLite 資料庫檔案路徑 |
+| `TEST_DATABASE_PATH` | 否 | — | 測試用 DB（vitest 自動使用） |
 | `BASE_CURRENCY` | 否 | `TWD` | 基準幣別 |
 | `SNAPSHOT_SCHEDULE` | 否 | `0 22 * * *` | 快照 cron 表達式 |
 | `PORT` | 否 | `8000` | API 監聽 port |
-| `NEXT_PUBLIC_API_BASE_URL` | 否 | `http://localhost:8000/api/v1` | 前端瀏覽器端 API URL |
-| `API_BASE_URL` | 否 | `http://api:8000/api/v1` | 前端 Server-Side API URL（Docker 內網用） |
+| `API_ORIGIN` | 否 | `http://localhost:8000` | Next.js API proxy 的目標 origin |
+| `WEB_ORIGIN` | 否 | `http://localhost:3000` | Tunnel 指向的 Web origin |
 
 ---
 

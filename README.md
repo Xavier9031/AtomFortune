@@ -1,70 +1,180 @@
-# Atom Fortune
+<p align="center">
+  <img src="web/public/icon-192.png" width="80" alt="AtomFortune" />
+</p>
 
-**隱私優先的個人淨值追蹤工具。**
-所有資料存放在本機，完全離線，不依賴任何雲端帳號或訂閱服務。
+<h1 align="center">AtomFortune</h1>
 
----
+<p align="center">
+  <strong>Privacy-first personal net worth tracker.</strong><br/>
+  All data stays on your device. No cloud accounts. No subscriptions.
+</p>
 
-## 下載（macOS Desktop）
+<p align="center">
+  <a href="https://github.com/Xavier9031/AtomFortune/releases"><img src="https://img.shields.io/github/v/release/Xavier9031/AtomFortune?label=latest&style=flat-square" alt="Release" /></a>
+  <a href="https://github.com/Xavier9031/AtomFortune/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Xavier9031/AtomFortune/ci.yml?label=CI&style=flat-square" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
+</p>
 
-前往 [GitHub Releases](https://github.com/Xavier9031/AtomFortune/releases) 下載最新版 `.dmg`，安裝後即可使用，無需任何設定。
-
-> 目前僅支援 **Apple Silicon（arm64）**。
-
----
-
-## 這是什麼？
-
-Atom Fortune 讓你在一個介面上追蹤所有資產與負債：
-
-- 銀行存款、現金、電子錢包
-- 股票、ETF、加密貨幣（自動抓取市價）
-- 房地產、車輛、貴金屬（手動輸入估值）
-- 房貸、信用卡等負債
-
-每天自動抓取市價與匯率，計算你的即時淨值，並記錄長期趨勢。
+<p align="center">
+  <a href="docs/README.zh-TW.md">繁體中文</a>
+</p>
 
 ---
 
-## 功能
+## What is AtomFortune?
 
-- **儀表板** — 淨值總覽、資產結構圖、30 天 / 1 年 / 全期趨勢、財務自由進度估算
-- **持倉管理** — 依帳戶分組，快速新增、編輯、刪除持倉
-- **資產管理** — 管理資產清單，查看各資產的持倉分佈與歷史趨勢
-- **帳戶管理** — 管理銀行、券商、錢包等帳戶
-- **多幣顯示** — 基準幣 TWD，可切換 USD / JPY 等顯示
-- **備份/還原** — 一鍵匯出全部資料為 JSON，隨時還原
-- **深色模式**
+A single interface to track everything you own and owe:
 
----
+- **Cash & deposits** — bank accounts, e-wallets, stablecoins
+- **Investments** — stocks, ETFs, crypto, funds, precious metals
+- **Fixed assets** — real estate, vehicles
+- **Liabilities** — mortgages, credit cards, personal loans
 
-## 自架（Docker Compose）
+Market prices and FX rates are fetched automatically every day, giving you a real-time net worth and long-term trend view.
 
-偏好網頁版或 Linux/Windows 的用戶可透過 Docker Compose 自架：
+## Features
+
+- **Dashboard** — Net worth overview, asset allocation donut, 30d / 6m / 1y / all-time trends
+- **Holdings** — Grouped by account, quick add/edit/delete
+- **Assets** — Full asset list with holding distribution and value history
+- **Accounts** — Bank, broker, crypto exchange, e-wallet management
+- **Multi-currency** — Base currency TWD, display in 17 currencies (USD, JPY, EUR, GBP, CNY, etc.)
+- **Backup & restore** — One-click encrypted export/import
+- **Multi-profile** — Multiple user profiles with independent data
+- **Dark mode** — Full dark theme with smooth transitions
+- **Mobile-friendly** — Responsive layout with bottom nav, card-based lists, full-screen panels
+- **Share to Phone** — One-click Cloudflare Tunnel + QR code to access from any network
+- **Auto-update** — Desktop app checks for updates on launch
+
+## Download
+
+Pre-built binaries are available on the [Releases](https://github.com/Xavier9031/AtomFortune/releases) page:
+
+| Platform | Format | Architecture |
+|----------|--------|-------------|
+| macOS | `.dmg` | Apple Silicon (arm64) |
+| Windows | `.exe` (NSIS installer) | x64 |
+| Linux | `.AppImage` | x64 |
+
+> No setup required — the desktop app bundles the API server and web frontend.
+
+## Self-host with Docker
+
+For those who prefer a web-based setup:
 
 ```bash
 git clone https://github.com/Xavier9031/AtomFortune.git
 cd AtomFortune
 docker compose up -d
-docker compose exec api npm run db:migrate
 ```
 
-啟動後開啟瀏覽器前往 **http://localhost:3000**
+Open **http://localhost:3001** in your browser.
 
----
+### Access from your phone
 
-## 技術堆疊
+Go to **Settings → Phone Access**, click **Start Connection**, and scan the QR code. Works on any network (4G/5G/different WiFi) via Cloudflare Tunnel.
 
-| 層  | 技術 |
-|-----|------|
-| 桌面殼層 | [Electron](https://www.electronjs.org/) 31 |
-| 後端 | [Hono](https://hono.dev/) + TypeScript |
-| 資料庫 | SQLite（[better-sqlite3](https://github.com/WiseLibs/better-sqlite3)）+ [Drizzle ORM](https://orm.drizzle.team/) |
-| 前端 | Next.js 16 + Tailwind CSS v4 + Recharts |
-| 市價 | yahoo-finance2（股票/ETF/加密貨幣）、open.er-api（匯率）|
+## Tech Stack
 
----
+| Layer | Technology |
+|-------|-----------|
+| Desktop | [Electron](https://www.electronjs.org/) 31 |
+| Backend | [Hono](https://hono.dev/) (TypeScript) |
+| Database | SQLite ([better-sqlite3](https://github.com/WiseLibs/better-sqlite3)) + [Drizzle ORM](https://orm.drizzle.team/) |
+| Frontend | [Next.js](https://nextjs.org/) 16 + [Tailwind CSS](https://tailwindcss.com/) v4 + [Recharts](https://recharts.org/) |
+| Market Data | [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2) (stocks/ETFs/crypto) |
+| FX Rates | [open.er-api](https://open.er-api.com/) (fiat) + [CoinGecko](https://www.coingecko.com/) (crypto) |
+| i18n | [next-intl](https://next-intl-docs.vercel.app/) (zh-TW, en) |
+| Testing | [Vitest](https://vitest.dev/) |
+| CI/CD | GitHub Actions (3-platform build on tag) |
 
-## 進階文件
+## Project Structure
 
-- [技術參考（API 端點、環境變數、快照機制）](docs/technical-reference.md)
+```
+AtomFortune/
+├── api/               # Hono REST API + SQLite
+│   ├── src/modules/   # assets, accounts, holdings, prices, snapshots, ...
+│   ├── src/jobs/      # daily snapshot cron, pricing service
+│   └── drizzle/       # database migrations
+├── web/               # Next.js frontend
+│   ├── app/           # pages (dashboard, holdings, assets, accounts, settings, ...)
+│   └── components/    # React components
+├── desktop/           # Electron shell
+│   └── src/main.ts    # main process, tunnel, menu
+└── docker-compose.yml
+```
+
+## Development
+
+### Prerequisites
+
+- Node.js 20+
+- npm
+
+### Setup
+
+```bash
+# Install monorepo tooling
+npm install
+
+# Install each package
+cd api && npm install && cd ..
+cd web && npm install && cd ..
+cd desktop && npm install && cd ..
+```
+
+### Run locally
+
+```bash
+# Terminal 1: API server (port 8000)
+cd api && npm run dev
+
+# Terminal 2: Web frontend (port 3000)
+cd web && npm run dev
+
+# Terminal 3 (optional): Desktop app
+cd desktop && npm start
+```
+
+### Run tests
+
+```bash
+cd api && npm test
+```
+
+### Build desktop app
+
+```bash
+cd desktop && npm run dist
+```
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_PATH` | `./atomfortune.db` | SQLite database file path |
+| `BASE_CURRENCY` | `TWD` | Base currency for calculations |
+| `SNAPSHOT_SCHEDULE` | `0 22 * * *` | Daily snapshot cron expression |
+| `PORT` | `8000` | API server port |
+| `API_ORIGIN` | `http://localhost:8000` | API origin for Next.js proxy |
+| `WEB_ORIGIN` | `http://localhost:3000` | Web origin for tunnel target |
+
+## How It Works
+
+1. **Add accounts** (bank, broker, wallet) and **assets** (stocks, cash, property)
+2. **Create holdings** linking assets to accounts with quantities
+3. Every day at 22:00, the **snapshot job** automatically:
+   - Fetches latest prices from Yahoo Finance
+   - Fetches FX rates from open.er-api + CoinGecko
+   - Calculates `value = quantity × price × fxRate` for each holding
+   - Saves a point-in-time snapshot
+4. The **dashboard** shows your net worth trend over time
+
+## Documentation
+
+- [Technical Reference](docs/technical-reference.md) — API endpoints, schema, snapshot mechanism
+- [繁體中文 README](docs/README.zh-TW.md)
+
+## License
+
+MIT
