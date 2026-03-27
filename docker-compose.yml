@@ -5,18 +5,15 @@ services:
       DATABASE_PATH: /data/atomfortune.db
       BASE_CURRENCY: TWD
       SNAPSHOT_SCHEDULE: "0 22 * * *"
+      WEB_ORIGIN: http://web:3000
     ports:
       - "8001:8000"
     volumes:
       - dbdata:/data
   web:
-    build:
-      context: ./web
-      args:
-        NEXT_PUBLIC_API_BASE_URL: http://localhost:8001/api/v1
+    build: ./web
     environment:
-      NEXT_PUBLIC_API_BASE_URL: http://localhost:8001/api/v1
-      API_BASE_URL: http://api:8000/api/v1
+      API_ORIGIN: http://api:8000
     ports:
       - "3001:3000"
     depends_on: [api]

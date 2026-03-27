@@ -56,7 +56,6 @@ async function handleShareToPhone(): Promise<void> {
 <html><body style="display:flex;align-items:center;justify-content:center;height:100vh;background:#1a1916;color:#f8f5f2;font-family:system-ui;margin:0;">
   <div style="text-align:center">
     <p style="font-size:18px;">正在建立連線...</p>
-    <p style="color:#888;font-size:14px;">首次使用需下載 Cloudflare Tunnel (~30 MB)</p>
   </div>
 </body></html>`)}`)
 
@@ -180,7 +179,7 @@ async function bootstrap(): Promise<void> {
         PORT: '3100',
         HOSTNAME: '127.0.0.1',
         NODE_ENV: 'production',
-        NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8000/api/v1',
+        API_ORIGIN: 'http://localhost:8000',
       },
       cwd: webStandalonePath,
     }

@@ -7,6 +7,7 @@ import { setLocale } from '@/app/actions/setLocale'
 import { setTheme } from '@/app/actions/setTheme'
 import { setExperimental } from '@/app/actions/setExperimental'
 import { SUPPORTED_LOCALES } from '@/lib/locales'
+import QRCodeCard from '@/components/shared/QRCodeCard'
 
 export default function SettingsPage() {
   const t = useTranslations()
@@ -106,6 +107,9 @@ export default function SettingsPage() {
 
         </div>
       </section>
+
+      {/* Remote Access / QR Code */}
+      <QRCodeCard />
 
       {/* System */}
       <section className="bg-[var(--color-surface)] rounded-xl border border-[var(--color-border)] overflow-hidden">
