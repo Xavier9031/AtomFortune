@@ -40,6 +40,27 @@ mac:
       arch:
         - arm64
 
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: resources/icon.png
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  installerIcon: resources/icon.png
+  uninstallerIcon: resources/icon.png
+
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+  category: Office
+  icon: resources/icon.png
+
 npmRebuild: true
 
 publish:
