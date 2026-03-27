@@ -10,9 +10,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Xavier9031/AtomFortune/releases"><img src="https://img.shields.io/github/v/release/Xavier9031/AtomFortune?label=最新版本&style=flat-square" alt="Release" /></a>
-  <a href="https://github.com/Xavier9031/AtomFortune/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Xavier9031/AtomFortune/ci.yml?label=CI&style=flat-square" alt="CI" /></a>
-  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
+  <img src="https://img.shields.io/badge/版本-0.0.7-green?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/平台-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Docker-blue?style=flat-square" alt="Platform" />
+  <img src="https://img.shields.io/badge/授權-MIT-blue?style=flat-square" alt="License" />
 </p>
 
 <p align="center">

@@ -50,8 +50,6 @@ win:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
-  installerIcon: resources/icon.png
-  uninstallerIcon: resources/icon.png
 
 linux:
   target:

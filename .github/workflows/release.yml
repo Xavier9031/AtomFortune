@@ -14,8 +14,31 @@ permissions:
   contents: write
 
 jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine tag
+        id: ref
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "tag=${{ inputs.tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+      - name: Create release if not exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.ref.outputs.tag }}"
+          VERSION="${TAG#atomfortune-}"
+          gh release view "$TAG" --repo Xavier9031/AtomFortune > /dev/null 2>&1 || \
+            gh release create "$TAG" --repo Xavier9031/AtomFortune \
+              --title "$VERSION" --generate-notes
+
   build-mac:
     name: Build macOS App
+    needs: create-release
     runs-on: macos-latest
 
     steps:
@@ -58,11 +81,11 @@ jobs:
           TAG="${{ steps.ref.outputs.ref }}"
           DMG=$(ls desktop/release/*.dmg)
           gh release upload "$TAG" "$DMG" --repo Xavier9031/AtomFortune --clobber
-          # latest-mac.yml is required by electron-updater to detect new versions
           gh release upload "$TAG" desktop/release/latest-mac.yml --repo Xavier9031/AtomFortune --clobber
 
   build-windows:
     name: Build Windows App
+    needs: create-release
     runs-on: windows-latest
 
     steps:
@@ -111,11 +134,11 @@ jobs:
           TAG="${{ steps.ref.outputs.ref }}"
           EXE=$(ls desktop/release/*.exe)
           gh release upload "$TAG" "$EXE" --repo Xavier9031/AtomFortune --clobber
-          # latest.yml is required by electron-updater on Windows
           gh release upload "$TAG" desktop/release/latest.yml --repo Xavier9031/AtomFortune --clobber
 
   build-linux:
     name: Build Linux App
+    needs: create-release
     runs-on: ubuntu-latest
 
     steps:
@@ -158,5 +181,4 @@ jobs:
           TAG="${{ steps.ref.outputs.ref }}"
           APPIMAGE=$(ls desktop/release/*.AppImage)
           gh release upload "$TAG" "$APPIMAGE" --repo Xavier9031/AtomFortune --clobber
-          # latest-linux.yml is required by electron-updater on Linux
           gh release upload "$TAG" desktop/release/latest-linux.yml --repo Xavier9031/AtomFortune --clobber
