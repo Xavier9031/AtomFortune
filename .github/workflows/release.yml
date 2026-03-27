@@ -51,10 +51,12 @@ jobs:
       - name: Build .dmg
         run: cd desktop && npm run build && npx electron-builder --mac --publish never
 
-      - name: Upload DMG to release
+      - name: Upload DMG and update manifest to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${{ steps.ref.outputs.ref }}"
           DMG=$(ls desktop/release/*.dmg)
           gh release upload "$TAG" "$DMG" --repo Xavier9031/AtomFortune --clobber
+          # latest-mac.yml is required by electron-updater to detect new versions
+          gh release upload "$TAG" desktop/release/latest-mac.yml --repo Xavier9031/AtomFortune --clobber
