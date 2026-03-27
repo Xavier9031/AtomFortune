@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import useSWR from 'swr'
@@ -48,6 +48,19 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
   const [selectedCat, setSelectedCat] = useState<Category | null>(null)
   const [hoveredCat, setHoveredCat] = useState<string | null>(null)
   const [groupBy, setGroupBy] = useState<GroupBy>('account')
+  const legendRef = useRef<HTMLDivElement>(null)
+
+  // Dismiss popover on outside tap (mobile)
+  useEffect(() => {
+    if (!hoveredCat) return
+    function onTouch(e: TouchEvent) {
+      if (legendRef.current && !legendRef.current.contains(e.target as Node)) {
+        setHoveredCat(null)
+      }
+    }
+    document.addEventListener('touchstart', onTouch)
+    return () => document.removeEventListener('touchstart', onTouch)
+  }, [hoveredCat])
 
   const netWorth = totalAssets - totalLiabilities
   const gross = categories.reduce((s, c) => s + c.value, 0)
@@ -102,14 +115,21 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
           </div>
 
           {/* Category legend */}
-          <div className="flex-1 space-y-1.5 min-w-0">
+          <div className="flex-1 space-y-1.5 min-w-0" ref={legendRef}>
             {donutData.map(c => {
               const pct = gross > 0 ? (c.value / gross) * 100 : 0
               const catItems = categories.find(cat => cat.category === c.category)?.items ?? []
               return (
                 <div key={c.category} className="relative"
                   onMouseEnter={() => setHoveredCat(c.category)}
-                  onMouseLeave={() => setHoveredCat(null)}>
+                  onMouseLeave={() => setHoveredCat(null)}
+                  onClick={(e) => {
+                    // Mobile: toggle popover on tap; prevent navigating to detail
+                    if ('ontouchstart' in window) {
+                      e.stopPropagation()
+                      setHoveredCat(prev => prev === c.category ? null : c.category)
+                    }
+                  }}>
                   <button onClick={() => setSelectedCat(c.category as Category)}
                     className="w-full text-left group">
                     <div className="flex items-center gap-2 mb-1">
