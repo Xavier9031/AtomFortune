@@ -91,6 +91,16 @@ Pre-built binaries are available on the [Releases](https://github.com/Xavier9031
 
 > No setup required — the desktop app bundles the API server and web frontend.
 
+### macOS: "App is damaged" warning
+
+Because AtomFortune is not signed with an Apple Developer certificate, macOS Gatekeeper will block it on first launch. To fix this, run the following command in Terminal after moving the app to your Applications folder:
+
+```bash
+xattr -cr /Applications/AtomFortune.app
+```
+
+Then double-click to open normally. This is a one-time step.
+
 ## Self-host with Docker
 
 For those who prefer a web-based setup:
