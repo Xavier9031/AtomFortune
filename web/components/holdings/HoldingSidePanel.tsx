@@ -283,7 +283,6 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   }
 
   async function handleDelete() {
-    if (!confirm(t('holdings.deleteConfirm', { name: holding!.assetName }))) return
     await fetchWithUser(`${BASE}/holdings/${holding!.assetId}/${holding!.accountId}`, { method: 'DELETE' })
     globalMutate(`${BASE}/holdings`)
     handleClose()

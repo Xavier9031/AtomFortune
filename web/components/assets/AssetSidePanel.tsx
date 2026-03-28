@@ -173,7 +173,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
   }
 
   async function handleDelete() {
-    if (!asset || !confirm(t('assets.deleteConfirm'))) return
+    if (!asset) return
     const res = await fetchWithUser(`${BASE}/assets/${asset.id}`, { method: 'DELETE' })
     if (!res.ok) alert(t('assets.deleteFailed'))
     else onClose()

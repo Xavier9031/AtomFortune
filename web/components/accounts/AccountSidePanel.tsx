@@ -34,7 +34,6 @@ export function AccountSidePanel({ open, account, holdingsCount = 0, onClose }: 
   async function handleDelete() {
     if (!account) return
     if (holdingsCount > 0) { alert(t('account.deleteBlockedByHoldings')); return }
-    if (!confirm(t('account.deleteConfirm'))) return
     const res = await fetchWithUser(`${BASE}/accounts/${account.id}`, { method: 'DELETE' })
     if (!res.ok) alert(t('account.deleteFailed'))
     else onClose()
