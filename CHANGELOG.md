@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.13](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.12...atomfortune-v0.0.13) (2026-03-28)
+
+
+### Bug Fixes
+
+* sync sub-package versions to 0.0.12 ([fba0f3f](https://github.com/Xavier9031/AtomFortune/commit/fba0f3f444e57423fc54ffedf056f6891c8240ef))
+
 ## [0.0.12](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.11...atomfortune-v0.0.12) (2026-03-28)
 
 
