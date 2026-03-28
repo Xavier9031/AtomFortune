@@ -84,9 +84,9 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
             <tr className="border-b border-[var(--color-border)] bg-[var(--color-bg)]">
               {[
                 t('holdings.columns.assetName'),
+                t('holdings.columns.type'),
                 t('holdings.columns.account'),
                 t('holdings.columns.institution'),
-                t('holdings.columns.type'),
                 t('holdings.columns.quantity'),
                 `${t('holdings.columns.value')} (${currency})`,
               ].map(h => (
@@ -101,14 +101,14 @@ export function HoldingsList({ holdings, onRowClick }: Props) {
                 className={`cursor-pointer hover:bg-[var(--color-bg)] transition-colors
                   ${i < holdings.length - 1 ? 'border-b border-[var(--color-border)]' : ''}`}>
                 <td className="px-4 py-3 whitespace-nowrap font-medium">{h.assetName}</td>
-                <td className="px-4 py-3 whitespace-nowrap">{h.accountName}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">{h.institution ?? '—'}</td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium
                     ${CATEGORY_COLOR[h.category] ?? 'bg-[var(--color-bg)] text-[var(--color-muted)]'}`}>
                     {t(`asset.subKinds.${h.subKind}` as Parameters<typeof t>[0], { defaultValue: h.subKind })}
                   </span>
                 </td>
+                <td className="px-4 py-3 whitespace-nowrap">{h.accountName}</td>
+                <td className="px-4 py-3 whitespace-nowrap text-[var(--color-muted)]">{h.institution ?? '—'}</td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   {parseFloat(String(h.quantity)).toLocaleString()}
                   <span className="ml-1 text-xs text-[var(--color-muted)]">{translateUnit(getHoldingUnit(h), t)}</span>
