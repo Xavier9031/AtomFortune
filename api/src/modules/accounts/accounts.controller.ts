@@ -7,6 +7,7 @@ import { AccountsService } from './accounts.service'
 import { AssetsRepository } from '../assets/assets.repository'
 import { HoldingsRepository } from '../holdings/holdings.repository'
 import { AccountCreateSchema, AccountUpdateSchema, BalanceSetSchema } from './accounts.schema'
+import { refreshUserSnapshot } from '../../jobs/snapshot.job'
 
 function getUserId(c: Context): string | null {
   return c.req.header('x-user-id') ?? null
@@ -40,7 +41,16 @@ accountsController.patch('/:id', zValidator('json', AccountUpdateSchema), async 
 accountsController.patch('/:id/balance', zValidator('json', BalanceSetSchema), async (c) => {
   const userId = getUserId(c)
   if (!userId) return c.json({ error: 'Missing X-User-Id header' }, 400)
-  return c.json(await service.setBalance(userId, c.req.param('id'), c.req.valid('json').balance, c.req.valid('json').currencyCode))
+  const result = await service.setBalance(userId, c.req.param('id'), c.req.valid('json').balance, c.req.valid('json').currencyCode)
+
+  // Refresh snapshot items for all holdings after balance change
+  try {
+    await refreshUserSnapshot(db, userId)
+  } catch (err) {
+    console.warn('Snapshot refresh after balance set failed:', err)
+  }
+
+  return c.json(result)
 })
 
 accountsController.delete('/:id', async (c) => {
