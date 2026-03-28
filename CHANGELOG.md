@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.14](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.13...atomfortune-v0.0.14) (2026-03-28)
+
+
+### Bug Fixes
+
+* auto-download pinned cloudflared for Phone Access ([1df9789](https://github.com/Xavier9031/AtomFortune/commit/1df978934691a9897d4a6df0ee5c1f45adff7298))
+
 ## [0.0.13](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.12...atomfortune-v0.0.13) (2026-03-28)
 
 
