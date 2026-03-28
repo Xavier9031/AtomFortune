@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.11](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.10...atomfortune-v0.0.11) (2026-03-28)
+
+
+### Bug Fixes
+
+* i18n cleanup and dead code removal ([d4bf2d1](https://github.com/Xavier9031/AtomFortune/commit/d4bf2d1ce161a6a05254af4098e1cc962aa3708f))
+
 ## [0.0.10](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.9...atomfortune-v0.0.10) (2026-03-28)
 
 
