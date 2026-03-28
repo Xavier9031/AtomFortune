@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.10](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.9...atomfortune-v0.0.10) (2026-03-28)
+
+
+### Bug Fixes
+
+* liquid assets incorrectly defaulting to gram unit ([e2c1032](https://github.com/Xavier9031/AtomFortune/commit/e2c10329027b698da8da8602aac190e54dc79d6f))
+* remove native confirm dialogs on delete actions ([25b46da](https://github.com/Xavier9031/AtomFortune/commit/25b46da1c53c16cba41aa5eb5ddab54ea683a4bc))
+
 ## [0.0.9](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.8...atomfortune-v0.0.9) (2026-03-28)
 
 
