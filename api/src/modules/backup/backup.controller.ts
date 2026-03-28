@@ -3,6 +3,7 @@ import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate'
 import { eq } from 'drizzle-orm'
 import crypto from 'crypto'
 import { db } from '../../db/client'
+import { backfillHistoricalPrices, backfillHistoricalFxRates } from '../../jobs/snapshot.job'
 import {
   assets, accounts, holdings, transactions,
   prices, fxRates, snapshotItems, recurringEntries, users,
@@ -264,6 +265,17 @@ backupRouter.post('/import', async (c) => {
       counts.recurringEntries = d.recurringEntries.length
     }
   })
+
+  // Fire-and-forget: backfill historical prices + FX for imported data
+  const snapshotDates = (d.snapshotItems ?? []).map((s: any) => s.snapshotDate).filter(Boolean)
+  if (snapshotDates.length > 0) {
+    const earliest = snapshotDates.sort()[0]
+    const today = new Date().toISOString().slice(0, 10)
+    Promise.all([
+      backfillHistoricalPrices(db, earliest, today).catch(err => console.warn('[import] Price backfill failed:', err)),
+      backfillHistoricalFxRates(db, earliest, today).catch(err => console.warn('[import] FX backfill failed:', err)),
+    ]).then(() => console.log(`[import] Backfill complete from ${earliest} to ${today}`))
+  }
 
   return c.json({ ok: true, imported: counts })
 })

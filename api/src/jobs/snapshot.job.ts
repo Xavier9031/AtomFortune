@@ -168,11 +168,28 @@ export async function dailySnapshotJob(
   const marketAssets = await getMarketAssets(db)
   let pricesMap = new Map<string, number>()
   if (!options.skipPriceFetch) {
+    // Fetch today's prices
     try {
       pricesMap = await fetchMarketPrices(marketAssets)
       await upsertPrices(db, pricesMap, today)
     } catch (err) {
       console.warn('Market price fetch failed:', err)
+    }
+
+    // Backfill gaps: find earliest snapshot date and fill from there to today
+    try {
+      const earliest = await db
+        .select({ d: snapshotItems.snapshotDate })
+        .from(snapshotItems)
+        .orderBy(snapshotItems.snapshotDate)
+        .limit(1)
+      const gapFrom = earliest.length ? earliest[0].d : formatDate(new Date(new Date(today + 'T00:00:00Z').getTime() - 30 * 86400_000))
+      await Promise.all([
+        backfillHistoricalPrices(db, gapFrom, today).catch(err => console.warn('Historical price gap-fill failed:', err)),
+        backfillHistoricalFxRates(db, gapFrom, today).catch(err => console.warn('Historical FX gap-fill failed:', err)),
+      ])
+    } catch (err) {
+      console.warn('Gap-fill failed:', err)
     }
   }
 
