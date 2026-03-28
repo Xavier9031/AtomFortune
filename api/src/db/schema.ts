@@ -111,6 +111,7 @@ export const recurringEntries = sqliteTable('recurringEntries', {
   label: text('label'),
   effectiveFrom: text('effectiveFrom').notNull(),
   effectiveTo: text('effectiveTo'),
+  lastAppliedDate: text('lastAppliedDate'),
   createdAt: text('createdAt').notNull().default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text('updatedAt').notNull().default(sql`CURRENT_TIMESTAMP`),
 })
