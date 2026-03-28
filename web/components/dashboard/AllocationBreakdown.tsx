@@ -47,7 +47,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
   const { data: holdings } = useSWR<Holding[]>(`${BASE}/holdings`, fetcher)
   const [selectedCat, setSelectedCat] = useState<Category | null>(null)
   const [hoveredCat, setHoveredCat] = useState<string | null>(null)
-  const [groupBy, setGroupBy] = useState<GroupBy>('account')
+  const [groupBy, setGroupBy] = useState<GroupBy>('asset')
   const legendRef = useRef<HTMLDivElement>(null)
 
   // Dismiss popover on outside tap (mobile)
@@ -250,7 +250,7 @@ export default function AllocationBreakdown({ categories, totalAssets, totalLiab
 
       {/* Group-by toggle */}
       <div className="flex gap-1 p-0.5 bg-[var(--color-bg)] rounded-lg w-fit">
-        {(['account', 'asset'] as GroupBy[]).map(g => (
+        {(['asset', 'account'] as GroupBy[]).map(g => (
           <button key={g} onClick={() => setGroupBy(g)}
             className={`px-3 py-1 text-xs rounded-md transition-colors
               ${groupBy === g
