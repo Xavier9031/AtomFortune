@@ -3,6 +3,7 @@ import { assets, holdings, prices, fxRates, snapshotItems, users } from '../db/s
 import { fetchMarketPrices, fetchHistoricalPricesForAssets } from './pricing.service'
 import { fetchFxRates, fetchHistoricalFxRates } from './fx.service'
 import type { DrizzleDB } from '../db/client'
+import { applyRecurringEntries } from './recurring.job'
 
 function formatDate(d: Date): string {
   return d.toISOString().slice(0, 10)
@@ -164,6 +165,13 @@ export async function dailySnapshotJob(
   options: { fxLookbackDays?: number; skipPriceFetch?: boolean } = {}
 ): Promise<SnapshotJobResult> {
   const today = formatDate(snapshotDate)
+
+  // Apply any missed recurring entries before taking snapshot
+  try {
+    await applyRecurringEntries(db, today)
+  } catch (err) {
+    console.warn('Recurring entries failed:', err)
+  }
 
   const marketAssets = await getMarketAssets(db)
   let pricesMap = new Map<string, number>()

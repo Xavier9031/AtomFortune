@@ -60,6 +60,12 @@ export async function startServer(port: number, migrationsFolder: string): Promi
   migrate(db, { migrationsFolder })
   console.log('DB migrations applied')
 
+  // Apply missed recurring entries on startup
+  import('./jobs/recurring.job').then(({ applyRecurringEntries }) =>
+    applyRecurringEntries(db, new Date().toISOString().slice(0, 10))
+      .catch(err => console.warn('Startup recurring apply failed:', err))
+  )
+
   // Wrap serve() in a Promise so 'error' events (e.g. EADDRINUSE) are catchable.
   // serve() returns the http.Server immediately after calling listen(); it does NOT
   // reject on bind failure — errors come via the 'error' event.
