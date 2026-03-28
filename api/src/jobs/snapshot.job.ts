@@ -144,6 +144,33 @@ export async function backfillHistoricalPrices(db: DrizzleDB, fromDate: string, 
   return { total, byAsset }
 }
 
+/** Lightweight per-user snapshot: resolve price + FX for all holdings and upsert today's snapshot items. */
+export async function refreshUserSnapshot(db: DrizzleDB, userId: string, today?: string) {
+  const date = today ?? formatDate(new Date())
+  const holdingRows = await getAllHoldingsWithAssets(db, userId)
+  let written = 0
+
+  for (const h of holdingRows) {
+    const price = await resolvePrice(db, h.assetId, h.pricingMode, date)
+    if (price === null) continue
+    const fxRate = await resolveFxRate(db, h.currencyCode, date)
+    const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
+    const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
+
+    await db.insert(snapshotItems)
+      .values({
+        snapshotDate: date, assetId: h.assetId, accountId: h.accountId, userId,
+        quantity: h.quantity, price: String(price), fxRate: String(fxRate), valueInBase: String(valueInBase),
+      })
+      .onConflictDoUpdate({
+        target: [snapshotItems.snapshotDate, snapshotItems.assetId, snapshotItems.accountId],
+        set: { quantity: h.quantity, price: String(price), fxRate: String(fxRate), valueInBase: String(valueInBase), updatedAt: new Date().toISOString() },
+      })
+    written++
+  }
+  return { written }
+}
+
 export async function backfillHistoricalFxRates(db: DrizzleDB, fromDate: string, toDate: string) {
   const historicalFx = await fetchHistoricalFxRates(fromDate, toDate)
   let total = 0

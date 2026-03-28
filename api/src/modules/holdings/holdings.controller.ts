@@ -8,8 +8,8 @@ import { AssetsRepository } from '../assets/assets.repository'
 import { AccountsRepository } from '../accounts/accounts.repository'
 import { HoldingUpsertSchema } from './holdings.schema'
 import { fetchMarketPrices } from '../../jobs/pricing.service'
-import { resolvePrice, resolveFxRate } from '../../jobs/snapshot.job'
-import { prices, snapshotItems } from '../../db/schema'
+import { refreshUserSnapshot } from '../../jobs/snapshot.job'
+import { prices } from '../../db/schema'
 
 function getUserId(c: Context): string | null {
   return c.req.header('x-user-id') ?? null
@@ -35,58 +35,37 @@ holdingsController.put('/:assetId/:accountId', zValidator('json', HoldingUpsertS
   const userId = getUserId(c)
   if (!userId) return c.json({ error: 'Missing X-User-Id header' }, 400)
   const assetId = c.req.param('assetId')
-  const accountId = c.req.param('accountId')
-  const holding = await service.upsert(userId, assetId, accountId, c.req.valid('json'))
+  const holding = await service.upsert(
+    userId, assetId, c.req.param('accountId'), c.req.valid('json')
+  )
 
-  // Synchronously compute and save today's snapshot item so the value shows immediately
+  const today = new Date().toISOString().slice(0, 10)
+
+  // For market assets, fetch latest price first
   const assetsRepo = new AssetsRepository(db)
   const asset = await assetsRepo.findById(assetId, userId)
-  if (asset) {
-    const today = new Date().toISOString().slice(0, 10)
-
-    // For market assets, fetch latest price first
-    if (asset.pricingMode === 'market' && asset.symbol) {
-      try {
-        const priceMap = await fetchMarketPrices([asset])
-        const price = priceMap.get(assetId)
-        if (price != null) {
-          await db.insert(prices)
-            .values({ assetId, priceDate: today, price: String(price), source: 'yahoo-finance2' })
-            .onConflictDoUpdate({
-              target: [prices.assetId, prices.priceDate],
-              set: { price: String(price), source: 'yahoo-finance2', updatedAt: new Date().toISOString() },
-            })
-        }
-      } catch (err) {
-        console.warn(`Auto price fetch failed for ${asset.symbol}:`, err)
-      }
-    }
-
-    // Create snapshot item for this holding
+  if (asset?.pricingMode === 'market' && asset.symbol) {
     try {
-      const price = await resolvePrice(db, assetId, asset.pricingMode, today)
-      const fxRate = await resolveFxRate(db, asset.currencyCode, today)
+      const priceMap = await fetchMarketPrices([asset])
+      const price = priceMap.get(assetId)
       if (price != null) {
-        const qty = Number(c.req.valid('json').quantity)
-        const valueInBase = qty * price * fxRate
-        await db.insert(snapshotItems)
-          .values({
-            snapshotDate: today, assetId, accountId, userId,
-            quantity: String(qty), price: String(price),
-            fxRate: String(fxRate), valueInBase: String(valueInBase),
-          })
+        await db.insert(prices)
+          .values({ assetId, priceDate: today, price: String(price), source: 'yahoo-finance2' })
           .onConflictDoUpdate({
-            target: [snapshotItems.snapshotDate, snapshotItems.assetId, snapshotItems.accountId],
-            set: {
-              quantity: String(qty), price: String(price),
-              fxRate: String(fxRate), valueInBase: String(valueInBase),
-              updatedAt: new Date().toISOString(),
-            },
+            target: [prices.assetId, prices.priceDate],
+            set: { price: String(price), source: 'yahoo-finance2', updatedAt: new Date().toISOString() },
           })
       }
     } catch (err) {
-      console.warn('Snapshot item creation failed:', err)
+      console.warn(`Auto price fetch failed for ${asset.symbol}:`, err)
     }
+  }
+
+  // Refresh snapshot items for ALL of this user's holdings
+  try {
+    await refreshUserSnapshot(db, userId, today)
+  } catch (err) {
+    console.warn('Snapshot refresh failed:', err)
   }
 
   return c.json(holding)
