@@ -89,8 +89,7 @@ docker compose up -d
 | 後端 | [Hono](https://hono.dev/)（TypeScript） |
 | 資料庫 | SQLite（[better-sqlite3](https://github.com/WiseLibs/better-sqlite3)）+ [Drizzle ORM](https://orm.drizzle.team/) |
 | 前端 | [Next.js](https://nextjs.org/) 16 + [Tailwind CSS](https://tailwindcss.com/) v4 + [Recharts](https://recharts.org/) |
-| 市價 | [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2)（股票 / ETF / 加密貨幣） |
-| 匯率 | [open.er-api](https://open.er-api.com/)（法幣）+ [CoinGecko](https://www.coingecko.com/)（加密貨幣） |
+| 市場數據 | [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2)（股票、ETF、加密貨幣、匯率） |
 | 國際化 | [next-intl](https://next-intl-docs.vercel.app/)（zh-TW、en） |
 | 測試 | [Vitest](https://vitest.dev/) |
 | CI/CD | GitHub Actions（tag 觸發三平台建置） |

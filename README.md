@@ -88,8 +88,7 @@ Go to **Settings → Phone Access**, click **Start Connection**, and scan the QR
 | Backend | [Hono](https://hono.dev/) (TypeScript) |
 | Database | SQLite ([better-sqlite3](https://github.com/WiseLibs/better-sqlite3)) + [Drizzle ORM](https://orm.drizzle.team/) |
 | Frontend | [Next.js](https://nextjs.org/) 16 + [Tailwind CSS](https://tailwindcss.com/) v4 + [Recharts](https://recharts.org/) |
-| Market Data | [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2) (stocks/ETFs/crypto) |
-| FX Rates | [open.er-api](https://open.er-api.com/) (fiat) + [CoinGecko](https://www.coingecko.com/) (crypto) |
+| Market Data | [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2) (stocks, ETFs, crypto, FX rates) |
 | i18n | [next-intl](https://next-intl-docs.vercel.app/) (zh-TW, en) |
 | Testing | [Vitest](https://vitest.dev/) |
 | CI/CD | GitHub Actions (3-platform build on tag) |

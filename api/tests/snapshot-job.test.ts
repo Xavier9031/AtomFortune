@@ -79,21 +79,11 @@ describe('fetchMarketPrices', () => {
 // ─── BS-2: FX Service ────────────────────────────────────────────────────────
 
 describe('fetchFxRates', () => {
-  beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn())
-  })
-  afterEach(() => vi.unstubAllGlobals())
-
-  it('returns USD/JPY/USDT/TWD rates with correct sources', async () => {
-    const mockFetch = vi.mocked(fetch)
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ rates: { USD: 0.030581, JPY: 4.6296 } }),
-    } as Response)
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ tether: { twd: 32.68 } }),
-    } as Response)
+  it('returns USD/USDT/TWD rates from Yahoo Finance', async () => {
+    vi.mocked(yahooFinance.quote).mockResolvedValueOnce([
+      { symbol: 'USDTWD=X', regularMarketPrice: 32.5 },
+      { symbol: 'JPYTWD=X', regularMarketPrice: 0.216 },
+    ] as any)
 
     const rates = await fetchFxRates()
 
@@ -102,18 +92,17 @@ describe('fetchFxRates', () => {
     const usdt = rates.find(r => r.fromCurrency === 'USDT')
     const twd = rates.find(r => r.fromCurrency === 'TWD')
 
-    expect(usd?.rate).toBeCloseTo(1 / 0.030581, 4)
-    expect(usd?.source).toBe('open.er-api')
-    expect(jpy?.rate).toBeCloseTo(1 / 4.6296, 4)
-    expect(usdt?.rate).toBeCloseTo(32.68)
-    expect(usdt?.source).toBe('coingecko')
+    expect(usd?.rate).toBe(32.5)
+    expect(usd?.source).toBe('yahoo-finance2')
+    expect(jpy?.rate).toBe(0.216)
+    expect(usdt?.rate).toBe(32.5) // USDT mirrors USD
     expect(twd?.rate).toBe(1.0)
     expect(twd?.source).toBe('system')
   })
 
-  it('throws if exchangerate-api response is not ok', async () => {
-    vi.mocked(fetch).mockResolvedValueOnce({ ok: false, status: 500 } as Response)
-    await expect(fetchFxRates()).rejects.toThrow('open.er-api')
+  it('throws if Yahoo Finance quote fails', async () => {
+    vi.mocked(yahooFinance.quote).mockRejectedValueOnce(new Error('yahoo error'))
+    await expect(fetchFxRates()).rejects.toThrow('yahoo error')
   })
 })
 

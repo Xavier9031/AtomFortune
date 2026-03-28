@@ -1,5 +1,5 @@
 import { db } from '../../db/client'
-import { dailySnapshotJob, backfillHistoricalPrices } from '../../jobs/snapshot.job'
+import { dailySnapshotJob, backfillHistoricalPrices, backfillHistoricalFxRates } from '../../jobs/snapshot.job'
 import * as repo from './snapshots.repository'
 
 type RangeParam = '30d' | '1y' | 'all'
@@ -22,6 +22,14 @@ export async function rebuildDate(date: string) {
 }
 
 export async function rebuildRange(from: string, to: string) {
+  // 1. Backfill historical FX rates from Yahoo Finance
+  try {
+    await backfillHistoricalFxRates(db, from, to)
+  } catch (err) {
+    console.warn('[rebuild-range] Historical FX fetch failed (continuing):', err)
+  }
+
+  // 2. Rebuild snapshots for every day in range
   const dates: string[] = []
   const current = new Date(from)
   const end = new Date(to)
@@ -30,7 +38,7 @@ export async function rebuildRange(from: string, to: string) {
     current.setDate(current.getDate() + 1)
   }
   for (const date of dates) {
-    await dailySnapshotJob(db, new Date(date), { fxLookbackDays: 31, skipPriceFetch: true })
+    await dailySnapshotJob(db, new Date(date), { skipPriceFetch: true })
   }
   return { rebuilt: dates.length, missingAssets: [] as string[] }
 }
@@ -50,7 +58,14 @@ export async function backfill(from: string, to: string) {
     console.warn('[backfill] Historical price fetch failed (continuing):', err)
   }
 
-  // 2. Rebuild snapshot for every day in range with extended FX lookback
+  // 2. Fetch historical FX rates from Yahoo Finance
+  try {
+    await backfillHistoricalFxRates(db, from, to)
+  } catch (err) {
+    console.warn('[backfill] Historical FX fetch failed (continuing):', err)
+  }
+
+  // 3. Rebuild snapshot for every day in range
   const dates: string[] = []
   const current = new Date(from)
   const end = new Date(to)
@@ -59,7 +74,7 @@ export async function backfill(from: string, to: string) {
     current.setDate(current.getDate() + 1)
   }
   for (const date of dates) {
-    await dailySnapshotJob(db, new Date(date), { fxLookbackDays: 31, skipPriceFetch: true })
+    await dailySnapshotJob(db, new Date(date), { skipPriceFetch: true })
   }
 
   return {

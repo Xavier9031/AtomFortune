@@ -1,7 +1,7 @@
 import { eq, and, gte, lte, desc } from 'drizzle-orm'
 import { assets, holdings, prices, fxRates, snapshotItems, users } from '../db/schema'
 import { fetchMarketPrices, fetchHistoricalPricesForAssets } from './pricing.service'
-import { fetchFxRates } from './fx.service'
+import { fetchFxRates, fetchHistoricalFxRates } from './fx.service'
 import type { DrizzleDB } from '../db/client'
 
 function formatDate(d: Date): string {
@@ -143,6 +143,21 @@ export async function backfillHistoricalPrices(db: DrizzleDB, fromDate: string, 
   return { total, byAsset }
 }
 
+export async function backfillHistoricalFxRates(db: DrizzleDB, fromDate: string, toDate: string) {
+  const historicalFx = await fetchHistoricalFxRates(fromDate, toDate)
+  let total = 0
+  for (const [currency, ratesByDate] of historicalFx) {
+    for (const [date, rate] of ratesByDate) {
+      await db.insert(fxRates)
+        .values({ fromCurrency: currency, toCurrency: 'TWD', rateDate: date, rate: String(rate), source: 'yahoo-finance2-historical' })
+        .onConflictDoNothing()
+      total++
+    }
+  }
+  console.log(`[fx-backfill] Inserted ${total} historical FX rates`)
+  return { total, currencies: [...historicalFx.keys()] }
+}
+
 export async function dailySnapshotJob(
   db: DrizzleDB,
   snapshotDate = new Date(),
@@ -196,7 +211,7 @@ export async function dailySnapshotJob(
     for (const h of holdingRows) {
       const price = await resolvePrice(db, h.assetId, h.pricingMode, today)
       if (price === null) { missingAssets.push(h.assetId); continue }
-      const fxRate = await resolveFxRate(db, h.currencyCode, today, options.fxLookbackDays ?? 7)
+      const fxRate = await resolveFxRate(db, h.currencyCode, today, options.fxLookbackDays ?? 90)
       const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
       const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
       resolvedItems.push({

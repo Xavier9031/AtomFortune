@@ -168,8 +168,6 @@ All free, no API keys required:
 
 | Source | Usage |
 |--------|-------|
-| [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2) | Stock, ETF, crypto market prices |
-| [open.er-api.com](https://www.exchangerate-api.com/docs/free-api) | Fiat currency exchange rates |
-| [CoinGecko API](https://www.coingecko.com/api/documentation) | USDT/TWD exchange rate + crypto search |
+| [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2) | Stock/ETF/crypto prices, FX rates (daily + historical), US ticker search |
 | [TWSE](https://www.twse.com.tw) | Taiwan stock ticker search |
-| Yahoo Finance Search | US stock/ETF ticker search |
+| [CoinGecko API](https://www.coingecko.com/api/documentation) | Crypto ticker search |
