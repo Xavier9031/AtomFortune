@@ -3,9 +3,7 @@
  * Exports buildAllProfiles() → [{ name, backup }] where backup is a v2 payload
  * ready to POST as JSON to /backup/import.
  *
- * Used by:
- *   - scripts/seed-demo.mjs  (API-based import)
- *   - api/generate-demo-backup.mjs  (offline zip generation)
+ * Used by: scripts/seed-demo.mjs
  */
 
 // ── Date helpers ────────────────────────────────────────────────────────────
