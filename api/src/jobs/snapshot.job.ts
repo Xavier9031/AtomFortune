@@ -54,9 +54,10 @@ export async function resolvePrice(
 }
 
 export async function resolveFxRate(
-  tx: DrizzleDB, currencyCode: string, today: string, maxLookbackDays = 7
+  tx: DrizzleDB, currencyCode: string, today: string, maxLookbackDays = 90
 ): Promise<number> {
   if (currencyCode === 'TWD') return 1.0
+  // First try: look back up to maxLookbackDays
   const cutoff = formatDate(new Date(new Date(today + 'T00:00:00Z').getTime() - maxLookbackDays * 86400_000))
   const rows = await tx
     .select({ rate: fxRates.rate })
@@ -69,7 +70,24 @@ export async function resolveFxRate(
     ))
     .orderBy(desc(fxRates.rateDate))
     .limit(1)
-  return rows.length ? Number(rows[0].rate) : 1.0
+  if (rows.length) return Number(rows[0].rate)
+  // Fallback: use the most recent rate regardless of date (better than 1.0)
+  const fallback = await tx
+    .select({ rate: fxRates.rate })
+    .from(fxRates)
+    .where(and(
+      eq(fxRates.fromCurrency, currencyCode),
+      eq(fxRates.toCurrency, 'TWD'),
+      lte(fxRates.rateDate, today),
+    ))
+    .orderBy(desc(fxRates.rateDate))
+    .limit(1)
+  if (fallback.length) {
+    console.warn(`[fxRate] Using stale rate for ${currencyCode}/TWD (latest: ${fallback[0].rate})`)
+    return Number(fallback[0].rate)
+  }
+  console.warn(`[fxRate] No rate found for ${currencyCode}/TWD, defaulting to 1.0`)
+  return 1.0
 }
 
 async function upsertPrices(db: DrizzleDB, pricesMap: Map<string, number>, today: string) {
