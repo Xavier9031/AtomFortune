@@ -7,6 +7,20 @@ import { fetchMarketPrices } from '../../jobs/pricing.service'
 
 const ASSET_CATEGORIES = ['liquid', 'investment', 'fixed', 'receivable'] as const
 const LIABILITY_CATEGORIES = ['debt'] as const
+const LIQUID_SUBKINDS = new Set(['bank_account', 'physical_cash', 'e_wallet'])
+
+function normalizeAssetUnit(input: {
+  subKind: string
+  currencyCode: string
+  symbol?: string | null
+  unit?: string | null
+}) {
+  if (LIQUID_SUBKINDS.has(input.subKind)) return input.currencyCode
+  if (input.subKind === 'stock' || input.subKind === 'etf') return 'shares'
+  if (input.subKind === 'crypto') return input.symbol?.toUpperCase() ?? input.unit ?? null
+  if (input.subKind === 'precious_metal') return input.unit ?? 'gram'
+  return input.unit ?? null
+}
 
 export class AssetsService {
   constructor(
@@ -28,7 +42,12 @@ export class AssetsService {
       name: data.name, assetClass: data.assetClass, category: data.category,
       subKind: data.subKind, symbol: data.symbol ?? null, market: data.market ?? null,
       currencyCode: data.currencyCode, pricingMode: data.pricingMode,
-      unit: data.unit ?? null,
+      unit: normalizeAssetUnit({
+        subKind: data.subKind,
+        currencyCode: data.currencyCode,
+        symbol: data.symbol ?? null,
+        unit: data.unit ?? null,
+      }),
     })
 
     // Fire-and-forget: fetch today's price for new market assets
@@ -50,7 +69,13 @@ export class AssetsService {
     if (!existing) throw new HTTPException(404, { message: 'Asset not found' })
     return this.repo.update(id, userId, {
       name: data.name, symbol: data.symbol ?? undefined, market: data.market ?? undefined,
-      unit: data.unit ?? undefined, pricingMode: data.pricingMode ?? undefined,
+      unit: normalizeAssetUnit({
+        subKind: existing.subKind,
+        currencyCode: existing.currencyCode,
+        symbol: data.symbol === undefined ? existing.symbol : data.symbol ?? null,
+        unit: data.unit === undefined ? existing.unit : data.unit ?? null,
+      }),
+      pricingMode: data.pricingMode ?? undefined,
     })
   }
 

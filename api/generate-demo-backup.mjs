@@ -29,13 +29,13 @@ const assets = [
     id: A.twd, userId: U,
     name: '活存（TWD）', assetClass: 'asset', category: 'liquid',
     subKind: 'bank_account', symbol: null, market: null,
-    currencyCode: 'TWD', pricingMode: 'fixed', unit: 'unit',
+    currencyCode: 'TWD', pricingMode: 'fixed', unit: 'TWD',
   },
   {
     id: A.usd, userId: U,
     name: '活存（USD）', assetClass: 'asset', category: 'liquid',
     subKind: 'bank_account', symbol: null, market: null,
-    currencyCode: 'USD', pricingMode: 'fixed', unit: 'unit',
+    currencyCode: 'USD', pricingMode: 'fixed', unit: 'USD',
   },
   {
     id: A.aapl, userId: U,
@@ -53,13 +53,13 @@ const assets = [
     id: A.btc, userId: U,
     name: 'Bitcoin', assetClass: 'asset', category: 'investment',
     subKind: 'crypto', symbol: 'BTC', market: null,
-    currencyCode: 'USD', pricingMode: 'market', unit: 'unit',
+    currencyCode: 'USD', pricingMode: 'market', unit: 'BTC',
   },
   {
     id: A.eth, userId: U,
     name: 'Ethereum', assetClass: 'asset', category: 'investment',
     subKind: 'crypto', symbol: 'ETH', market: null,
-    currencyCode: 'USD', pricingMode: 'market', unit: 'unit',
+    currencyCode: 'USD', pricingMode: 'market', unit: 'ETH',
   },
 ]
 

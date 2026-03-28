@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { BASE } from '@/lib/api'
 import { fetchWithUser } from '@/lib/user'
+import { getDefaultUnitForSubKind, getDisplayUnit } from '@/lib/utils'
 import type { Asset, AssetClass, Category, PricingMode, SubKind, Ticker } from '@/lib/types'
 import { TickerSearch } from './TickerSearch'
 import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
@@ -63,7 +64,7 @@ const ASSET_GROUPS: AssetGroup[] = [
 ]
 
 const DEFAULT_PRICING: Record<string, PricingMode> = {
-  bank_account: 'fixed', physical_cash: 'fixed', stablecoin: 'fixed', e_wallet: 'fixed',
+  bank_account: 'fixed', physical_cash: 'fixed', e_wallet: 'fixed',
   receivable: 'fixed', credit_card: 'fixed', mortgage: 'fixed', personal_loan: 'fixed',
   stock: 'market', etf: 'market', crypto: 'market',
   fund: 'manual', precious_metal: 'market', real_estate: 'manual', vehicle: 'manual',
@@ -77,20 +78,25 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
   const [pendingKind, setPendingKind] = useState<AssetKindItem | null>(null)
   const [selectedTicker, setSelectedTicker] = useState<Ticker | null>(null)
   const [selectedMetal, setSelectedMetal] = useState<typeof PRECIOUS_METALS[number] | null>(null)
-  const [form, setForm] = useState({ name: '', symbol: '', currencyCode: 'TWD', unit: 'gram' })
+  const [form, setForm] = useState({ name: '', symbol: '', currencyCode: 'TWD', unit: '' })
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (!open) return
     if (asset) {
       setView('form')
-      setForm({ name: asset.name, symbol: asset.symbol ?? '', currencyCode: asset.currencyCode, unit: asset.unit ?? 'gram' })
+      setForm({
+        name: asset.name,
+        symbol: asset.symbol ?? '',
+        currencyCode: asset.currencyCode,
+        unit: getDisplayUnit(asset),
+      })
     } else {
       setView('kindPicker')
       setPendingKind(null)
       setSelectedTicker(null)
       setSelectedMetal(null)
-      setForm({ name: '', symbol: '', currencyCode: 'TWD', unit: 'gram' })
+      setForm({ name: '', symbol: '', currencyCode: 'TWD', unit: '' })
     }
   }, [open, asset])
 
@@ -100,12 +106,11 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
       setSelectedTicker(null)
       setView('tickerSearch')
     } else {
-      const isLiquid = LIQUID_SUBKINDS.includes(item.subKind)
       setForm(p => ({
         ...p,
         name: t(item.labelKey as Parameters<typeof t>[0]),
         currencyCode: 'TWD',
-        unit: isLiquid ? 'TWD' : (item.subKind === 'precious_metal' ? 'gram' : ''),
+        unit: getDefaultUnitForSubKind({ subKind: item.subKind, currencyCode: 'TWD' }),
       }))
       setView('form')
     }
@@ -119,7 +124,11 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
       name: ticker.name,
       symbol: ticker.symbol,
       currencyCode: ticker.type === 'crypto' || ticker.country === 'US' ? 'USD' : 'TWD',
-      unit: ticker.type === 'crypto' ? ticker.symbol.toUpperCase() : 'shares',
+      unit: getDefaultUnitForSubKind({
+        subKind: ticker.type,
+        currencyCode: ticker.type === 'crypto' || ticker.country === 'US' ? 'USD' : 'TWD',
+        symbol: ticker.symbol,
+      }),
     }))
     setView('form')
   }

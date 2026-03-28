@@ -7,7 +7,7 @@ import { Settings } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { BASE, fetcher } from '@/lib/api'
 import { fetchWithUser } from '@/lib/user'
-import { formatValue, getHoldingUnit, translateUnit } from '@/lib/utils'
+import { formatValue, getDisplayUnit, getHoldingUnit, translateUnit } from '@/lib/utils'
 import { ManualPriceModal } from './ManualPriceModal'
 import type { Asset, Holding, Transaction } from '@/lib/types'
 
@@ -36,7 +36,7 @@ export function AssetDetailView({ asset: initial }: { asset: Asset }) {
   const totalValue = holdings.reduce((s, h) => s + (Number(h.latestValueInBase) || 0), 0)
   const chartData = (snapshots ?? []).map(d => ({ date: d.snapshotDate, value: Number(d.valueInBase) }))
   const sortedTxns = [...(txns ?? [])].sort((a, b) => b.txnDate.localeCompare(a.txnDate))
-  const unit = initial.unit ?? initial.symbol ?? initial.currencyCode
+  const unit = getDisplayUnit(initial)
 
   async function handleSave() {
     setSaving(true)

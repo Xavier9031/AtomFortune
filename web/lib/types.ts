@@ -43,7 +43,7 @@ export interface LiveDashboard {
 export type AssetClass = 'asset' | 'liability'
 export type SubKind = 'bank_account' | 'stock' | 'etf' | 'crypto' | 'fund' |
   'real_estate' | 'credit_card' | 'mortgage' | 'personal_loan' | 'physical_cash' |
-  'e_wallet' | 'stablecoin' | 'precious_metal' | 'vehicle' | 'receivable' | 'other' | string
+  'e_wallet' | 'precious_metal' | 'vehicle' | 'receivable' | 'other' | string
 export type PricingMode = 'market' | 'fixed' | 'manual'
 export type AccountType = 'bank' | 'broker' | 'crypto_exchange' | 'e_wallet' | 'cash' | 'other'
 export type TxnType = 'buy' | 'sell' | 'transfer_in' | 'transfer_out' | 'adjustment'

@@ -8,7 +8,7 @@ import { RecurringEntriesPanel } from '@/components/assets/RecurringEntriesPanel
 import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker, Transaction } from '@/lib/types'
 import { TickerSearch } from '@/components/assets/TickerSearch'
 import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
-import { getHoldingUnit, translateUnit } from '@/lib/utils'
+import { getDefaultUnitForSubKind, getDisplayUnit, getHoldingUnit, translateUnit } from '@/lib/utils'
 
 type View = 'main' | 'acctPicker' | 'acctTypePicker' | 'acctForm' | 'assetPicker' | 'assetKindPicker' | 'assetTickerSearch' | 'assetForm'
 type Mode = 'add' | 'edit'
@@ -64,7 +64,7 @@ const ASSET_GROUPS: AssetGroup[] = [
 ]
 
 const DEFAULT_PRICING: Record<string, PricingMode> = {
-  bank_account: 'fixed', physical_cash: 'fixed', stablecoin: 'fixed',
+  bank_account: 'fixed', physical_cash: 'fixed',
   e_wallet: 'fixed', receivable: 'fixed', credit_card: 'fixed',
   mortgage: 'fixed', personal_loan: 'fixed',
   stock: 'market', etf: 'market', crypto: 'market',
@@ -149,7 +149,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   const [newAssetName, setNewAssetName] = useState('')
   const [newAssetSymbol, setNewAssetSymbol] = useState('')
   const [newAssetCurrency, setNewAssetCurrency] = useState('TWD')
-  const [newAssetUnit, setNewAssetUnit] = useState('gram')
+  const [newAssetUnit, setNewAssetUnit] = useState('')
   const [savingAsset, setSavingAsset] = useState(false)
 
   const { data: accounts, mutate: mutateAccounts } = useSWR<Account[]>(`${BASE}/accounts`, fetcher)
@@ -186,12 +186,17 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   }
 
   function handleTickerSelect(ticker: Ticker) {
+    const currencyCode = ticker.type === 'crypto' || ticker.country === 'US' ? 'USD' : 'TWD'
     setSelectedTicker(ticker)
     setPendingAssetKind(prev => prev ? { ...prev, subKind: ticker.type as SubKind } : prev)
     setNewAssetName(ticker.name)
     setNewAssetSymbol(ticker.symbol)
-    setNewAssetCurrency(ticker.type === 'crypto' || ticker.country === 'US' ? 'USD' : 'TWD')
-    setNewAssetUnit(ticker.type === 'crypto' ? ticker.symbol.toUpperCase() : 'shares')
+    setNewAssetCurrency(currencyCode)
+    setNewAssetUnit(getDefaultUnitForSubKind({
+      subKind: ticker.type,
+      currencyCode,
+      symbol: ticker.symbol,
+    }))
     pushView('assetForm')
   }
 
@@ -215,7 +220,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
       const created: Asset = await res.json()
       await mutateAssets()
       setSelectedAsset(created.id)
-      setNewAssetName(''); setNewAssetSymbol(''); setSelectedTicker(null); setNewAssetUnit('gram')
+      setNewAssetName(''); setNewAssetSymbol(''); setSelectedTicker(null); setNewAssetUnit('')
       resetViews()
     } finally { setSavingAsset(false) }
   }
@@ -411,7 +416,12 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
               </button>
               <HoldDeleteButton onConfirm={handleDelete} label={t('common.delete')} readyLabel={t('common.confirmDelete')} />
             </div>
-            <RecurringEntriesPanel assetId={holding.assetId} accountId={holding.accountId} unit={holding.unit} currencyCode={holding.currencyCode} />
+            <RecurringEntriesPanel
+              assetId={holding.assetId}
+              accountId={holding.accountId}
+              unit={getHoldingUnit(holding)}
+              currencyCode={holding.currencyCode}
+            />
             <HoldingTransactions assetId={holding.assetId} accountId={holding.accountId} />
           </div>
         )}
@@ -481,7 +491,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   ) : selectedAssetObj && (
                     <span className="px-2 py-1 bg-[var(--color-text)] text-[var(--color-surface)]
                       rounded-full text-xs font-bold shrink-0">
-                      {selectedAssetObj.symbol ?? selectedAssetObj.unit ?? selectedAssetObj.currencyCode}
+                      {selectedAssetObj.symbol ?? getDisplayUnit(selectedAssetObj)}
                     </span>
                   )}
                 </div>
@@ -632,7 +642,9 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                           setSelectedTicker(null)
                           setSelectedPreciousMetal(null)
                           setNewAssetName(t(item.labelKey as Parameters<typeof t>[0]))
-                          setNewAssetSymbol(''); setNewAssetCurrency('TWD'); setNewAssetUnit('gram')
+                          setNewAssetSymbol('')
+                          setNewAssetCurrency('TWD')
+                          setNewAssetUnit(getDefaultUnitForSubKind({ subKind: item.subKind, currencyCode: 'TWD' }))
                           if (item.useTicker) {
                             pushView('assetTickerSearch')
                           } else {

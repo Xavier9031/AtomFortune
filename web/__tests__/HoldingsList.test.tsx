@@ -17,6 +17,13 @@ const mockHoldings: Holding[] = [
     currencyCode: 'USD', pricingMode: 'market', accountType: 'crypto_exchange',
     updatedAt: '2026-03-22',
   },
+  {
+    assetId: 'a3', accountId: 'acc3', quantity: 22222, assetName: 'Physical Cash',
+    accountName: '錢包', latestValueInBase: 22222,
+    assetClass: 'asset', category: 'liquid', subKind: 'physical_cash',
+    currencyCode: 'TWD', pricingMode: 'fixed', unit: 'gram', accountType: 'cash',
+    updatedAt: '2026-03-22',
+  },
 ]
 
 it('groups holdings by account name as section headers', () => {
@@ -24,4 +31,10 @@ it('groups holdings by account name as section headers', () => {
   expect(screen.getAllByText('富途').length).toBeGreaterThan(0)
   expect(screen.getAllByText('幣安').length).toBeGreaterThan(0)
   expect(screen.getAllByText('AAPL').length).toBeGreaterThan(0)
+})
+
+it('shows currency instead of a bad stored unit for physical cash', () => {
+  render(<HoldingsList holdings={mockHoldings} onRowClick={jest.fn()} />)
+  expect(screen.getAllByText('TWD').length).toBeGreaterThan(0)
+  expect(screen.queryByText('gram')).not.toBeInTheDocument()
 })

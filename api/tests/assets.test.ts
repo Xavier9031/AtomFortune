@@ -25,6 +25,35 @@ describe('POST /api/v1/assets', () => {
     const body = await res.json()
     expect(body.id).toBeDefined()
     expect(body.name).toBe('AAPL')
+    expect(body.unit).toBe('shares')
+  })
+
+  it('normalizes liquid asset units to the asset currency', async () => {
+    const res = await app.request('/api/v1/assets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...USER_HEADER },
+      body: JSON.stringify({
+        name: 'Cash', assetClass: 'asset', category: 'liquid',
+        subKind: 'physical_cash', currencyCode: 'TWD', pricingMode: 'fixed',
+        unit: 'gram',
+      }),
+    })
+    expect(res.status).toBe(201)
+    expect((await res.json()).unit).toBe('TWD')
+  })
+
+  it('normalizes crypto units to the ticker symbol', async () => {
+    const res = await app.request('/api/v1/assets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...USER_HEADER },
+      body: JSON.stringify({
+        name: 'Bitcoin', assetClass: 'asset', category: 'investment',
+        subKind: 'crypto', symbol: 'btc', currencyCode: 'USD', pricingMode: 'market',
+        unit: 'unit',
+      }),
+    })
+    expect(res.status).toBe(201)
+    expect((await res.json()).unit).toBe('BTC')
   })
 
   it('returns 422 for invalid assetClass/category combo', async () => {
@@ -85,6 +114,24 @@ describe('PATCH /api/v1/assets/:id', () => {
     })
     expect(res.status).toBe(200)
     expect((await res.json()).name).toBe('Tesla Inc')
+  })
+
+  it('self-heals invalid liquid units on update', async () => {
+    const create = await app.request('/api/v1/assets', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
+      body: JSON.stringify({
+        name: 'Cash', assetClass: 'asset', category: 'liquid',
+        subKind: 'physical_cash', currencyCode: 'TWD', pricingMode: 'fixed',
+        unit: 'gram',
+      }),
+    })
+    const { id } = await create.json()
+    const res = await app.request(`/api/v1/assets/${id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
+      body: JSON.stringify({ name: 'Wallet Cash' }),
+    })
+    expect(res.status).toBe(200)
+    expect((await res.json()).unit).toBe('TWD')
   })
 })
 
