@@ -11,13 +11,11 @@
 
 <p align="center">
   <a href="https://github.com/Xavier9031/AtomFortune/releases/latest">
-    <img src="https://img.shields.io/github/v/release/Xavier9031/AtomFortune?style=flat-square&label=latest" alt="Latest Release" />
+    <img src="https://img.shields.io/badge/download-latest-brightgreen?style=flat-square" alt="Download" />
   </a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Docker-blue?style=flat-square" alt="Platform" />
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
-  <a href="https://github.com/Xavier9031/AtomFortune/actions/workflows/ci.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/Xavier9031/AtomFortune/ci.yml?branch=main&style=flat-square&label=CI" alt="CI" />
-  </a>
+  <img src="https://img.shields.io/badge/built%20with-TypeScript-3178c6?style=flat-square" alt="TypeScript" />
 </p>
 
 <p align="center">
@@ -33,11 +31,11 @@
 ---
 
 <p align="center">
-  <img src="docs/screenshots/dashboard-dark.png" alt="Dashboard – Dark Mode" width="780" />
+  <img src="docs/screenshots/dashboard.png" alt="Dashboard – Dark Mode" width="780" />
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/dashboard.png" alt="Dashboard – Light Mode" width="380" />
+  <img src="docs/screenshots/dashboard-light.png" alt="Dashboard – Light Mode" width="380" />
   &nbsp;
   <img src="docs/screenshots/holdings.png" alt="Holdings" width="380" />
 </p>
@@ -45,7 +43,7 @@
 <p align="center">
   <img src="docs/screenshots/assets.png" alt="Assets" width="380" />
   &nbsp;
-  <img src="docs/screenshots/settings.png" alt="Settings & Phone Access" width="380" />
+  <img src="docs/screenshots/accounts.png" alt="Accounts" width="380" />
 </p>
 
 ---
