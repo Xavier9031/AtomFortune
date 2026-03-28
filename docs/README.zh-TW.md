@@ -5,8 +5,8 @@
 <h1 align="center">AtomFortune</h1>
 
 <p align="center">
-  <strong>隱私優先的個人資產儀表板。</strong><br/>
-  所有資料存放在本機，完全離線，不依賴任何雲端帳號或訂閱服務。
+  <strong>開源、隱私優先的個人資產儀表板。</strong><br/>
+  所有資料存放在本機，完全離線，不依賴任何雲端帳號或訂閱服務。完全開源。
 </p>
 
 <p align="center">

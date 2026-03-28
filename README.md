@@ -5,8 +5,8 @@
 <h1 align="center">AtomFortune</h1>
 
 <p align="center">
-  <strong>Privacy-first personal asset dashboard.</strong><br/>
-  All data stays on your device. No cloud accounts. No subscriptions.
+  <strong>Open-source, privacy-first personal asset dashboard.</strong><br/>
+  All data stays on your device. No cloud accounts. No subscriptions. Fully open-source.
 </p>
 
 <p align="center">
