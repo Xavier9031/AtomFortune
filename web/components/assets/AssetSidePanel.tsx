@@ -3,72 +3,13 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { BASE } from '@/lib/api'
 import { fetchWithUser } from '@/lib/user'
-import { getDefaultUnitForSubKind, getDisplayUnit } from '@/lib/utils'
-import type { Asset, AssetClass, Category, PricingMode, SubKind, Ticker } from '@/lib/types'
+import { getDefaultPricingMode, getDefaultUnitForSubKind, getDisplayUnit, isLiquidSubKind, isMarketPricedSubKind } from '@/lib/assetRules'
+import { ASSET_GROUPS, PRECIOUS_METALS, UNIT_OPTIONS, type AssetKindItem } from '@/lib/assetCatalog'
+import type { Asset, SubKind, Ticker } from '@/lib/types'
 import { TickerSearch } from './TickerSearch'
 import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
 
-const LIQUID_SUBKINDS: SubKind[] = ['bank_account', 'physical_cash', 'e_wallet']
-
 type View = 'kindPicker' | 'tickerSearch' | 'form'
-
-interface AssetKindItem {
-  subKind: SubKind
-  labelKey: string
-  icon: string
-  assetClass: AssetClass
-  category: Category
-  useTicker?: boolean
-}
-interface AssetGroup { labelKey: string; colorClass: string; items: AssetKindItem[] }
-
-const PRECIOUS_METALS = [
-  { nameKey: 'assets.preciousMetals.gold' as const, symbol: 'XAUUSD=X' },
-  { nameKey: 'assets.preciousMetals.silver' as const, symbol: 'XAGUSD=X' },
-  { nameKey: 'assets.preciousMetals.platinum' as const, symbol: 'XPTUSD=X' },
-]
-
-const UNIT_OPTIONS = [
-  { value: 'gram', tKey: 'assets.units.gram' as const },
-  { value: 'ounce', tKey: 'assets.units.ounce' as const },
-]
-
-const ASSET_GROUPS: AssetGroup[] = [
-  { labelKey: 'asset.groups.liquid', colorClass: 'bg-green-500', items: [
-    { subKind: 'bank_account', labelKey: 'asset.subKinds.bank_account', icon: '🏦', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'physical_cash', labelKey: 'asset.subKinds.physical_cash', icon: '💵', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'e_wallet', labelKey: 'asset.subKinds.e_wallet', icon: '📲', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'other', labelKey: 'asset.itemLabels.liquid_other', icon: '📦', assetClass: 'asset', category: 'liquid' },
-  ]},
-  { labelKey: 'asset.groups.investment', colorClass: 'bg-indigo-500', items: [
-    { subKind: 'stock', labelKey: 'asset.itemLabels.stock_etf', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'crypto', labelKey: 'asset.subKinds.crypto', icon: '₿', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'fund', labelKey: 'asset.subKinds.fund', icon: '💰', assetClass: 'asset', category: 'investment' },
-    { subKind: 'precious_metal', labelKey: 'asset.subKinds.precious_metal', icon: '🥇', assetClass: 'asset', category: 'investment' },
-    { subKind: 'other', labelKey: 'asset.itemLabels.investment_other', icon: '📦', assetClass: 'asset', category: 'investment' },
-  ]},
-  { labelKey: 'asset.groups.fixed', colorClass: 'bg-violet-500', items: [
-    { subKind: 'real_estate', labelKey: 'asset.subKinds.real_estate', icon: '🏠', assetClass: 'asset', category: 'fixed' },
-    { subKind: 'vehicle', labelKey: 'asset.subKinds.vehicle', icon: '🚗', assetClass: 'asset', category: 'fixed' },
-    { subKind: 'other', labelKey: 'asset.itemLabels.fixed_other', icon: '📦', assetClass: 'asset', category: 'fixed' },
-  ]},
-  { labelKey: 'asset.groups.receivable', colorClass: 'bg-sky-400', items: [
-    { subKind: 'receivable', labelKey: 'asset.subKinds.receivable', icon: '📋', assetClass: 'asset', category: 'receivable' },
-  ]},
-  { labelKey: 'asset.groups.debt', colorClass: 'bg-slate-400', items: [
-    { subKind: 'credit_card', labelKey: 'asset.subKinds.credit_card', icon: '💳', assetClass: 'liability', category: 'debt' },
-    { subKind: 'mortgage', labelKey: 'asset.subKinds.mortgage', icon: '🏡', assetClass: 'liability', category: 'debt' },
-    { subKind: 'personal_loan', labelKey: 'asset.subKinds.personal_loan', icon: '💸', assetClass: 'liability', category: 'debt' },
-    { subKind: 'other', labelKey: 'asset.itemLabels.debt_other', icon: '📦', assetClass: 'liability', category: 'debt' },
-  ]},
-]
-
-const DEFAULT_PRICING: Record<string, PricingMode> = {
-  bank_account: 'fixed', physical_cash: 'fixed', e_wallet: 'fixed',
-  receivable: 'fixed', credit_card: 'fixed', mortgage: 'fixed', personal_loan: 'fixed',
-  stock: 'market', etf: 'market', crypto: 'market',
-  fund: 'manual', precious_metal: 'market', real_estate: 'manual', vehicle: 'manual',
-}
 
 interface Props { open: boolean; asset?: Asset; onClose: () => void }
 
@@ -162,7 +103,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
             category: pendingKind.category,
             subKind: pendingKind.subKind,
             currencyCode: form.currencyCode.trim().toUpperCase() || 'TWD',
-            pricingMode: DEFAULT_PRICING[pendingKind.subKind] ?? 'manual',
+            pricingMode: getDefaultPricingMode(pendingKind.subKind),
             symbol: form.symbol.trim() || undefined,
             unit: form.unit || undefined,
           }),
@@ -182,7 +123,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
   const canGoBack = !asset && (view === 'tickerSearch' || view === 'form')
   const isMarket = asset
     ? asset.pricingMode === 'market'
-    : pendingKind ? DEFAULT_PRICING[pendingKind.subKind] === 'market' : false
+    : pendingKind ? isMarketPricedSubKind(pendingKind.subKind) : false
 
   const title = asset ? t('assets.editTitle')
     : view === 'kindPicker' ? t('assets.kindPickerTitle')
@@ -295,7 +236,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                 </div>
               )}
               {/* Liquid: currency picker (currency = unit) */}
-              {!asset && pendingKind && LIQUID_SUBKINDS.includes(pendingKind.subKind) && (
+              {!asset && pendingKind && isLiquidSubKind(pendingKind.subKind) && (
                 <div className="grid grid-cols-[5rem_1fr] items-center px-4 py-3.5">
                   <span className="text-sm text-[var(--color-muted)]">{t('assets.form.currencyLabel')}</span>
                   <div className="flex justify-end">
@@ -347,7 +288,7 @@ export function AssetSidePanel({ open, asset, onClose }: Props) {
                   {[
                     { label: t('assets.detail.typeLabel'), value: t(`asset.subKinds.${asset.subKind}` as Parameters<typeof t>[0], { defaultValue: asset.subKind }) },
                     { label: t('assets.detail.pricingLabel'), value: t(`asset.pricingModes.${asset.pricingMode}` as Parameters<typeof t>[0], { defaultValue: asset.pricingMode }) },
-                    ...(LIQUID_SUBKINDS.includes(asset.subKind as SubKind)
+                    ...(isLiquidSubKind(asset.subKind)
                       ? [{ label: t('assets.form.currencyLabel'), value: asset.currencyCode }]
                       : []),
                   ].map(({ label, value }) => (

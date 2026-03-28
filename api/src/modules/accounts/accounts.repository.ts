@@ -1,6 +1,9 @@
 import { eq, and, sql } from 'drizzle-orm'
 import { DrizzleDB } from '../../db/client'
 import { accounts, holdings } from '../../db/schema'
+import { LIQUID_SUBKIND_VALUES } from '../assets/asset-rules'
+
+const LIQUID_SUBKINDS_SQL = LIQUID_SUBKIND_VALUES.map(subKind => `'${subKind}'`).join(', ')
 
 export class AccountsRepository {
   constructor(private db: DrizzleDB) {}
@@ -18,7 +21,7 @@ export class AccountsRepository {
         SELECT h.quantity FROM holdings h
         JOIN assets a ON h."assetId" = a.id
         WHERE h."accountId" = ${accounts.id}
-        AND a."subKind" IN ('bank_account', 'physical_cash', 'e_wallet')
+        AND a."subKind" IN (${sql.raw(LIQUID_SUBKINDS_SQL)})
         LIMIT 1
       )`,
     }).from(accounts).where(eq(accounts.userId, userId))

@@ -3,6 +3,7 @@ import { AccountCreateInput, AccountUpdateInput, BalanceSetInput } from './accou
 import { AssetsRepository } from '../assets/assets.repository'
 import { HoldingsService } from '../holdings/holdings.service'
 import { HTTPException } from 'hono/http-exception'
+import { normalizeAssetUnit } from '../assets/asset-rules'
 
 const LIQUID_SUBKINDS: Partial<Record<string, string>> = {
   bank: 'bank_account',
@@ -70,7 +71,7 @@ export class AccountsService {
         category: 'liquid',
         subKind,
         currencyCode,
-        unit: currencyCode,
+        unit: normalizeAssetUnit({ subKind, currencyCode }),
         pricingMode: 'fixed',
       })
     }

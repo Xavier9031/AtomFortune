@@ -1,8 +1,7 @@
-import type { Category } from './types'
+export { getDefaultUnitForSubKind, getDisplayUnit, getHoldingUnit } from './assetRules'
 
 // Currencies where decimals are not meaningful
 const ZERO_DECIMAL_CURRENCIES = new Set(['TWD', 'JPY', 'KRW', 'VND', 'IDR'])
-const LIQUID_SUBKINDS = new Set(['bank_account', 'physical_cash', 'e_wallet'])
 
 export function formatValue(value: number, currency: string): string {
   const maximumFractionDigits = ZERO_DECIMAL_CURRENCIES.has(currency) ? 0 : 2
@@ -25,41 +24,6 @@ const LEGACY_UNIT_MAP: Record<string, string> = {
   '股': 'shares',
   '公克': 'gram',
   '盎司': 'ounce',
-}
-
-// subKinds that always use 'shares' regardless of stored unit
-const SUBKIND_UNIT: Record<string, string> = {
-  stock: 'shares',
-  etf: 'shares',
-}
-
-type UnitSource = {
-  subKind?: string | null
-  unit?: string | null
-  symbol?: string | null
-  currencyCode: string
-}
-
-export function getDefaultUnitForSubKind(source: {
-  subKind?: string | null
-  currencyCode: string
-  symbol?: string | null
-}): string {
-  if (source.subKind && LIQUID_SUBKINDS.has(source.subKind)) return source.currencyCode
-  if (source.subKind && SUBKIND_UNIT[source.subKind]) return SUBKIND_UNIT[source.subKind]
-  if (source.subKind === 'precious_metal') return 'gram'
-  if (source.subKind === 'crypto') return source.symbol?.toUpperCase() ?? ''
-  return ''
-}
-
-export function getDisplayUnit(source: UnitSource): string {
-  if (source.subKind && LIQUID_SUBKINDS.has(source.subKind)) return source.currencyCode
-  if (source.subKind && SUBKIND_UNIT[source.subKind]) return SUBKIND_UNIT[source.subKind]
-  return source.unit ?? source.symbol ?? source.currencyCode
-}
-
-export function getHoldingUnit(h: UnitSource): string {
-  return getDisplayUnit(h)
 }
 
 export function translateUnit(raw: string, t: (key: string) => string): string {

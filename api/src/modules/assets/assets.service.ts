@@ -4,23 +4,7 @@ import { PricesRepository } from '../prices/prices.repository'
 import { AssetCreateInput, AssetUpdateInput } from './assets.schema'
 import { HTTPException } from 'hono/http-exception'
 import { fetchMarketPrices } from '../../jobs/pricing.service'
-
-const ASSET_CATEGORIES = ['liquid', 'investment', 'fixed', 'receivable'] as const
-const LIABILITY_CATEGORIES = ['debt'] as const
-const LIQUID_SUBKINDS = new Set(['bank_account', 'physical_cash', 'e_wallet'])
-
-function normalizeAssetUnit(input: {
-  subKind: string
-  currencyCode: string
-  symbol?: string | null
-  unit?: string | null
-}) {
-  if (LIQUID_SUBKINDS.has(input.subKind)) return input.currencyCode
-  if (input.subKind === 'stock' || input.subKind === 'etf') return 'shares'
-  if (input.subKind === 'crypto') return input.symbol?.toUpperCase() ?? input.unit ?? null
-  if (input.subKind === 'precious_metal') return input.unit ?? 'gram'
-  return input.unit ?? null
-}
+import { isCategoryAllowed, normalizeAssetUnit } from './asset-rules'
 
 export class AssetsService {
   constructor(
@@ -33,10 +17,12 @@ export class AssetsService {
   async findById(id: string, userId: string) { return this.repo.findById(id, userId) }
 
   async createAsset(userId: string, data: AssetCreateInput) {
-    if (data.assetClass === 'asset' && !ASSET_CATEGORIES.includes(data.category as any))
-      throw new HTTPException(422, { message: 'Invalid category for assetClass=asset' })
-    if (data.assetClass === 'liability' && !LIABILITY_CATEGORIES.includes(data.category as any))
-      throw new HTTPException(422, { message: 'category must be debt for liability' })
+    if (!isCategoryAllowed(data.assetClass, data.category)) {
+      const message = data.assetClass === 'asset'
+        ? 'Invalid category for assetClass=asset'
+        : 'category must be debt for liability'
+      throw new HTTPException(422, { message })
+    }
     const asset = await this.repo.create({
       userId,
       name: data.name, assetClass: data.assetClass, category: data.category,

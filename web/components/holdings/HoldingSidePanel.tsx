@@ -5,72 +5,19 @@ import useSWR, { mutate as globalMutate } from 'swr'
 import { BASE, fetcher } from '@/lib/api'
 import { fetchWithUser } from '@/lib/user'
 import { RecurringEntriesPanel } from '@/components/assets/RecurringEntriesPanel'
-import type { Account, AccountType, Asset, AssetClass, Category, Holding, PricingMode, SubKind, Ticker, Transaction } from '@/lib/types'
+import type { Account, AccountType, Asset, Holding, SubKind, Ticker, Transaction } from '@/lib/types'
 import { TickerSearch } from '@/components/assets/TickerSearch'
 import { CurrencyPicker } from '@/components/shared/CurrencyPicker'
-import { getDefaultUnitForSubKind, getDisplayUnit, getHoldingUnit, translateUnit } from '@/lib/utils'
+import { getDefaultPricingMode, getDefaultUnitForSubKind, getDisplayUnit, getHoldingUnit, isLiquidSubKind, isMarketPricedSubKind } from '@/lib/assetRules'
+import { translateUnit } from '@/lib/utils'
+import { ASSET_GROUPS, PRECIOUS_METALS, UNIT_OPTIONS, type AssetKindItem } from '@/lib/assetCatalog'
+import { ACC_GROUPS, type AccTypeItem } from '@/lib/accountTypes'
 
 type View = 'main' | 'acctPicker' | 'acctTypePicker' | 'acctForm' | 'assetPicker' | 'assetKindPicker' | 'assetTickerSearch' | 'assetForm'
 type Mode = 'add' | 'edit'
 interface Props { mode: Mode; open: boolean; onClose: () => void; holding?: Holding }
 
 const LIQUID_ACCOUNT_TYPES: AccountType[] = ['bank', 'cash', 'e_wallet']
-const LIQUID_SUBKINDS: SubKind[] = ['bank_account', 'physical_cash', 'e_wallet']
-
-import { ACC_GROUPS, type AccTypeItem } from '@/lib/accountTypes'
-
-interface AssetKindItem { subKind: SubKind; labelKey: string; icon: string; assetClass: AssetClass; category: Category; useTicker?: boolean }
-interface AssetGroup { labelKey: string; colorClass: string; items: AssetKindItem[] }
-
-const PRECIOUS_METALS = [
-  { nameKey: 'assets.preciousMetals.gold' as const, symbol: 'XAUUSD=X' },
-  { nameKey: 'assets.preciousMetals.silver' as const, symbol: 'XAGUSD=X' },
-  { nameKey: 'assets.preciousMetals.platinum' as const, symbol: 'XPTUSD=X' },
-]
-
-const UNIT_OPTIONS = [
-  { value: 'gram', tKey: 'assets.units.gram' as const },
-  { value: 'ounce', tKey: 'assets.units.ounce' as const },
-]
-
-const ASSET_GROUPS: AssetGroup[] = [
-  { labelKey: 'asset.groups.liquid', colorClass: 'bg-green-500', items: [
-    { subKind: 'physical_cash', labelKey: 'asset.subKinds.physical_cash', icon: '💵', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'bank_account', labelKey: 'asset.subKinds.bank_account', icon: '🏦', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'e_wallet', labelKey: 'asset.subKinds.e_wallet', icon: '📲', assetClass: 'asset', category: 'liquid' },
-    { subKind: 'other', labelKey: 'asset.itemLabels.liquid_other', icon: '📦', assetClass: 'asset', category: 'liquid' },
-  ]},
-  { labelKey: 'asset.groups.investment', colorClass: 'bg-indigo-500', items: [
-    { subKind: 'stock', labelKey: 'asset.itemLabels.stock_etf', icon: '📊', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'crypto', labelKey: 'asset.subKinds.crypto', icon: '₿', assetClass: 'asset', category: 'investment', useTicker: true },
-    { subKind: 'fund', labelKey: 'asset.subKinds.fund', icon: '💰', assetClass: 'asset', category: 'investment' },
-    { subKind: 'precious_metal', labelKey: 'asset.subKinds.precious_metal', icon: '🥇', assetClass: 'asset', category: 'investment' },
-    { subKind: 'other', labelKey: 'asset.itemLabels.investment_other', icon: '📦', assetClass: 'asset', category: 'investment' },
-  ]},
-  { labelKey: 'asset.groups.fixed', colorClass: 'bg-violet-500', items: [
-    { subKind: 'real_estate', labelKey: 'asset.subKinds.real_estate', icon: '🏠', assetClass: 'asset', category: 'fixed' },
-    { subKind: 'vehicle', labelKey: 'asset.subKinds.vehicle', icon: '🚗', assetClass: 'asset', category: 'fixed' },
-    { subKind: 'other', labelKey: 'asset.itemLabels.fixed_other', icon: '📦', assetClass: 'asset', category: 'fixed' },
-  ]},
-  { labelKey: 'asset.groups.receivable', colorClass: 'bg-sky-400', items: [
-    { subKind: 'receivable', labelKey: 'asset.subKinds.receivable', icon: '📋', assetClass: 'asset', category: 'receivable' },
-  ]},
-  { labelKey: 'asset.groups.debt', colorClass: 'bg-slate-400', items: [
-    { subKind: 'credit_card', labelKey: 'asset.subKinds.credit_card', icon: '💳', assetClass: 'liability', category: 'debt' },
-    { subKind: 'mortgage', labelKey: 'asset.subKinds.mortgage', icon: '🏡', assetClass: 'liability', category: 'debt' },
-    { subKind: 'personal_loan', labelKey: 'asset.subKinds.personal_loan', icon: '💸', assetClass: 'liability', category: 'debt' },
-    { subKind: 'other', labelKey: 'asset.itemLabels.debt_other', icon: '📦', assetClass: 'liability', category: 'debt' },
-  ]},
-]
-
-const DEFAULT_PRICING: Record<string, PricingMode> = {
-  bank_account: 'fixed', physical_cash: 'fixed',
-  e_wallet: 'fixed', receivable: 'fixed', credit_card: 'fixed',
-  mortgage: 'fixed', personal_loan: 'fixed',
-  stock: 'market', etf: 'market', crypto: 'market',
-  fund: 'manual', precious_metal: 'market', real_estate: 'manual',
-  vehicle: 'manual', other: 'manual',
-}
 
 // Hold-to-confirm delete button: hover 2.5 s to arm, then click to fire
 function HoldDeleteButton({ onConfirm, label, readyLabel }: { onConfirm: () => void; label: string; readyLabel: string }) {
@@ -158,7 +105,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
   const selectedAssetObj = assets?.find(a => a.id === selectedAsset)
 
   const isLiquidAccount = !!(selectedAccountObj && LIQUID_ACCOUNT_TYPES.includes(selectedAccountObj.accountType))
-  const isLiquidHolding = !!(holding && LIQUID_SUBKINDS.includes(holding.subKind as SubKind))
+  const isLiquidHolding = !!(holding && isLiquidSubKind(holding.subKind))
 
   // Sync quantity + currency when opening in edit mode
   useEffect(() => {
@@ -212,7 +159,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
           category: pendingAssetKind.category,
           subKind: pendingAssetKind.subKind,
           currencyCode: newAssetCurrency.trim().toUpperCase() || 'TWD',
-          pricingMode: DEFAULT_PRICING[pendingAssetKind.subKind] ?? 'manual',
+          pricingMode: getDefaultPricingMode(pendingAssetKind.subKind),
           symbol: newAssetSymbol.trim() || undefined,
           unit: newAssetUnit || undefined,
         }),
@@ -742,7 +689,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   placeholder={t('assets.form.namePlaceholder')} autoFocus={!selectedTicker}
                   className="text-right bg-transparent text-sm outline-none w-full" />
               </div>
-              {DEFAULT_PRICING[pendingAssetKind.subKind] === 'market' && pendingAssetKind.subKind !== 'precious_metal' && (
+              {isMarketPricedSubKind(pendingAssetKind.subKind) && pendingAssetKind.subKind !== 'precious_metal' && (
                 <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5 border-b border-[var(--color-border)]">
                   <span className="text-sm text-[var(--color-muted)]">{t('assets.form.symbolLabel')}</span>
                   {selectedTicker
@@ -791,7 +738,7 @@ export function HoldingSidePanel({ mode, open, onClose, holding }: Props) {
                   </div>
                 </>
               )}
-              {DEFAULT_PRICING[pendingAssetKind.subKind] !== 'market' && pendingAssetKind.subKind !== 'precious_metal' && (
+              {!isMarketPricedSubKind(pendingAssetKind.subKind) && pendingAssetKind.subKind !== 'precious_metal' && (
                 <div className="grid grid-cols-[4rem_1fr] items-center px-4 py-3.5">
                   <span className="text-sm text-[var(--color-muted)]">{t('assets.form.currencyLabel')}</span>
                   {selectedTicker
