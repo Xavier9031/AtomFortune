@@ -198,9 +198,9 @@ export default function UserSwitcher({ variant = 'sidebar' }: { variant?: 'sideb
   // ── Modal actions ─────────────────────────────────────────────────────────
 
   async function handleExport(userId: string) {
-    const headers: Record<string, string> = {}
+    const headers: Record<string, string> = { 'x-user-id': userId }
     if (exportPw) headers['x-backup-password'] = exportPw
-    const res = await fetch(`${BASE}/backup/export?userId=${encodeURIComponent(userId)}`, { headers })
+    const res = await fetch(`${BASE}/backup/export`, { headers })
     if (!res.ok) return
     const blob = await res.blob()
     const disposition = res.headers.get('content-disposition') ?? ''

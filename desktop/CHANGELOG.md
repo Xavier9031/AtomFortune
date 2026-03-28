@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.8](https://github.com/Xavier9031/AtomFortune/releases/tag/v0.0.8) (2026-03-28)
+
+### Security
+
+* restrict browser CORS to trusted localhost origins only
+* add optional `API_TOKEN` protection for `/api/v1/*`
+* remove sensitive backup query-string inputs and move them to headers
+* require a pinned `CLOUDFLARED_SHA256` for managed `cloudflared` downloads
+
+### Fixes
+
+* remove misleading `BASE_CURRENCY` configuration surface
+* align settings/runtime docs with actual API behavior
+* restore passing API and web test suites before release
+
 ## [0.0.2](https://github.com/Xavier9031/AtomFortune/compare/desktop-v0.0.1...desktop-v0.0.2) (2026-03-24)
 
 

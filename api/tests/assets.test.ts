@@ -1,4 +1,7 @@
-import { describe, it, expect, beforeEach, afterAll } from 'vitest'
+import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest'
+vi.mock('../src/jobs/pricing.service', () => ({
+  fetchMarketPrices: vi.fn().mockResolvedValue(new Map()),
+}))
 import app from '../src/index'
 import { cleanDb, closeDb, seedTestUser } from './helpers/db'
 

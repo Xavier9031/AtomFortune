@@ -6,7 +6,10 @@ vi.mock('../src/modules/snapshots/snapshots.repository', () => ({
   getSnapshotByDate: vi.fn(),
   getSnapshotItemsByAsset: vi.fn(),
 }))
-vi.mock('../src/jobs/snapshot.job', () => ({ dailySnapshotJob: vi.fn() }))
+vi.mock('../src/jobs/snapshot.job', () => ({
+  dailySnapshotJob: vi.fn(),
+  backfillHistoricalFxRates: vi.fn().mockResolvedValue({ total: 0, currencies: [] }),
+}))
 
 import * as repo from '../src/modules/snapshots/snapshots.repository'
 import { dailySnapshotJob } from '../src/jobs/snapshot.job'

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { testDb, cleanDb, seedTestUser } from './helpers/db'
 import { assets, accounts, holdings, transactions, recurringEntries } from '../src/db/schema'
 import { applyRecurringEntries } from '../src/jobs/recurring.job'
@@ -8,6 +8,7 @@ describe('applyRecurringEntries', () => {
   let userId: string
 
   beforeEach(async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {})
     cleanDb()
     const user = await seedTestUser('recurring-test')
     userId = user.id

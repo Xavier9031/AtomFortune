@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, Menu, Notification, utilityProcess } from '
 import { autoUpdater } from 'electron-updater'
 import path from 'path'
 import http from 'http'
+import crypto from 'crypto'
 import QRCode from 'qrcode'
 import { startTunnel, stopTunnel } from './tunnel'
 
@@ -161,6 +162,7 @@ async function bootstrap(): Promise<void> {
   // api/src/db/client.ts reads DATABASE_PATH at module evaluation time.
   // Dynamic import() below defers the require() call until after these are set.
   process.env.DATABASE_PATH = path.join(app.getPath('userData'), 'atomfortune.db')
+  process.env.API_TOKEN = process.env.API_TOKEN ?? crypto.randomBytes(24).toString('hex')
   process.env.ELECTRON = 'true'
   process.env.NODE_ENV = 'production'
 
@@ -180,6 +182,7 @@ async function bootstrap(): Promise<void> {
         HOSTNAME: '127.0.0.1',
         NODE_ENV: 'production',
         API_ORIGIN: 'http://localhost:8000',
+        API_TOKEN: process.env.API_TOKEN,
       },
       cwd: webStandalonePath,
     }

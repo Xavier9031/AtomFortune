@@ -35,8 +35,8 @@ describe('GET /api/v1/backup/export (with X-User-Id)', () => {
 
   it('returns encrypted .enc file when password is provided', async () => {
     const user = await seedTestUser()
-    const res = await app.request('/api/v1/backup/export?password=s3cret', {
-      headers: { 'x-user-id': user.id },
+    const res = await app.request('/api/v1/backup/export', {
+      headers: { 'x-user-id': user.id, 'x-backup-password': 's3cret' },
     })
     expect(res.status).toBe(200)
     const buf = await res.arrayBuffer()
@@ -54,8 +54,8 @@ describe('POST /api/v1/backup/import (with X-User-Id)', () => {
     await testDb.insert(accounts).values({
       userId: user.id, name: 'MyBank', accountType: 'bank',
     })
-    const exportRes = await app.request('/api/v1/backup/export?password=mypassword', {
-      headers: { 'x-user-id': user.id },
+    const exportRes = await app.request('/api/v1/backup/export', {
+      headers: { 'x-user-id': user.id, 'x-backup-password': 'mypassword' },
     })
     const zipBuf = await exportRes.arrayBuffer()
     // Clean up and re-import

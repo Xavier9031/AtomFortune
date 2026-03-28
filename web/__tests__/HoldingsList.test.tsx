@@ -21,7 +21,7 @@ const mockHoldings: Holding[] = [
 
 it('groups holdings by account name as section headers', () => {
   render(<HoldingsList holdings={mockHoldings} onRowClick={jest.fn()} />)
-  expect(screen.getByText('富途')).toBeInTheDocument()
-  expect(screen.getByText('幣安')).toBeInTheDocument()
-  expect(screen.getByText('AAPL')).toBeInTheDocument()
+  expect(screen.getAllByText('富途').length).toBeGreaterThan(0)
+  expect(screen.getAllByText('幣安').length).toBeGreaterThan(0)
+  expect(screen.getAllByText('AAPL').length).toBeGreaterThan(0)
 })

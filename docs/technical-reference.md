@@ -34,6 +34,8 @@
 |--------|------|-------------|
 | GET | `/api/v1/transactions` | List transactions (`?assetId=&accountId=&from=&to=`) |
 | POST | `/api/v1/transactions` | Create transaction |
+| PATCH | `/api/v1/transactions/:id` | Update transaction note |
+| DELETE | `/api/v1/transactions/:id` | Delete adjustment transaction |
 
 ### Recurring Entries
 
@@ -64,6 +66,8 @@
 | POST | `/api/v1/snapshots/trigger` | Trigger snapshot (`?date=YYYY-MM-DD`) |
 | POST | `/api/v1/snapshots/rebuild/:date` | Rebuild snapshot for a date |
 | POST | `/api/v1/snapshots/rebuild-range` | Rebuild date range (body: `{ from, to }`) |
+| POST | `/api/v1/snapshots/backfill-prices` | Backfill historical prices only |
+| POST | `/api/v1/snapshots/backfill` | Backfill historical prices + FX, then rebuild |
 
 ### Dashboard
 
@@ -89,8 +93,15 @@
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/v1/tickers/search` | Search stocks/ETFs/crypto (`?q=&country=TW\|US\|Crypto`) |
-| GET | `/api/v1/backup/export/:userId` | Export user data as encrypted ZIP |
-| POST | `/api/v1/backup/import/:userId` | Import ZIP to restore data |
+| GET | `/api/v1/backup/export` | Export user data as ZIP (`X-User-Id`, optional `X-Backup-Password`) |
+| POST | `/api/v1/backup/import` | Import ZIP to restore data (`X-User-Id`) |
+| DELETE | `/api/v1/backup/reset` | Delete all data for the current user (`X-User-Id`) |
+
+### System
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/system/config` | Runtime config exposed to the web app (`snapshotSchedule`) |
 
 ### Tunnel (Phone Access)
 
@@ -107,15 +118,24 @@
 Daily cron job (default 22:00) runs `dailySnapshotJob`:
 
 1. Fetch latest market prices for all `market`-priced assets (yahoo-finance2)
-2. Fetch latest FX rates (open.er-api for fiat + CoinGecko for USDT/TWD)
+2. Fetch latest FX rates from Yahoo Finance (`USDT` mirrors `USD`)
 3. Calculate `valueInBase` (TWD) = `quantity × price × fxRate` for each holding
 4. Write to `snapshotItems` table (skip if no price found within 30 days)
-5. Entire process runs in a single DB transaction for atomicity
+5. Rebuild today's snapshot items per user
+
+## Authentication
+
+- `/health` is always public
+- `/api/v1/*` can be protected with `API_TOKEN`
+- When `API_TOKEN` is set, send either `Authorization: Bearer <token>` or `X-API-Token: <token>`
+- The bundled web app uses the Next.js proxy to add the token server-side; the desktop app generates one automatically per launch
+- Phone sharing prefers a system-installed `cloudflared`; managed downloads require `CLOUDFLARED_SHA256`
 
 Manual trigger (for backfilling):
 
 ```bash
-curl -X POST "http://localhost:8000/api/v1/snapshots/trigger?date=2026-03-22"
+curl -X POST "http://localhost:8000/api/v1/snapshots/trigger?date=2026-03-22" \
+  -H "X-User-Id: default-user"
 ```
 
 ---
@@ -154,7 +174,8 @@ Liabilities
 |----------|----------|---------|-------------|
 | `DATABASE_PATH` | No | `./atomfortune.db` | SQLite database file path |
 | `TEST_DATABASE_PATH` | No | — | Test database (used by Vitest) |
-| `BASE_CURRENCY` | No | `TWD` | Base currency for calculations |
+| `API_TOKEN` | No | unset | Optional shared token for the API and Next.js proxy |
+| `CLOUDFLARED_SHA256` | No | unset | SHA256 pin for managed `cloudflared` downloads |
 | `SNAPSHOT_SCHEDULE` | No | `0 22 * * *` | Daily snapshot cron expression |
 | `PORT` | No | `8000` | API server port |
 | `API_ORIGIN` | No | `http://localhost:8000` | Target origin for Next.js API proxy |
@@ -168,6 +189,6 @@ All free, no API keys required:
 
 | Source | Usage |
 |--------|-------|
-| [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2) | Stock/ETF/crypto prices, FX rates (daily + historical), US ticker search |
+| [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2) | Stock/ETF/crypto prices and FX rates (daily + historical) |
 | [TWSE](https://www.twse.com.tw) | Taiwan stock ticker search |
 | [CoinGecko API](https://www.coingecko.com/api/documentation) | Crypto ticker search |

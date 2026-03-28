@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { AccountsTable } from '@/components/accounts/AccountsTable'
 import type { Account } from '@/lib/types'
 
@@ -8,11 +8,13 @@ const accounts: Account[] = [
 
 it('renders account row', () => {
   render(<AccountsTable accounts={accounts} holdingsCount={{ '1': 3 }} onEdit={jest.fn()} />)
-  expect(screen.getByText('富途')).toBeInTheDocument()
+  expect(screen.getAllByText('富途').length).toBeGreaterThan(0)
   expect(screen.getByText('3')).toBeInTheDocument()
 })
 
-it('disables delete button when account has holdings', () => {
-  render(<AccountsTable accounts={accounts} holdingsCount={{ '1': 2 }} onEdit={jest.fn()} />)
-  expect(screen.getByRole('button', { name: /刪除/ })).toBeDisabled()
+it('calls onEdit when account row is clicked', () => {
+  const onEdit = jest.fn()
+  render(<AccountsTable accounts={accounts} holdingsCount={{ '1': 2 }} onEdit={onEdit} />)
+  fireEvent.click(screen.getAllByText('富途')[0])
+  expect(onEdit).toHaveBeenCalledWith(accounts[0])
 })

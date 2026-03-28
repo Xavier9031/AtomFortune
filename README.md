@@ -6,7 +6,7 @@
 
 <p align="center">
   <strong>Open-source, privacy-first personal asset dashboard.</strong><br/>
-  All data stays on your device. No cloud accounts. No subscriptions. Fully open-source.
+  Your financial records stay on your device. No cloud accounts. No subscriptions. Fully open-source.
 </p>
 
 <p align="center">
@@ -63,7 +63,7 @@ A single interface to track everything you own and owe:
 - **Fixed assets** — real estate, vehicles
 - **Liabilities** — mortgages, credit cards, personal loans
 
-Market prices and FX rates are fetched automatically every day, giving you a real-time net worth and long-term trend view.
+Market prices and FX rates can be fetched automatically every day, giving you a real-time net worth and long-term trend view.
 
 ## Features
 
@@ -71,7 +71,7 @@ Market prices and FX rates are fetched automatically every day, giving you a rea
 - **Holdings** — Grouped by account, quick add/edit/delete
 - **Assets** — Full asset list with holding distribution and value history
 - **Accounts** — Bank, broker, crypto exchange, e-wallet management
-- **Multi-currency** — Base currency TWD, display in 17 currencies (USD, JPY, EUR, GBP, CNY, etc.)
+- **Multi-currency** — Snapshot values are stored in TWD, with display in 17 currencies (USD, JPY, EUR, GBP, CNY, etc.)
 - **Backup & restore** — One-click encrypted export/import
 - **Multi-profile** — Multiple user profiles with independent data
 - **Dark mode** — Full dark theme with smooth transitions
@@ -108,6 +108,7 @@ For those who prefer a web-based setup:
 ```bash
 git clone https://github.com/Xavier9031/AtomFortune.git
 cd AtomFortune
+export API_TOKEN=change-this-before-exposing-the-stack
 docker compose up -d
 ```
 
@@ -116,6 +117,8 @@ Open **http://localhost:3001** in your browser.
 ### Access from your phone
 
 Go to **Settings → Phone Access**, click **Start Connection**, and scan the QR code. Works on any network (4G/5G/different WiFi) via Cloudflare Tunnel.
+
+If `cloudflared` is not already installed on the machine, set `CLOUDFLARED_SHA256` first so managed downloads are pinned before execution.
 
 ## Tech Stack
 
@@ -182,6 +185,7 @@ cd desktop && npm start
 
 ```bash
 cd api && npm test
+cd web && npm test
 ```
 
 ### Build desktop app
@@ -195,7 +199,8 @@ cd desktop && npm run dist
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DATABASE_PATH` | `./atomfortune.db` | SQLite database file path |
-| `BASE_CURRENCY` | `TWD` | Base currency for calculations |
+| `API_TOKEN` | unset | Optional shared token for the API and Next.js proxy |
+| `CLOUDFLARED_SHA256` | unset | SHA256 pin for managed `cloudflared` downloads when using phone sharing |
 | `SNAPSHOT_SCHEDULE` | `0 22 * * *` | Daily snapshot cron expression |
 | `PORT` | `8000` | API server port |
 | `API_ORIGIN` | `http://localhost:8000` | API origin for Next.js proxy |
@@ -207,7 +212,7 @@ cd desktop && npm run dist
 2. **Create holdings** linking assets to accounts with quantities
 3. Every day at 22:00, the **snapshot job** automatically:
    - Fetches latest prices from Yahoo Finance
-   - Fetches FX rates from open.er-api + CoinGecko
+   - Fetches FX rates from Yahoo Finance (`USDT` mirrors `USD`)
    - Calculates `value = quantity × price × fxRate` for each holding
    - Saves a point-in-time snapshot
 4. The **dashboard** shows your net worth trend over time
@@ -223,7 +228,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## Security
 
-AtomFortune is designed for local/self-hosted use. The API has no authentication by design — **do not expose the API port to the public internet**. See [SECURITY.md](SECURITY.md) for details and the vulnerability reporting process.
+AtomFortune is designed for local/self-hosted use. Browser CORS access is limited to localhost origins by default, and you can optionally protect `/api/v1/*` with `API_TOKEN`. The desktop app generates a per-launch token automatically. Phone sharing prefers a system-installed `cloudflared`; otherwise managed downloads require `CLOUDFLARED_SHA256`. Optional network features contact Yahoo Finance, TWSE, CoinGecko, GitHub Releases, and Cloudflare Tunnel. See [SECURITY.md](SECURITY.md) for details and the vulnerability reporting process.
 
 ## License
 

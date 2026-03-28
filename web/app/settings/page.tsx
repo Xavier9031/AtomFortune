@@ -7,6 +7,7 @@ import { setLocale } from '@/app/actions/setLocale'
 import { setTheme } from '@/app/actions/setTheme'
 import { setExperimental } from '@/app/actions/setExperimental'
 import { SUPPORTED_LOCALES } from '@/lib/locales'
+import { BASE } from '@/lib/api'
 import QRCodeCard from '@/components/shared/QRCodeCard'
 
 export default function SettingsPage() {
@@ -18,11 +19,17 @@ export default function SettingsPage() {
   const resolveRef = useRef<(() => void) | null>(null)
   const [dark, setDark] = useState(false)
   const [experimental, setExperimentalState] = useState(false)
-  const schedule = process.env.NEXT_PUBLIC_SNAPSHOT_SCHEDULE ?? '0 22 * * *'
+  const [schedule, setSchedule] = useState('0 22 * * *')
 
   useEffect(() => {
     setDark(document.documentElement.dataset.theme === 'dark')
     setExperimentalState(document.documentElement.dataset.experimental === 'true')
+    fetch(`${BASE}/system/config`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.snapshotSchedule) setSchedule(data.snapshotSchedule)
+      })
+      .catch(() => {})
   }, [])
 
   useEffect(() => {

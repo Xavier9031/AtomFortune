@@ -352,7 +352,7 @@
     "profileNamePlaceholder": "例：我的帳戶",
     "getStarted": "開始使用",
     "chooseFile": "選擇備份檔案",
-    "baseCurrencyLabel": "主要幣別",
+    "displayCurrencyLabel": "顯示幣別",
     "importDesc": "選擇備份檔案（.zip），個人檔案名稱將自動從檔名擷取。"
   },
   "snapshots": {

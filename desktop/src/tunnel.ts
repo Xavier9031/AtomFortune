@@ -2,13 +2,19 @@ import { app } from 'electron'
 import path from 'path'
 import fs from 'fs'
 import https from 'https'
-import { spawn, execSync, ChildProcess } from 'child_process'
+import { createHash } from 'crypto'
+import { spawn, execSync, execFileSync, ChildProcess } from 'child_process'
 
 const BIN_DIR = path.join(app.getPath('userData'), 'bin')
 
 function cloudflaredPath(): string {
   const name = process.platform === 'win32' ? 'cloudflared.exe' : 'cloudflared'
   return path.join(BIN_DIR, name)
+}
+
+function expectedSha256(): string | null {
+  const value = process.env.CLOUDFLARED_SHA256?.trim().toLowerCase()
+  return value || null
 }
 
 function downloadUrl(): string {
@@ -48,9 +54,44 @@ function downloadFile(url: string, dest: string): Promise<void> {
   })
 }
 
+function sha256File(filePath: string): string {
+  const hash = createHash('sha256')
+  hash.update(fs.readFileSync(filePath))
+  return hash.digest('hex')
+}
+
+function verifyCloudflaredBinary(filePath: string): void {
+  const expected = expectedSha256()
+  if (!expected) {
+    throw new Error(
+      'Managed cloudflared download is disabled until CLOUDFLARED_SHA256 is set. Install cloudflared on PATH or pin a SHA256 first.'
+    )
+  }
+
+  const actual = sha256File(filePath)
+  if (actual !== expected) {
+    throw new Error(`cloudflared SHA256 mismatch: expected ${expected}, got ${actual}`)
+  }
+}
+
+function systemCloudflaredPath(): string | null {
+  try {
+    execFileSync('cloudflared', ['--version'], { stdio: 'ignore' })
+    return 'cloudflared'
+  } catch {
+    return null
+  }
+}
+
 async function ensureCloudflared(): Promise<string> {
+  const systemPath = systemCloudflaredPath()
+  if (systemPath) return systemPath
+
   const cfPath = cloudflaredPath()
-  if (fs.existsSync(cfPath)) return cfPath
+  if (fs.existsSync(cfPath)) {
+    verifyCloudflaredBinary(cfPath)
+    return cfPath
+  }
 
   fs.mkdirSync(BIN_DIR, { recursive: true })
 
@@ -69,6 +110,7 @@ async function ensureCloudflared(): Promise<string> {
     fs.chmodSync(cfPath, 0o755)
   }
 
+  verifyCloudflaredBinary(cfPath)
   return cfPath
 }
 

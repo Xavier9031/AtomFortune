@@ -13,7 +13,8 @@ it('shows manual price button only for manual pricingMode', () => {
     assetClass: 'asset', category: 'investment', subKind: 'fund',
     currencyCode: 'TWD' } as Asset
   render(<AssetDetailView asset={asset} />)
-  expect(screen.getByText('更新今日價格')).toBeInTheDocument()
+  expect(screen.queryByText('更新今日價格')).not.toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /設定/ })).toBeInTheDocument()
 })
 
 it('hides manual price button for market assets', () => {

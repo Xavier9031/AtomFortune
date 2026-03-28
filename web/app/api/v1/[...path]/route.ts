@@ -8,6 +8,9 @@ async function proxy(req: NextRequest) {
 
   const headers = new Headers(req.headers)
   headers.delete('host')
+  if (process.env.API_TOKEN && !headers.has('authorization') && !headers.has('x-api-token')) {
+    headers.set('authorization', `Bearer ${process.env.API_TOKEN}`)
+  }
 
   const init: RequestInit = { method: req.method, headers }
 

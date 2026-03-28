@@ -8,14 +8,21 @@
 
 ## Security Design
 
-AtomFortune is designed as a **self-hosted, local-first** application. All data stays on your own machine or server — no cloud accounts, no external data collection.
+AtomFortune is designed as a **self-hosted, local-first** application. Your financial records stay on your own machine or server — no cloud accounts and no mandatory third-party backend.
 
 - All data is stored locally in a SQLite file you control
 - The API server is intended to run on `localhost` or within your trusted local network
+- Browser CORS access is restricted to localhost origins by default
+- `/api/v1/*` can be protected with an optional `API_TOKEN`
+- Phone sharing prefers a system-installed `cloudflared`; managed downloads require `CLOUDFLARED_SHA256`
 - Backup exports can be encrypted with AES-256-GCM using a password you choose
-- No external services receive your financial data (market prices are fetched anonymously)
+- Optional network features contact external services:
+  - Yahoo Finance for prices and FX rates
+  - TWSE and CoinGecko for ticker search
+  - GitHub Releases for desktop auto-update checks
+  - Cloudflare Tunnel when you explicitly enable phone sharing
 
-**The API has no built-in authentication.** It is designed to be accessed only from your local machine or private network. **Do not expose the API port (default: 8000) to the public internet.**
+**The API is still intended for local/private deployments.** If you expose it beyond localhost, set `API_TOKEN` for both the API and the web proxy. The desktop app generates a random per-launch token automatically. Even with a token, you should avoid exposing the API port (default: 8000) directly to the public internet.
 
 ## Reporting a Vulnerability
 

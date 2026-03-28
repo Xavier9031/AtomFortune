@@ -41,7 +41,7 @@ export default function OnboardingScreen() {
   const [status, setStatus] = useState<'loading' | 'show' | 'hide'>('loading')
   const [step, setStep] = useState<Step>('choose')
   const [name, setName] = useState('')
-  const [baseCurrency, setBaseCurrency] = useState<Currency>('TWD')
+  const [displayCurrency, setDisplayCurrency] = useState<Currency>('TWD')
   const [importPw, setImportPw] = useState('')
   const [loading, setLoading] = useState(false)
   const [dark, setDark] = useState(false)
@@ -94,7 +94,7 @@ export default function OnboardingScreen() {
       if (res.ok) {
         const user = await res.json()
         setActiveUserId(user.id)
-        setCurrency(baseCurrency)
+        setCurrency(displayCurrency)
         window.location.reload()
       }
     } finally { setLoading(false) }
@@ -118,7 +118,7 @@ export default function OnboardingScreen() {
       if (importPw) headers['x-backup-password'] = importPw
       await fetch(`${BASE}/backup/import`, { method: 'POST', headers, body: form })
       setActiveUserId(user.id)
-      setCurrency(baseCurrency)
+      setCurrency(displayCurrency)
       window.location.reload()
     } finally { setLoading(false) }
   }
@@ -174,13 +174,13 @@ export default function OnboardingScreen() {
 
           <div className="space-y-2">
             <p className="text-[10px] font-semibold tracking-widest uppercase text-[var(--color-muted)]">
-              {t('onboarding.baseCurrencyLabel')}
+              {t('onboarding.displayCurrencyLabel')}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {POPULAR_CURRENCIES.map(c => (
-                <button key={c} onClick={() => setBaseCurrency(c)}
+                <button key={c} onClick={() => setDisplayCurrency(c)}
                   className={`px-2 py-1 rounded-lg text-[11px] font-mono font-medium border transition-colors duration-150
-                    ${baseCurrency === c
+                    ${displayCurrency === c
                       ? 'bg-[var(--color-accent)] border-[var(--color-accent)] text-white'
                       : 'border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]'}`}>
                   {c}

@@ -14,7 +14,7 @@ export default function DashboardPage() {
 
   if (liveLoading) {
     return (
-      <div className="animate-pulse space-y-4">
+      <div data-testid="dashboard-loading" className="animate-pulse space-y-4">
         <div className="h-20 bg-[var(--color-surface)] rounded-lg" />
         <div className="grid grid-cols-2 gap-4">
           <div className="h-64 bg-[var(--color-surface)] rounded-lg" />

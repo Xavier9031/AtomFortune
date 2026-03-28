@@ -111,17 +111,29 @@ describe('fetchFxRates', () => {
 import { dailySnapshotJob } from '../src/jobs/snapshot.job'
 import * as pricingService from '../src/jobs/pricing.service'
 import * as fxService from '../src/jobs/fx.service'
+import * as recurringJob from '../src/jobs/recurring.job'
 
 describe('dailySnapshotJob', () => {
   let mockDb: any
   let mockInsertValues: ReturnType<typeof vi.fn>
   let mockDeleteWhere: ReturnType<typeof vi.fn>
+  const makeFromResult = (rows: any[] = []) => {
+    const result: any = Promise.resolve(rows)
+    result.where = vi.fn().mockResolvedValue(rows)
+    result.innerJoin = vi.fn(() => ({ where: vi.fn().mockResolvedValue(rows) }))
+    result.orderBy = vi.fn(() => ({ limit: vi.fn().mockResolvedValue(rows) }))
+    return result
+  }
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.spyOn(console, 'log').mockImplementation(() => {})
     // Spy on the actual module exports for snapshot tests
     vi.spyOn(pricingService, 'fetchMarketPrices').mockResolvedValue(new Map())
+    vi.spyOn(pricingService, 'fetchHistoricalPricesForAssets').mockResolvedValue(new Map())
     vi.spyOn(fxService, 'fetchFxRates').mockResolvedValue([])
+    vi.spyOn(fxService, 'fetchHistoricalFxRates').mockResolvedValue(new Map())
+    vi.spyOn(recurringJob, 'applyRecurringEntries').mockResolvedValue(0 as any)
     mockInsertValues = vi.fn(() => ({ run: vi.fn() }))
     mockDeleteWhere = vi.fn(() => ({ run: vi.fn() }))
 
@@ -141,14 +153,7 @@ describe('dailySnapshotJob', () => {
   })
 
   it('calls fetchMarketPrices and fetchFxRates exactly once', async () => {
-    // Build a chainable mock: from() returns a thenable [] with .where() and .innerJoin()
-    const makeFromResult = () => {
-      const result: any = Promise.resolve([])
-      result.where = vi.fn().mockResolvedValue([])
-      result.innerJoin = vi.fn(() => ({ where: vi.fn().mockResolvedValue([]) }))
-      return result
-    }
-    mockDb.select = vi.fn(() => ({ from: vi.fn(makeFromResult) }))
+    mockDb.select = vi.fn(() => ({ from: vi.fn(() => makeFromResult()) }))
 
     await dailySnapshotJob(mockDb as any, new Date('2026-03-22'))
 
@@ -157,14 +162,7 @@ describe('dailySnapshotJob', () => {
   })
 
   it('inserts snapshot item when price and fx_rate are resolved', async () => {
-    // Build a chainable mock: from() returns a thenable [] with .where() and .innerJoin()
-    const makeFromResult = () => {
-      const result: any = Promise.resolve([])
-      result.where = vi.fn().mockResolvedValue([])
-      result.innerJoin = vi.fn(() => ({ where: vi.fn().mockResolvedValue([]) }))
-      return result
-    }
-    mockDb.select = vi.fn(() => ({ from: vi.fn(makeFromResult) }))
+    mockDb.select = vi.fn(() => ({ from: vi.fn(() => makeFromResult()) }))
 
     await dailySnapshotJob(mockDb as any, new Date('2026-03-22'))
     // Just verify it ran without error

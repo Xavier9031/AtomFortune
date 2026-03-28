@@ -3,7 +3,7 @@ services:
     build: ./api
     environment:
       DATABASE_PATH: /data/atomfortune.db
-      BASE_CURRENCY: TWD
+      API_TOKEN: ${API_TOKEN:-}
       SNAPSHOT_SCHEDULE: "0 22 * * *"
       WEB_ORIGIN: http://web:3000
     ports:
@@ -14,6 +14,7 @@ services:
     build: ./web
     environment:
       API_ORIGIN: http://api:8000
+      API_TOKEN: ${API_TOKEN:-}
     ports:
       - "3001:3000"
     depends_on: [api]

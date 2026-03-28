@@ -19,11 +19,47 @@ import { backupRouter } from './modules/backup/backup.controller'
 import recurringEntriesController from './modules/recurring-entries/recurring-entries.controller'
 import usersController from './modules/users/users.controller'
 import { tunnelRouter } from './modules/tunnel/tunnel.controller'
+import { systemRouter } from './modules/system/system.controller'
+import { apiTokenMiddleware } from './middleware/api-token'
 import path from 'path'
+
+function normalizeLocalOrigin(origin?: string | null): string | null {
+  if (!origin) return null
+  try {
+    const url = new URL(origin)
+    if (!['http:', 'https:'].includes(url.protocol)) return null
+    if (!['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) return null
+    return `${url.protocol}//${url.host}`
+  } catch {
+    return null
+  }
+}
+
+const trustedBrowserOrigins = new Set([
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+  'http://localhost:3001',
+  'http://127.0.0.1:3001',
+  'http://localhost:3100',
+  'http://127.0.0.1:3100',
+])
+
+const configuredWebOrigin = normalizeLocalOrigin(process.env.WEB_ORIGIN)
+if (configuredWebOrigin) trustedBrowserOrigins.add(configuredWebOrigin)
 
 const app = new Hono()
 
-app.use('*', cors({ origin: '*', allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'] }))
+app.use('*', cors({
+  origin: (origin) => {
+    const normalized = normalizeLocalOrigin(origin)
+    return normalized && trustedBrowserOrigins.has(normalized) ? origin : null
+  },
+  allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowHeaders: ['Content-Type', 'X-User-Id', 'X-Backup-Password', 'Authorization', 'X-API-Token'],
+  exposeHeaders: ['Content-Disposition'],
+}))
+
+app.use('/api/v1/*', apiTokenMiddleware(config.apiToken))
 
 app.get('/health', (c) => c.json({ status: 'ok' }))
 
@@ -40,6 +76,7 @@ app.route('/api/v1/backup', backupRouter)
 app.route('/api/v1/recurring-entries', recurringEntriesController)
 app.route('/api/v1/users', usersController)
 app.route('/api/v1/tunnel', tunnelRouter)
+app.route('/api/v1/system', systemRouter)
 
 app.onError((err, c) => {
   const status = (err as any).status ?? 500
