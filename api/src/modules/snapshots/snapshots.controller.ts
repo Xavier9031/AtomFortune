@@ -75,6 +75,8 @@ snapshotsRouter.post('/backfill-prices',
     to:   z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   }).refine(d => d.from <= d.to, { message: 'from must be ≤ to' })),
   async (c) => {
+    const userId = getUserId(c)
+    if (!userId) return c.json({ error: 'x-user-id header required' }, 400)
     const { from, to } = c.req.valid('json')
     const result = await service.backfillPricesOnly(from, to)
     return c.json(result)

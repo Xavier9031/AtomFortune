@@ -41,14 +41,6 @@ app.route('/api/v1/recurring-entries', recurringEntriesController)
 app.route('/api/v1/users', usersController)
 app.route('/api/v1/tunnel', tunnelRouter)
 
-// Manual trigger endpoint for dev/debug
-app.post('/snapshots/trigger', async (c) => {
-  const dateParam = c.req.query('date')
-  const snapshotDate = dateParam ? new Date(dateParam) : new Date()
-  await dailySnapshotJob(db, snapshotDate)
-  return c.json({ triggered: true, date: snapshotDate.toISOString().slice(0, 10) })
-})
-
 app.onError((err, c) => {
   const status = (err as any).status ?? 500
   return c.json({ error: err.message }, status)

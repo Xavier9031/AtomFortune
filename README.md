@@ -10,13 +10,42 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.0.7-green?style=flat-square" alt="Version" />
+  <a href="https://github.com/Xavier9031/AtomFortune/releases/latest">
+    <img src="https://img.shields.io/github/v/release/Xavier9031/AtomFortune?style=flat-square&label=latest" alt="Latest Release" />
+  </a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Docker-blue?style=flat-square" alt="Platform" />
   <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" />
+  <a href="https://github.com/Xavier9031/AtomFortune/actions/workflows/ci.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/Xavier9031/AtomFortune/ci.yml?branch=main&style=flat-square&label=CI" alt="CI" />
+  </a>
 </p>
 
 <p align="center">
   <a href="docs/README.zh-TW.md">繁體中文</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Xavier9031/AtomFortune/releases">Download</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Xavier9031/AtomFortune/issues">Report Bug</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Xavier9031/AtomFortune/issues">Request Feature</a>
+</p>
+
+---
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-dark.png" alt="Dashboard – Dark Mode" width="780" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" alt="Dashboard – Light Mode" width="380" />
+  &nbsp;
+  <img src="docs/screenshots/holdings.png" alt="Holdings" width="380" />
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/assets.png" alt="Assets" width="380" />
+  &nbsp;
+  <img src="docs/screenshots/settings.png" alt="Settings & Phone Access" width="380" />
 </p>
 
 ---
@@ -179,6 +208,14 @@ cd desktop && npm run dist
 
 - [Technical Reference](docs/technical-reference.md) — API endpoints, schema, snapshot mechanism
 - [繁體中文 README](docs/README.zh-TW.md)
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before submitting a pull request.
+
+## Security
+
+AtomFortune is designed for local/self-hosted use. The API has no authentication by design — **do not expose the API port to the public internet**. See [SECURITY.md](SECURITY.md) for details and the vulnerability reporting process.
 
 ## License
 

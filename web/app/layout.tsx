@@ -38,7 +38,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <TopBar />
             <div className="flex">
               <div className="shrink-0"><Sidebar /></div>
-              <main className="flex-1 p-4 md:p-6 pb-20 md:pb-6 bg-bg min-h-screen">{children}</main>
+              <main className="flex-1 min-w-0 p-4 md:p-6 pb-20 md:pb-6 bg-bg min-h-screen overflow-x-hidden">{children}</main>
             </div>
             <BottomNav />
           </CurrencyProvider>

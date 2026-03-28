@@ -50,7 +50,8 @@ backupRouter.get('/export', async (c) => {
   const userId = c.req.header('x-user-id') ?? c.req.query('userId')
   if (!userId) return c.json({ error: 'Missing X-User-Id header' }, 400)
 
-  const password = c.req.query('password')
+  // Accept password from header (preferred) or query param (legacy/browser fallback)
+  const password = c.req.header('x-backup-password') ?? c.req.query('password')
   const date = new Date().toISOString().slice(0, 10)
 
   const [
@@ -118,10 +119,13 @@ backupRouter.post('/import', async (c) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let body: any
 
+  const MAX_IMPORT_SIZE = 50 * 1024 * 1024 // 50 MB
+
   if (contentType.includes('multipart/form-data')) {
     const formData = await c.req.formData()
     const file = formData.get('file') as File | null
     if (!file) return c.json({ error: 'Missing file field' }, 400)
+    if (file.size > MAX_IMPORT_SIZE) return c.json({ error: `File too large (max ${MAX_IMPORT_SIZE / 1024 / 1024} MB)` }, 413)
 
     const buf = await file.arrayBuffer()
     try {

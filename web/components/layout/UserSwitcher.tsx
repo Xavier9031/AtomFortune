@@ -197,10 +197,20 @@ export default function UserSwitcher({ variant = 'sidebar' }: { variant?: 'sideb
 
   // ── Modal actions ─────────────────────────────────────────────────────────
 
-  function handleExport(userId: string) {
-    const params = new URLSearchParams({ userId })
-    if (exportPw) params.set('password', exportPw)
-    window.location.href = `${BASE}/backup/export?${params.toString()}`
+  async function handleExport(userId: string) {
+    const headers: Record<string, string> = {}
+    if (exportPw) headers['x-backup-password'] = exportPw
+    const res = await fetch(`${BASE}/backup/export?userId=${encodeURIComponent(userId)}`, { headers })
+    if (!res.ok) return
+    const blob = await res.blob()
+    const disposition = res.headers.get('content-disposition') ?? ''
+    const match = disposition.match(/filename="([^"]+)"/)
+    const filename = match?.[1] ?? 'backup.zip'
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(blob)
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(a.href)
   }
 
   async function handleImportFile(file: File, userId: string) {
