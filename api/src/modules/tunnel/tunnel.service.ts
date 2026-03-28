@@ -6,30 +6,49 @@ import { createHash } from 'crypto'
 import { spawn, execSync, execFileSync, ChildProcess } from 'child_process'
 
 const BIN_DIR = path.join(os.tmpdir(), 'cloudflared-bin')
+const CLOUDFLARED_VERSION = '2026.3.0'
+
+const MANAGED_DOWNLOADS: Record<string, { filename: string; sha256: string }> = {
+  'darwin-amd64': {
+    filename: 'cloudflared-darwin-amd64.tgz',
+    sha256: '0f30140c4a5e213d22f951ef4c964cac5fb6a5f061ba6eba5ea932999f7c0394',
+  },
+  'darwin-arm64': {
+    filename: 'cloudflared-darwin-arm64.tgz',
+    sha256: '2aae4f69b0fc1c671b8353b4f594cbd902cd1e360c8eed2b8cad4602cb1546fb',
+  },
+  'linux-amd64': {
+    filename: 'cloudflared-linux-amd64',
+    sha256: '4a9e50e6d6d798e90fcd01933151a90bf7edd99a0a55c28ad18f2e16263a5c30',
+  },
+  'linux-arm64': {
+    filename: 'cloudflared-linux-arm64',
+    sha256: '0755ba4cbab59980e6148367fcf53a8f3ec85a97deefd63c2420cf7850769bee',
+  },
+  'win32-amd64': {
+    filename: 'cloudflared-windows-amd64.exe',
+    sha256: '59b12880b24af581cf5b1013db601c7d843b9b097e9c78aa5957c7f39f741885',
+  },
+}
 
 function cloudflaredPath(): string {
   const name = process.platform === 'win32' ? 'cloudflared.exe' : 'cloudflared'
   return path.join(BIN_DIR, name)
 }
 
-function expectedSha256(): string | null {
-  const value = process.env.CLOUDFLARED_SHA256?.trim().toLowerCase()
-  return value || null
-}
-
-function downloadUrl(): string {
-  const p = process.platform
-  const a = process.arch
-  const base = 'https://github.com/cloudflare/cloudflared/releases/latest/download'
-  if (p === 'darwin') {
-    const arch = a === 'arm64' ? 'arm64' : 'amd64'
-    return `${base}/cloudflared-darwin-${arch}.tgz`
+function managedDownloadSpec(): { url: string; sha256: string; isTgz: boolean } {
+  const arch = process.arch === 'arm64' ? 'arm64' : 'amd64'
+  const key = `${process.platform}-${arch}`
+  const spec = MANAGED_DOWNLOADS[key]
+  if (!spec) {
+    throw new Error(`Managed cloudflared download is not available for ${process.platform}/${process.arch}. Install cloudflared manually.`)
   }
-  if (p === 'win32') {
-    return `${base}/cloudflared-windows-amd64.exe`
+  const overrideSha = process.env.CLOUDFLARED_SHA256?.trim().toLowerCase()
+  return {
+    url: `https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/${spec.filename}`,
+    sha256: overrideSha || spec.sha256,
+    isTgz: spec.filename.endsWith('.tgz'),
   }
-  const arch = a === 'arm64' ? 'arm64' : 'amd64'
-  return `${base}/cloudflared-linux-${arch}`
 }
 
 function downloadFile(url: string, dest: string): Promise<void> {
@@ -60,14 +79,7 @@ function sha256File(filePath: string): string {
   return hash.digest('hex')
 }
 
-function verifyCloudflaredBinary(filePath: string): void {
-  const expected = expectedSha256()
-  if (!expected) {
-    throw new Error(
-      'Managed cloudflared download is disabled until CLOUDFLARED_SHA256 is set. Install cloudflared on PATH or pin a SHA256 first.'
-    )
-  }
-
+function verifyCloudflaredBinary(filePath: string, expected: string): void {
   const actual = sha256File(filePath)
   if (actual !== expected) {
     throw new Error(`cloudflared SHA256 mismatch: expected ${expected}, got ${actual}`)
@@ -88,21 +100,24 @@ async function ensureCloudflared(): Promise<string> {
   if (systemPath) return systemPath
 
   const cfPath = cloudflaredPath()
+  const spec = managedDownloadSpec()
   if (fs.existsSync(cfPath)) {
-    verifyCloudflaredBinary(cfPath)
-    return cfPath
+    try {
+      verifyCloudflaredBinary(cfPath, spec.sha256)
+      return cfPath
+    } catch {
+      fs.rmSync(cfPath, { force: true })
+    }
   }
 
   fs.mkdirSync(BIN_DIR, { recursive: true })
 
-  const url = downloadUrl()
-  const isTgz = url.endsWith('.tgz')
-  const tmpDest = isTgz ? path.join(BIN_DIR, 'cloudflared.tgz') : cfPath
+  const tmpDest = spec.isTgz ? path.join(BIN_DIR, 'cloudflared.tgz') : cfPath
 
-  console.log(`Downloading cloudflared from ${url}...`)
-  await downloadFile(url, tmpDest)
+  console.log(`Downloading cloudflared ${CLOUDFLARED_VERSION} from ${spec.url}...`)
+  await downloadFile(spec.url, tmpDest)
 
-  if (isTgz) {
+  if (spec.isTgz) {
     execSync(`tar xzf "${tmpDest}" -C "${BIN_DIR}"`, { stdio: 'ignore' })
     fs.unlinkSync(tmpDest)
   }
@@ -111,8 +126,8 @@ async function ensureCloudflared(): Promise<string> {
     fs.chmodSync(cfPath, 0o755)
   }
 
-  verifyCloudflaredBinary(cfPath)
-  console.log('cloudflared downloaded')
+  verifyCloudflaredBinary(cfPath, spec.sha256)
+  console.log(`cloudflared ${CLOUDFLARED_VERSION} downloaded`)
   return cfPath
 }
 

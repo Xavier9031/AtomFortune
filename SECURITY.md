@@ -15,7 +15,7 @@ AtomFortune is designed as a **self-hosted, local-first** application. Your fina
 - Browser CORS access is restricted to localhost origins by default
 - `/api/v1/*` can be protected with an optional `API_TOKEN`
 - Local profiles are convenience partitions inside one instance, not separate security principals
-- Phone sharing prefers a system-installed `cloudflared`; managed downloads require `CLOUDFLARED_SHA256`
+- Phone sharing prefers a system-installed `cloudflared`; otherwise AtomFortune downloads a pinned managed copy automatically. `CLOUDFLARED_SHA256` remains available as an advanced override.
 - Backup exports can be encrypted with AES-256-GCM using a password you choose
 - Optional network features contact external services:
   - Yahoo Finance for prices and FX rates

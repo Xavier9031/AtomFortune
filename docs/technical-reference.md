@@ -130,7 +130,7 @@ Daily cron job (default 22:00) runs `dailySnapshotJob`:
 - When `API_TOKEN` is set, send either `Authorization: Bearer <token>` or `X-API-Token: <token>`
 - The bundled web app uses the Next.js proxy to add the token server-side; the desktop app generates one automatically per launch
 - `X-User-Id` selects a local profile inside one instance; it is not a full authentication/authorization system
-- Phone sharing prefers a system-installed `cloudflared`; managed downloads require `CLOUDFLARED_SHA256`
+- Phone sharing prefers a system-installed `cloudflared`; otherwise AtomFortune downloads a pinned managed copy automatically. `CLOUDFLARED_SHA256` remains available as an advanced override.
 
 Manual trigger for one local profile:
 
@@ -175,7 +175,7 @@ Liabilities
 | `DATABASE_PATH` | No | `./atomfortune.db` | SQLite database file path |
 | `TEST_DATABASE_PATH` | No | — | Test database (used by Vitest) |
 | `API_TOKEN` | No | unset | Optional shared token for the API and Next.js proxy |
-| `CLOUDFLARED_SHA256` | No | unset | SHA256 pin for managed `cloudflared` downloads |
+| `CLOUDFLARED_SHA256` | No | unset | Optional SHA256 override for managed `cloudflared` downloads |
 | `SNAPSHOT_SCHEDULE` | No | `0 22 * * *` | Daily snapshot cron expression |
 | `PORT` | No | `8000` | API server port |
 | `API_ORIGIN` | No | `http://localhost:8000` | Target origin for Next.js API proxy |

@@ -118,7 +118,7 @@ Open **http://localhost:3001** in your browser.
 
 Go to **Settings → Phone Access**, click **Start Connection**, and scan the QR code. Works on any network (4G/5G/different WiFi) via Cloudflare Tunnel.
 
-If `cloudflared` is not already installed on the machine, set `CLOUDFLARED_SHA256` first so managed downloads are pinned before execution.
+If `cloudflared` is not already installed on the machine, AtomFortune can download a pinned managed copy automatically for Phone Access.
 
 ## Tech Stack
 
@@ -200,7 +200,7 @@ cd desktop && npm run dist
 |----------|---------|-------------|
 | `DATABASE_PATH` | `./atomfortune.db` | SQLite database file path |
 | `API_TOKEN` | unset | Optional shared token for the API and Next.js proxy |
-| `CLOUDFLARED_SHA256` | unset | SHA256 pin for managed `cloudflared` downloads when using phone sharing |
+| `CLOUDFLARED_SHA256` | unset | Optional SHA256 override for managed `cloudflared` downloads when using phone sharing |
 | `SNAPSHOT_SCHEDULE` | `0 22 * * *` | Daily snapshot cron expression |
 | `PORT` | `8000` | API server port |
 | `API_ORIGIN` | `http://localhost:8000` | API origin for Next.js proxy |
@@ -228,7 +228,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## Security
 
-AtomFortune is designed for local/self-hosted use. Browser CORS access is limited to localhost origins by default, and you can optionally protect `/api/v1/*` with `API_TOKEN`. The desktop app generates a per-launch token automatically. Multi-profile support is a local data-organization feature inside one instance, not a full account/permission system. Manual snapshot rebuild/backfill endpoints operate on the profile selected by `X-User-Id`; scheduled jobs still process all local profiles. Phone sharing prefers a system-installed `cloudflared`; otherwise managed downloads require `CLOUDFLARED_SHA256`. Optional network features contact Yahoo Finance, TWSE, CoinGecko, GitHub Releases, and Cloudflare Tunnel. See [SECURITY.md](SECURITY.md) for details and the vulnerability reporting process.
+AtomFortune is designed for local/self-hosted use. Browser CORS access is limited to localhost origins by default, and you can optionally protect `/api/v1/*` with `API_TOKEN`. The desktop app generates a per-launch token automatically. Multi-profile support is a local data-organization feature inside one instance, not a full account/permission system. Manual snapshot rebuild/backfill endpoints operate on the profile selected by `X-User-Id`; scheduled jobs still process all local profiles. Phone sharing prefers a system-installed `cloudflared`; otherwise AtomFortune downloads a pinned managed copy automatically. Optional network features contact Yahoo Finance, TWSE, CoinGecko, GitHub Releases, and Cloudflare Tunnel. See [SECURITY.md](SECURITY.md) for details and the vulnerability reporting process.
 
 ## License
 

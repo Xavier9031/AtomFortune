@@ -96,7 +96,7 @@ docker compose up -d
 進入 **設定 → 手機連線**，按下 **開啟連線**，用手機掃描 QR Code 即可。
 支援 4G/5G、不同 WiFi 等任何網路環境（透過 Cloudflare Tunnel）。
 
-如果機器上沒有先安裝 `cloudflared`，請先設定 `CLOUDFLARED_SHA256`，讓受管下載在執行前有固定的雜湊值可驗證。
+如果機器上沒有先安裝 `cloudflared`，AtomFortune 會自動下載內建 SHA256 pin 的受管版本來提供手機連線。
 
 ## 技術堆疊
 
@@ -178,7 +178,7 @@ cd desktop && npm run dist
 |------|--------|------|
 | `DATABASE_PATH` | `./atomfortune.db` | SQLite 資料庫路徑 |
 | `API_TOKEN` | 未設定 | API 與 Next.js proxy 共用的選用保護 token |
-| `CLOUDFLARED_SHA256` | 未設定 | 啟用手機連線時，受管 `cloudflared` 下載所需的 SHA256 pin |
+| `CLOUDFLARED_SHA256` | 未設定 | 啟用手機連線時，受管 `cloudflared` 下載的選用 SHA256 override |
 | `SNAPSHOT_SCHEDULE` | `0 22 * * *` | 每日快照排程（cron） |
 | `PORT` | `8000` | API 伺服器埠號 |
 | `API_ORIGIN` | `http://localhost:8000` | Next.js 代理的 API 來源 |

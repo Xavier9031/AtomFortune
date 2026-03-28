@@ -7,7 +7,7 @@
 * restrict browser CORS to trusted localhost origins only
 * add optional `API_TOKEN` protection for `/api/v1/*`
 * remove sensitive backup query-string inputs and move them to headers
-* require a pinned `CLOUDFLARED_SHA256` for managed `cloudflared` downloads
+* use built-in pinned `cloudflared` downloads for Phone Access while keeping `CLOUDFLARED_SHA256` as an advanced override
 
 ### Fixes
 
