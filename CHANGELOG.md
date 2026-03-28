@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.8](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.7...atomfortune-v0.0.8) (2026-03-28)
+
+
+### Features
+
+* open-source preparation ([d26345d](https://github.com/Xavier9031/AtomFortune/commit/d26345d858b5c44712267b9221cb9607879bf753))
+
 ## [0.0.5](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.4...atomfortune-v0.0.5) (2026-03-25)
 
 
