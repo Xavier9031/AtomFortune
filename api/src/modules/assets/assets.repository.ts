@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm'
+import { eq, and, asc } from 'drizzle-orm'
 import { DrizzleDB } from '../../db/client'
 import { assets, holdings } from '../../db/schema'
 
@@ -7,6 +7,7 @@ export class AssetsRepository {
 
   findAll(userId: string) {
     return this.db.select().from(assets).where(eq(assets.userId, userId))
+      .orderBy(asc(assets.category), asc(assets.subKind), asc(assets.name))
   }
 
   findById(id: string, userId: string) {
