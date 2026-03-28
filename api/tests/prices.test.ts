@@ -11,8 +11,8 @@ afterAll(() => closeDb())
 describe('POST /api/v1/prices/manual', () => {
   it('creates a manual price for a manual-mode asset', async () => {
     const [asset] = await testDb.insert(assets).values({
-      name: 'Gold', assetClass: 'asset', category: 'investment',
-      subKind: 'precious_metal', currencyCode: 'TWD', pricingMode: 'manual', userId: 'default-user',
+      name: 'Fund A', assetClass: 'asset', category: 'investment',
+      subKind: 'fund', currencyCode: 'TWD', pricingMode: 'manual', userId: 'default-user',
     }).returning()
 
     const res = await app.request('/api/v1/prices/manual', {
@@ -49,8 +49,33 @@ describe('GET /api/v1/prices', () => {
       method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
       body: JSON.stringify({ assetId: asset.id, priceDate: '2026-03-22', price: 10.5 }),
     })
-    const res = await app.request(`/api/v1/prices?assetId=${asset.id}`)
+    const res = await app.request(`/api/v1/prices?assetId=${asset.id}`, { headers: USER_HEADER })
     expect(res.status).toBe(200)
     expect(await res.json()).toHaveLength(1)
+  })
+
+  it('only returns prices for the requesting user', async () => {
+    const otherUser = await seedTestUser('Other User')
+    const [mine] = await testDb.insert(assets).values({
+      name: 'My Fund', assetClass: 'asset', category: 'investment',
+      subKind: 'fund', currencyCode: 'TWD', pricingMode: 'manual', userId: 'default-user',
+    }).returning()
+    const [theirs] = await testDb.insert(assets).values({
+      name: 'Their Fund', assetClass: 'asset', category: 'investment',
+      subKind: 'fund', currencyCode: 'TWD', pricingMode: 'manual', userId: otherUser.id,
+    }).returning()
+    await app.request('/api/v1/prices/manual', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', ...USER_HEADER },
+      body: JSON.stringify({ assetId: mine.id, priceDate: '2026-03-22', price: 10.5 }),
+    })
+    await app.request('/api/v1/prices/manual', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-user-id': otherUser.id },
+      body: JSON.stringify({ assetId: theirs.id, priceDate: '2026-03-22', price: 99.9 }),
+    })
+    const res = await app.request('/api/v1/prices', { headers: USER_HEADER })
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body).toHaveLength(1)
+    expect(body[0].assetId).toBe(mine.id)
   })
 })

@@ -11,8 +11,8 @@ import ClientInit from '@/components/ClientInit'
 import OnboardingScreen from '@/components/layout/OnboardingScreen'
 
 export const metadata: Metadata = {
-  title: 'Atom Fortune',
-  description: '個人資產淨值追蹤系統',
+  title: 'AtomFortune',
+  description: 'Local-first personal net worth tracker.',
 }
 
 export const viewport: Viewport = {

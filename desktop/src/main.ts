@@ -56,7 +56,7 @@ async function handleShareToPhone(): Promise<void> {
   qrWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
 <html><body style="display:flex;align-items:center;justify-content:center;height:100vh;background:#1a1916;color:#f8f5f2;font-family:system-ui;margin:0;">
   <div style="text-align:center">
-    <p style="font-size:18px;">正在建立連線...</p>
+    <p style="font-size:18px;">Setting up connection...</p>
   </div>
 </body></html>`)}`)
 
@@ -72,14 +72,14 @@ async function handleShareToPhone(): Promise<void> {
 
     qrWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`<!DOCTYPE html>
 <html><body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#1a1916;color:#f8f5f2;font-family:system-ui;margin:0;user-select:none;">
-  <h2 style="margin:0 0 20px;">手機掃描連線</h2>
+  <h2 style="margin:0 0 20px;">Scan with Your Phone</h2>
   <img src="${qrDataUrl}" width="256" height="256" style="border-radius:12px;" />
   <p style="color:#0a9e9e;margin:16px 24px 0;font-size:13px;word-break:break-all;text-align:center;">${url}</p>
-  <p style="color:#555;font-size:12px;margin-top:12px;">關閉此視窗會停止連線</p>
+  <p style="color:#555;font-size:12px;margin-top:12px;">Closing this window will stop the connection.</p>
 </body></html>`)}`)
   } catch (err: any) {
     if (qrWindow && !qrWindow.isDestroyed()) qrWindow.close()
-    dialog.showErrorBox('連線失敗', err?.message ?? String(err))
+    dialog.showErrorBox('Connection Failed', err?.message ?? String(err))
   }
 
   qrWindow.on('closed', () => {

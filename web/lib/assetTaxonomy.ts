@@ -16,6 +16,6 @@ export const DEFAULT_PRICING_MODE: Record<string, PricingMode> = {
   e_wallet: 'fixed', receivable: 'fixed', credit_card: 'fixed',
   mortgage: 'fixed', personal_loan: 'fixed',
   stock: 'market', etf: 'market', crypto: 'market',
-  fund: 'manual', precious_metal: 'manual', real_estate: 'manual',
+  fund: 'manual', precious_metal: 'market', real_estate: 'manual',
   vehicle: 'manual', other: 'manual',
 }

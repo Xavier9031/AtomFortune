@@ -58,7 +58,7 @@ AtomFortune takes a different approach: **periodic asset snapshots**. Instead of
 
 A single interface to track everything you own and owe:
 
-- **Cash & deposits** — bank accounts, e-wallets, stablecoins
+- **Cash & deposits** — bank accounts, physical cash, e-wallets
 - **Investments** — stocks, ETFs, crypto, funds, precious metals
 - **Fixed assets** — real estate, vehicles
 - **Liabilities** — mortgages, credit cards, personal loans

@@ -141,6 +141,9 @@
       "noHistory": "尚無歷史資料",
       "transactions": "交易紀錄",
       "noTransactions": "尚無交易紀錄"
+    },
+    "manualPrice": {
+      "pricePlaceholder": "價格"
     }
   },
   "asset": {
@@ -148,7 +151,6 @@
       "bank_account": "銀行存款",
       "physical_cash": "現金",
       "e_wallet": "電子錢包",
-      "stablecoin": "穩定幣",
       "stock": "股票",
       "etf": "ETF",
       "fund": "基金",
@@ -272,7 +274,21 @@
     "moreItems": "項",
     "annotatedNetWorthTitle": "淨值歷史・含交易標記",
     "stackedAreaTitle": "資產結構堆疊",
-    "txnMarkers": "虛線 = 交易日（共 {count} 筆）"
+    "txnMarkers": "虛線 = 交易日（共 {count} 筆）",
+    "experimentalPreview": "預覽功能",
+    "fireProgressTitle": "財務自由進度",
+    "fireTargetLabel": "目標 {target} {currency}",
+    "fireGrowthEstimate": "近期增速預估",
+    "fireGrowthPending": "增速計算中…",
+    "fireRecentGrowth": "近 3 個月月均增 +{amount} {currency}",
+    "fireMonthlyCashflow": "月淨現金流（自動記）",
+    "fireReachEstimate": "按現金流計算約",
+    "fireReachSuffix": "後達成",
+    "fireNegativeCashflow": "現金流為負，建議檢視支出",
+    "fireRecurringHint": "前往資產詳情頁設定「自動記」以啟用現金流預測",
+    "fireDurationYears": "{value} 年",
+    "fireDurationMonths": "{value} 個月",
+    "monthlyDeltaTitle": "近 30 天淨值變化"
   },
   "settings": {
     "title": "設定",

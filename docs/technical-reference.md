@@ -50,8 +50,8 @@
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/api/v1/prices` | List price records (`?assetId=&from=&to=`) |
-| POST | `/api/v1/prices/manual` | Manually set price (for manual-priced assets) |
+| GET | `/api/v1/prices` | List current profile price records (`X-User-Id`, `?assetId=&from=&to=`) |
+| POST | `/api/v1/prices/manual` | Manually set price for a manual-priced asset |
 | GET | `/api/v1/fx-rates` | List FX rates (`?from=&to=&fromDate=&toDate=`) |
 | POST | `/api/v1/fx-rates/refresh` | Refresh FX rates now |
 | POST | `/api/v1/fx-rates/manual` | Manually set FX rate |
@@ -149,12 +149,11 @@ Assets
 │   ├── bank_account   → fixed pricing
 │   ├── physical_cash  → fixed
 │   ├── e_wallet       → fixed
-│   └── stablecoin     → fixed
 ├── investment
 │   ├── stock / etf    → market (yahoo-finance2)
 │   ├── crypto         → market (yahoo-finance2)
 │   ├── fund           → manual
-│   └── precious_metal → manual
+│   └── precious_metal → market (yahoo-finance2)
 ├── fixed
 │   ├── real_estate    → manual
 │   └── vehicle        → manual

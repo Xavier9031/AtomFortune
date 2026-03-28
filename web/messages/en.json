@@ -141,6 +141,9 @@
       "noHistory": "No historical data",
       "transactions": "Transaction History",
       "noTransactions": "No transactions"
+    },
+    "manualPrice": {
+      "pricePlaceholder": "Price"
     }
   },
   "asset": {
@@ -148,7 +151,6 @@
       "bank_account": "Bank Account",
       "physical_cash": "Physical Cash",
       "e_wallet": "E-Wallet",
-      "stablecoin": "Stablecoin",
       "stock": "Stock",
       "etf": "ETF",
       "fund": "Fund",
@@ -272,7 +274,21 @@
     "moreItems": "more",
     "annotatedNetWorthTitle": "Net Worth with Transactions",
     "stackedAreaTitle": "Asset Structure",
-    "txnMarkers": "Dashed lines = transaction dates ({count} total)"
+    "txnMarkers": "Dashed lines = transaction dates ({count} total)",
+    "experimentalPreview": "Preview",
+    "fireProgressTitle": "FIRE Progress",
+    "fireTargetLabel": "Target {target} {currency}",
+    "fireGrowthEstimate": "At the recent pace:",
+    "fireGrowthPending": "Calculating pace…",
+    "fireRecentGrowth": "Average monthly gain over the last 3 months: +{amount} {currency}",
+    "fireMonthlyCashflow": "Monthly net cash flow (recurring)",
+    "fireReachEstimate": "At the current cash-flow pace:",
+    "fireReachSuffix": "to reach the target",
+    "fireNegativeCashflow": "Cash flow is negative. Review your spending.",
+    "fireRecurringHint": "Add recurring entries on the asset detail page to enable cash-flow projection.",
+    "fireDurationYears": "{value} years",
+    "fireDurationMonths": "{value} months",
+    "monthlyDeltaTitle": "Net worth change over the last 30 days"
   },
   "settings": {
     "title": "Settings",

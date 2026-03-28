@@ -19,11 +19,6 @@ const CAT_COLOR: Record<string, string> = {
   debt:       '#f45d48',
 }
 
-const CAT_LABEL: Record<string, string> = {
-  liquid: '流動資金', investment: '投資', fixed: '固定資產',
-  receivable: '應收款', debt: '負債',
-}
-
 // FIRE target in each display currency (rough equivalents of ~30M TWD)
 const FIRE_TARGET: Record<string, number> = {
   TWD: 30_000_000, USD: 1_000_000, JPY: 150_000_000,
@@ -68,6 +63,7 @@ function RangeTabs({ value, onChange }: { value: Range; onChange: (r: Range) => 
 // ─── Widget 1: FIRE Progress ──────────────────────────────────────────────────
 
 export function FireProgress({ currency }: { currency: Currency }) {
+  const t = useTranslations('dashboard')
   const { data } = useNetWorthHistory(currency, 'all')
   const { data: allEntries } = useRecurringEntries()
   if (!data?.data?.length) return null
@@ -93,13 +89,17 @@ export function FireProgress({ currency }: { currency: Currency }) {
   const monthlyExpense = active.filter(e => e.type === 'expense').reduce((s, e) => s + Number(e.amount), 0)
   const monthlyNet = monthlyIncome - monthlyExpense
   const monthsFromCashflow = monthlyNet > 0 ? (target - current) / monthlyNet : null
+  const formatDuration = (months: number) =>
+    months >= 12
+      ? t('fireDurationYears', { value: (months / 12).toFixed(1) })
+      : t('fireDurationMonths', { value: Math.round(months) })
 
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <div className="flex items-baseline justify-between mb-3">
-        <h3 className="text-sm font-semibold">財務自由進度</h3>
+        <h3 className="text-sm font-semibold">{t('fireProgressTitle')}</h3>
         <span className="text-xs text-[var(--color-muted)]">
-          目標 {fmtShort(target)} {currency}
+          {t('fireTargetLabel', { target: fmtShort(target), currency })}
         </span>
       </div>
 
@@ -112,18 +112,18 @@ export function FireProgress({ currency }: { currency: Currency }) {
         <span className="tabular-nums font-medium text-[var(--color-text)]">{pct.toFixed(1)}%</span>
         {monthsLeft ? (
           <span>
-            近期增速預估{' '}
+            {t('fireGrowthEstimate')}{' '}
             <span className="text-[var(--color-text)] font-medium">
-              {monthsLeft >= 12 ? `${(monthsLeft / 12).toFixed(1)} 年` : `${Math.round(monthsLeft)} 個月`}
+              {formatDuration(monthsLeft)}
             </span>
           </span>
-        ) : <span>增速計算中…</span>}
+        ) : <span>{t('fireGrowthPending')}</span>}
         <span className="tabular-nums">{fmtShort(current)}</span>
       </div>
 
       {monthlyRate > 0 && (
         <p className="text-xs text-[var(--color-muted)] mt-1">
-          近 3 個月月均增 +{fmtShort(monthlyRate)} {currency}
+          {t('fireRecentGrowth', { amount: fmtShort(monthlyRate), currency })}
         </p>
       )}
 
@@ -131,7 +131,7 @@ export function FireProgress({ currency }: { currency: Currency }) {
       {active.length > 0 ? (
         <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
           <div className="flex items-center justify-between text-xs mb-1.5">
-            <span className="text-[var(--color-muted)]">月淨現金流（自動記）</span>
+            <span className="text-[var(--color-muted)]">{t('fireMonthlyCashflow')}</span>
             <span className={`font-medium tabular-nums ${monthlyNet >= 0 ? 'text-green-500' : 'text-red-400'}`}>
               {monthlyNet >= 0 ? '+' : ''}{fmtShort(monthlyNet)} TWD
             </span>
@@ -142,21 +142,19 @@ export function FireProgress({ currency }: { currency: Currency }) {
           </div>
           {monthsFromCashflow ? (
             <p className="text-xs text-[var(--color-muted)] mt-1.5">
-              按現金流計算約{' '}
+              {t('fireReachEstimate')}{' '}
               <span className="text-[var(--color-text)] font-medium">
-                {monthsFromCashflow >= 12
-                  ? `${(monthsFromCashflow / 12).toFixed(1)} 年`
-                  : `${Math.round(monthsFromCashflow)} 個月`}
+                {formatDuration(monthsFromCashflow)}
               </span>
-              {' '}後達成
+              {' '}{t('fireReachSuffix')}
             </p>
           ) : monthlyNet <= 0 ? (
-            <p className="text-xs text-red-400 mt-1.5">現金流為負，建議檢視支出</p>
+            <p className="text-xs text-red-400 mt-1.5">{t('fireNegativeCashflow')}</p>
           ) : null}
         </div>
       ) : (
         <p className="text-xs text-[var(--color-muted)] mt-3 pt-3 border-t border-[var(--color-border)]">
-          前往資產詳情頁設定「自動記」以啟用現金流預測
+          {t('fireRecurringHint')}
         </p>
       )}
     </div>
@@ -166,6 +164,8 @@ export function FireProgress({ currency }: { currency: Currency }) {
 // ─── Widget 2: Monthly delta (waterfall) ─────────────────────────────────────
 
 export function MonthlyDelta({ currency }: { currency: Currency }) {
+  const t = useTranslations('dashboard')
+  const tAsset = useTranslations('asset')
   const { data } = useCategoryHistory(currency, '30d')
   if (!data?.data?.length || data.data.length < 2) return null
 
@@ -186,7 +186,7 @@ export function MonthlyDelta({ currency }: { currency: Currency }) {
   return (
     <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
       <div className="flex items-baseline justify-between mb-4">
-        <h3 className="text-sm font-semibold">近 30 天淨值變化</h3>
+        <h3 className="text-sm font-semibold">{t('monthlyDeltaTitle')}</h3>
         <span className={`text-sm font-bold tabular-nums ${netDelta >= 0 ? 'text-green-500' : 'text-red-400'}`}>
           {netDelta >= 0 ? '+' : ''}{fmtShort(netDelta)}
         </span>
@@ -198,7 +198,7 @@ export function MonthlyDelta({ currency }: { currency: Currency }) {
           return (
             <div key={cat} className="flex items-center gap-2 text-xs">
               <span className="text-[var(--color-muted)] w-14 shrink-0 text-right">
-                {CAT_LABEL[cat] ?? cat}
+                {tAsset(`categories.${cat}` as any)}
               </span>
 
               {/* Symmetric bar */}
@@ -354,29 +354,6 @@ export function StackedAssetArea({ currency }: { currency: Currency }) {
             </button>
           )
         })}
-      </div>
-    </div>
-  )
-}
-
-// ─── Main export ──────────────────────────────────────────────────────────────
-
-export default function ExperimentalWidgets({ currency }: { currency: Currency }) {
-  return (
-    <div className="space-y-4 mt-6">
-      {/* Divider */}
-      <div className="flex items-center gap-3">
-        <div className="h-px flex-1 bg-[var(--color-border)]" />
-        <span className="text-xs text-[var(--color-muted)] px-3 py-1
-          border border-[var(--color-border)] rounded-full shrink-0">
-          預覽功能
-        </span>
-        <div className="h-px flex-1 bg-[var(--color-border)]" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <FireProgress currency={currency} />
-        <MonthlyDelta currency={currency} />
       </div>
     </div>
   )
