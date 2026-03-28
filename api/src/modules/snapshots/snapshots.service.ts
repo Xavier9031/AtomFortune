@@ -16,12 +16,12 @@ export async function getDetail(userId: string, date: string) {
   return repo.getSnapshotByDate(db, userId, date)
 }
 
-export async function rebuildDate(date: string) {
-  await dailySnapshotJob(db, new Date(date), { skipPriceFetch: true })
+export async function rebuildDate(userId: string, date: string) {
+  await dailySnapshotJob(db, new Date(date), { skipPriceFetch: true, userId })
   return { rebuilt: 1, missingAssets: [] as string[] }
 }
 
-export async function rebuildRange(from: string, to: string) {
+export async function rebuildRange(userId: string, from: string, to: string) {
   // 1. Backfill historical FX rates from Yahoo Finance
   try {
     await backfillHistoricalFxRates(db, from, to)
@@ -38,21 +38,21 @@ export async function rebuildRange(from: string, to: string) {
     current.setDate(current.getDate() + 1)
   }
   for (const date of dates) {
-    await dailySnapshotJob(db, new Date(date), { skipPriceFetch: true })
+    await dailySnapshotJob(db, new Date(date), { skipPriceFetch: true, userId })
   }
   return { rebuilt: dates.length, missingAssets: [] as string[] }
 }
 
-export async function backfillPricesOnly(from: string, to: string) {
-  const result = await backfillHistoricalPrices(db, from, to)
+export async function backfillPricesOnly(userId: string, from: string, to: string) {
+  const result = await backfillHistoricalPrices(db, from, to, userId)
   return result
 }
 
-export async function backfill(from: string, to: string) {
+export async function backfill(userId: string, from: string, to: string) {
   // 1. Fetch historical market prices from Yahoo Finance
   let pricesResult: Awaited<ReturnType<typeof backfillHistoricalPrices>> | null = null
   try {
-    pricesResult = await backfillHistoricalPrices(db, from, to)
+    pricesResult = await backfillHistoricalPrices(db, from, to, userId)
     console.log(`[backfill] Inserted ${pricesResult.total} historical price records`)
   } catch (err) {
     console.warn('[backfill] Historical price fetch failed (continuing):', err)
@@ -74,7 +74,7 @@ export async function backfill(from: string, to: string) {
     current.setDate(current.getDate() + 1)
   }
   for (const date of dates) {
-    await dailySnapshotJob(db, new Date(date), { skipPriceFetch: true })
+    await dailySnapshotJob(db, new Date(date), { skipPriceFetch: true, userId })
   }
 
   return {

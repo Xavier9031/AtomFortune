@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest'
 import app from '../src/index'
 import { cleanDb, closeDb, testDb, seedTestUser } from './helpers/db'
-import { assets, accounts } from '../src/db/schema'
+import { assets, accounts, prices } from '../src/db/schema'
 import { unzipSync, strFromU8 } from 'fflate'
 
 beforeEach(() => cleanDb())
@@ -15,10 +15,22 @@ describe('GET /api/v1/backup/export (with X-User-Id)', () => {
 
   it('returns a zip containing backup.json for correct user', async () => {
     const user = await seedTestUser()
+    const otherUser = await seedTestUser('Other')
     await testDb.insert(assets).values({
       userId: user.id,
       name: 'Cash', assetClass: 'asset', category: 'liquid',
       subKind: 'bank_account', currencyCode: 'TWD', pricingMode: 'fixed',
+    })
+    const [otherAsset] = await testDb.insert(assets).values({
+      userId: otherUser.id,
+      name: 'Other Asset', assetClass: 'asset', category: 'investment',
+      subKind: 'fund', currencyCode: 'USD', pricingMode: 'manual',
+    }).returning()
+    await testDb.insert(prices).values({
+      assetId: otherAsset.id,
+      priceDate: '2026-03-22',
+      price: '123.45',
+      source: 'manual',
     })
     const res = await app.request('/api/v1/backup/export', {
       headers: { 'x-user-id': user.id },
@@ -31,6 +43,7 @@ describe('GET /api/v1/backup/export (with X-User-Id)', () => {
     const parsed = JSON.parse(strFromU8(unzipped[filename]))
     expect(parsed.data.assets).toHaveLength(1)
     expect(parsed.data.assets[0].name).toBe('Cash')
+    expect(parsed.data.prices).toHaveLength(0)
   })
 
   it('returns encrypted .enc file when password is provided', async () => {

@@ -1,4 +1,4 @@
-import { and, desc, eq, lt, max, sql, gte } from 'drizzle-orm'
+import { and, desc, eq, lt, lte, max, sql, gte } from 'drizzle-orm'
 import { assets, fxRates, snapshotItems, holdings } from '../../db/schema'
 import type { DrizzleDB } from '../../db/client'
 
@@ -44,7 +44,7 @@ export async function getPreviousSummary(db: DrizzleDB, userId: string, beforeDa
 
   const totalAssets = Number(rows.find(r => r.assetClass === 'asset')?.total ?? 0)
   const totalLiabilities = Number(rows.find(r => r.assetClass === 'liability')?.total ?? 0)
-  return { netWorth: String(totalAssets - totalLiabilities) }
+  return { snapshotDate: prevDate, netWorth: String(totalAssets - totalLiabilities) }
 }
 
 export async function getFxRateForDisplay(
@@ -54,10 +54,60 @@ export async function getFxRateForDisplay(
   const rows = await db
     .select({ rate: fxRates.rate })
     .from(fxRates)
+    .where(and(
+      eq(fxRates.fromCurrency, displayCurrency),
+      eq(fxRates.toCurrency, 'TWD'),
+      lte(fxRates.rateDate, date),
+    ))
+    .orderBy(desc(fxRates.rateDate))
+    .limit(1)
+  if (rows.length) return Number(rows[0].rate)
+
+  const fallback = await db
+    .select({ rate: fxRates.rate })
+    .from(fxRates)
     .where(and(eq(fxRates.fromCurrency, displayCurrency), eq(fxRates.toCurrency, 'TWD')))
     .orderBy(desc(fxRates.rateDate))
     .limit(1)
-  return rows.length ? Number(rows[0].rate) : 1.0
+  return fallback.length ? Number(fallback[0].rate) : 1.0
+}
+
+export async function getFxRatesForDisplayDates(
+  db: DrizzleDB,
+  displayCurrency: string,
+  dates: string[],
+): Promise<Map<string, number>> {
+  const dateMap = new Map<string, number>()
+  const uniqueDates = [...new Set(dates)].sort()
+  if (displayCurrency === 'TWD') {
+    for (const date of uniqueDates) dateMap.set(date, 1.0)
+    return dateMap
+  }
+
+  const rows = await db
+    .select({ rateDate: fxRates.rateDate, rate: fxRates.rate })
+    .from(fxRates)
+    .where(and(eq(fxRates.fromCurrency, displayCurrency), eq(fxRates.toCurrency, 'TWD')))
+    .orderBy(fxRates.rateDate)
+
+  if (!rows.length) {
+    for (const date of uniqueDates) dateMap.set(date, 1.0)
+    return dateMap
+  }
+
+  const latestRate = Number(rows[rows.length - 1].rate)
+  let idx = 0
+  let lastSeenRate: number | null = null
+
+  for (const date of uniqueDates) {
+    while (idx < rows.length && rows[idx].rateDate <= date) {
+      lastSeenRate = Number(rows[idx].rate)
+      idx++
+    }
+    dateMap.set(date, lastSeenRate ?? latestRate)
+  }
+
+  return dateMap
 }
 
 export async function getAllocationForDate(db: DrizzleDB, userId: string, date: string) {

@@ -8,8 +8,10 @@ vi.mock('../src/modules/dashboard/dashboard.repository', () => ({
   getSummaryForDate: vi.fn(),
   getPreviousSummary: vi.fn(),
   getFxRateForDisplay: vi.fn(),
+  getFxRatesForDisplayDates: vi.fn(),
   getAllocationForDate: vi.fn(),
   getNetWorthHistory: vi.fn(),
+  getCategoryHistory: vi.fn(),
 }))
 
 import * as repo from '../src/modules/dashboard/dashboard.repository'
@@ -22,7 +24,10 @@ describe('GET /api/v1/dashboard/summary', () => {
     vi.mocked(repo.getSummaryForDate).mockResolvedValue({
       totalAssets: '13199320.00', totalLiabilities: '352000.00',
     })
-    vi.mocked(repo.getPreviousSummary).mockResolvedValue({ netWorth: '12558320.00' })
+    vi.mocked(repo.getPreviousSummary).mockResolvedValue({
+      snapshotDate: '2026-03-21',
+      netWorth: '12558320.00',
+    })
     vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(1.0)
 
     const res = await app.request('/api/v1/dashboard/summary?displayCurrency=TWD', { headers: USER_HEADER })
@@ -99,8 +104,10 @@ describe('GET /api/v1/dashboard/net-worth-history', () => {
       { snapshotDate: '2026-03-21', netWorth: '12558320.00' },
       { snapshotDate: '2026-03-22', netWorth: '12847320.00' },
     ])
-    vi.mocked(repo.getFxRateForDisplay).mockResolvedValue(32.5)
-    vi.mocked(repo.getLatestSnapshotDate).mockResolvedValue('2026-03-22')
+    vi.mocked(repo.getFxRatesForDisplayDates).mockResolvedValue(new Map([
+      ['2026-03-21', 32.5],
+      ['2026-03-22', 31.8],
+    ]))
 
     const res = await app.request('/api/v1/dashboard/net-worth-history?range=30d&displayCurrency=USD', { headers: USER_HEADER })
     expect(res.status).toBe(200)
@@ -108,11 +115,32 @@ describe('GET /api/v1/dashboard/net-worth-history', () => {
     expect(body.displayCurrency).toBe('USD')
     expect(body.data).toHaveLength(2)
     expect(body.data[0].netWorth).toBeCloseTo(12558320 / 32.5, 0)
-    expect(body.data[1].netWorth).toBeCloseTo(12847320 / 32.5, 0)
+    expect(body.data[1].netWorth).toBeCloseTo(12847320 / 31.8, 0)
   })
 
   it('returns 400 for invalid range', async () => {
     const res = await app.request('/api/v1/dashboard/net-worth-history?range=bad', { headers: USER_HEADER })
     expect(res.status).toBe(400)
+  })
+})
+
+describe('GET /api/v1/dashboard/category-history', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('converts category history using each point date FX rate', async () => {
+    vi.mocked(repo.getCategoryHistory).mockResolvedValue([
+      { snapshotDate: '2026-03-21', category: 'investment', assetClass: 'asset', value: '3250000.00' },
+      { snapshotDate: '2026-03-22', category: 'investment', assetClass: 'asset', value: '3180000.00' },
+    ])
+    vi.mocked(repo.getFxRatesForDisplayDates).mockResolvedValue(new Map([
+      ['2026-03-21', 32.5],
+      ['2026-03-22', 31.8],
+    ]))
+
+    const res = await app.request('/api/v1/dashboard/category-history?range=30d&displayCurrency=USD', { headers: USER_HEADER })
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.data[0].investment).toBeCloseTo(3250000 / 32.5, 0)
+    expect(body.data[1].investment).toBeCloseTo(3180000 / 31.8, 0)
   })
 })

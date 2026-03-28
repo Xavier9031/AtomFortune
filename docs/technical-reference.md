@@ -63,11 +63,11 @@
 | GET | `/api/v1/snapshots/history` | Snapshot date list (`?range=30d\|1y\|all`) |
 | GET | `/api/v1/snapshots/items` | Snapshot series for an asset (`?assetId=&range=`) |
 | GET | `/api/v1/snapshots/:date` | Snapshot detail for a date |
-| POST | `/api/v1/snapshots/trigger` | Trigger snapshot (`?date=YYYY-MM-DD`) |
-| POST | `/api/v1/snapshots/rebuild/:date` | Rebuild snapshot for a date |
-| POST | `/api/v1/snapshots/rebuild-range` | Rebuild date range (body: `{ from, to }`) |
-| POST | `/api/v1/snapshots/backfill-prices` | Backfill historical prices only |
-| POST | `/api/v1/snapshots/backfill` | Backfill historical prices + FX, then rebuild |
+| POST | `/api/v1/snapshots/trigger` | Trigger snapshot for the profile in `X-User-Id` (`?date=YYYY-MM-DD`) |
+| POST | `/api/v1/snapshots/rebuild/:date` | Rebuild one profile's snapshot for a date |
+| POST | `/api/v1/snapshots/rebuild-range` | Rebuild one profile's date range (body: `{ from, to }`) |
+| POST | `/api/v1/snapshots/backfill-prices` | Backfill one profile's historical asset prices only |
+| POST | `/api/v1/snapshots/backfill` | Backfill one profile's historical asset prices, refresh shared FX data, then rebuild |
 
 ### Dashboard
 
@@ -93,7 +93,7 @@
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/v1/tickers/search` | Search stocks/ETFs/crypto (`?q=&country=TW\|US\|Crypto`) |
-| GET | `/api/v1/backup/export` | Export user data as ZIP (`X-User-Id`, optional `X-Backup-Password`) |
+| GET | `/api/v1/backup/export` | Export current profile data as ZIP (`X-User-Id`, optional `X-Backup-Password`) |
 | POST | `/api/v1/backup/import` | Import ZIP to restore data (`X-User-Id`) |
 | DELETE | `/api/v1/backup/reset` | Delete all data for the current user (`X-User-Id`) |
 
@@ -129,9 +129,10 @@ Daily cron job (default 22:00) runs `dailySnapshotJob`:
 - `/api/v1/*` can be protected with `API_TOKEN`
 - When `API_TOKEN` is set, send either `Authorization: Bearer <token>` or `X-API-Token: <token>`
 - The bundled web app uses the Next.js proxy to add the token server-side; the desktop app generates one automatically per launch
+- `X-User-Id` selects a local profile inside one instance; it is not a full authentication/authorization system
 - Phone sharing prefers a system-installed `cloudflared`; managed downloads require `CLOUDFLARED_SHA256`
 
-Manual trigger (for backfilling):
+Manual trigger for one local profile:
 
 ```bash
 curl -X POST "http://localhost:8000/api/v1/snapshots/trigger?date=2026-03-22" \
@@ -180,6 +181,12 @@ Liabilities
 | `PORT` | No | `8000` | API server port |
 | `API_ORIGIN` | No | `http://localhost:8000` | Target origin for Next.js API proxy |
 | `WEB_ORIGIN` | No | `http://localhost:3000` | Target origin for tunnel |
+
+## Scope Notes
+
+- Scheduled jobs (`cron` on startup/runtime) still process every local profile in the current database
+- Manual snapshot endpoints use `X-User-Id` and rebuild snapshot rows for that selected profile only
+- Historical FX data is shared reference data; rebuilding one profile may refresh shared FX rows used by other profiles in the same local database
 
 ---
 

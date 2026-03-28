@@ -14,6 +14,12 @@ export async function getMarketAssets(db: DrizzleDB) {
     .from(assets).where(eq(assets.pricingMode, 'market'))
 }
 
+export async function getMarketAssetsForUser(db: DrizzleDB, userId: string) {
+  return db.select({ id: assets.id, name: assets.name, symbol: assets.symbol, pricingMode: assets.pricingMode, subKind: assets.subKind, market: assets.market })
+    .from(assets)
+    .where(and(eq(assets.pricingMode, 'market'), eq(assets.userId, userId)))
+}
+
 export async function getAllHoldingsWithAssets(tx: DrizzleDB, userId: string) {
   return tx
     .select({
@@ -124,8 +130,15 @@ export type SnapshotJobResult = {
   snapshotItemsWritten: number
 }
 
-export async function backfillHistoricalPrices(db: DrizzleDB, fromDate: string, toDate: string) {
-  const marketAssets = await getMarketAssets(db)
+export async function backfillHistoricalPrices(
+  db: DrizzleDB,
+  fromDate: string,
+  toDate: string,
+  userId?: string,
+) {
+  const marketAssets = userId
+    ? await getMarketAssetsForUser(db, userId)
+    : await getMarketAssets(db)
   const historicalData = await fetchHistoricalPricesForAssets(marketAssets, fromDate, toDate)
   let total = 0
   const byAsset: { assetId: string; symbol: string; count: number }[] = []
@@ -144,31 +157,80 @@ export async function backfillHistoricalPrices(db: DrizzleDB, fromDate: string, 
   return { total, byAsset }
 }
 
-/** Lightweight per-user snapshot: resolve price + FX for all holdings and upsert today's snapshot items. */
-export async function refreshUserSnapshot(db: DrizzleDB, userId: string, today?: string) {
-  const date = today ?? formatDate(new Date())
+async function buildResolvedSnapshotItems(
+  db: DrizzleDB,
+  userId: string,
+  date: string,
+  maxLookbackDays = 90,
+) {
   const holdingRows = await getAllHoldingsWithAssets(db, userId)
-  let written = 0
+  const resolvedItems: Array<{
+    snapshotDate: string
+    assetId: string
+    accountId: string
+    userId: string
+    quantity: string
+    price: string
+    fxRate: string
+    valueInBase: string
+  }> = []
+  const missingAssets: string[] = []
 
   for (const h of holdingRows) {
     const price = await resolvePrice(db, h.assetId, h.pricingMode, date)
-    if (price === null) continue
-    const fxRate = await resolveFxRate(db, h.currencyCode, date)
+    if (price === null) {
+      missingAssets.push(h.assetId)
+      continue
+    }
+    const fxRate = await resolveFxRate(db, h.currencyCode, date, maxLookbackDays)
     const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
     const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
 
-    await db.insert(snapshotItems)
-      .values({
-        snapshotDate: date, assetId: h.assetId, accountId: h.accountId, userId,
-        quantity: h.quantity, price: String(price), fxRate: String(fxRate), valueInBase: String(valueInBase),
-      })
-      .onConflictDoUpdate({
-        target: [snapshotItems.snapshotDate, snapshotItems.assetId, snapshotItems.accountId],
-        set: { quantity: h.quantity, price: String(price), fxRate: String(fxRate), valueInBase: String(valueInBase), updatedAt: new Date().toISOString() },
-      })
-    written++
+    resolvedItems.push({
+      snapshotDate: date,
+      assetId: h.assetId,
+      accountId: h.accountId,
+      userId,
+      quantity: h.quantity,
+      price: String(price),
+      fxRate: String(fxRate),
+      valueInBase: String(valueInBase),
+    })
   }
-  return { written }
+
+  return { resolvedItems, missingAssets }
+}
+
+export async function rebuildUserSnapshot(
+  db: DrizzleDB,
+  userId: string,
+  date: string,
+  options: { fxLookbackDays?: number } = {},
+) {
+  const { resolvedItems, missingAssets } = await buildResolvedSnapshotItems(
+    db,
+    userId,
+    date,
+    options.fxLookbackDays ?? 90,
+  )
+
+  db.transaction((tx) => {
+    tx.delete(snapshotItems)
+      .where(and(eq(snapshotItems.snapshotDate, date), eq(snapshotItems.userId, userId)))
+      .run()
+
+    for (const item of resolvedItems) {
+      tx.insert(snapshotItems).values(item).run()
+    }
+  })
+
+  return { written: resolvedItems.length, missingAssets }
+}
+
+/** Lightweight per-user snapshot: resolve price + FX for all holdings and rebuild today's snapshot items. */
+export async function refreshUserSnapshot(db: DrizzleDB, userId: string, today?: string) {
+  const date = today ?? formatDate(new Date())
+  return rebuildUserSnapshot(db, userId, date)
 }
 
 export async function backfillHistoricalFxRates(db: DrizzleDB, fromDate: string, toDate: string) {
@@ -189,7 +251,7 @@ export async function backfillHistoricalFxRates(db: DrizzleDB, fromDate: string,
 export async function dailySnapshotJob(
   db: DrizzleDB,
   snapshotDate = new Date(),
-  options: { fxLookbackDays?: number; skipPriceFetch?: boolean } = {}
+  options: { fxLookbackDays?: number; skipPriceFetch?: boolean; userId?: string } = {}
 ): Promise<SnapshotJobResult> {
   const today = formatDate(snapshotDate)
 
@@ -200,7 +262,9 @@ export async function dailySnapshotJob(
     console.warn('Recurring entries failed:', err)
   }
 
-  const marketAssets = await getMarketAssets(db)
+  const marketAssets = options.userId
+    ? await getMarketAssetsForUser(db, options.userId)
+    : await getMarketAssets(db)
   let pricesMap = new Map<string, number>()
   if (!options.skipPriceFetch) {
     // Fetch today's prices
@@ -213,14 +277,21 @@ export async function dailySnapshotJob(
 
     // Backfill gaps: find earliest snapshot date and fill from there to today
     try {
-      const earliest = await db
-        .select({ d: snapshotItems.snapshotDate })
-        .from(snapshotItems)
-        .orderBy(snapshotItems.snapshotDate)
-        .limit(1)
+      const earliest = options.userId
+        ? await db
+            .select({ d: snapshotItems.snapshotDate })
+            .from(snapshotItems)
+            .where(eq(snapshotItems.userId, options.userId))
+            .orderBy(snapshotItems.snapshotDate)
+            .limit(1)
+        : await db
+            .select({ d: snapshotItems.snapshotDate })
+            .from(snapshotItems)
+            .orderBy(snapshotItems.snapshotDate)
+            .limit(1)
       const gapFrom = earliest.length ? earliest[0].d : formatDate(new Date(new Date(today + 'T00:00:00Z').getTime() - 30 * 86400_000))
       await Promise.all([
-        backfillHistoricalPrices(db, gapFrom, today).catch(err => console.warn('Historical price gap-fill failed:', err)),
+        backfillHistoricalPrices(db, gapFrom, today, options.userId).catch(err => console.warn('Historical price gap-fill failed:', err)),
         backfillHistoricalFxRates(db, gapFrom, today).catch(err => console.warn('Historical FX gap-fill failed:', err)),
       ])
     } catch (err) {
@@ -250,41 +321,14 @@ export async function dailySnapshotJob(
   let snapshotItemsWritten = 0
 
   // Iterate per user
-  const allUsers = await getAllUsers(db)
+  const allUsers = options.userId ? [{ id: options.userId }] : await getAllUsers(db)
 
   for (const user of allUsers) {
-    const holdingRows = await getAllHoldingsWithAssets(db, user.id)
-    const resolvedItems: Array<{
-      snapshotDate: string, assetId: string, accountId: string, userId: string,
-      quantity: string, price: string, fxRate: string, valueInBase: string,
-    }> = []
-    const missingAssets: string[] = []
-
-    for (const h of holdingRows) {
-      const price = await resolvePrice(db, h.assetId, h.pricingMode, today)
-      if (price === null) { missingAssets.push(h.assetId); continue }
-      const fxRate = await resolveFxRate(db, h.currencyCode, today, options.fxLookbackDays ?? 90)
-      const unitMultiplier = getUnitMultiplier(h.subKind, h.unit)
-      const valueInBase = Number(h.quantity) * unitMultiplier * price * fxRate
-      resolvedItems.push({
-        snapshotDate: today, assetId: h.assetId, accountId: h.accountId,
-        userId: user.id,
-        quantity: h.quantity, price: String(price), fxRate: String(fxRate),
-        valueInBase: String(valueInBase),
-      })
-    }
-
-    if (missingAssets.length) console.warn(`[user ${user.id}] Missing assets:`, missingAssets)
-
-    db.transaction((tx) => {
-      tx.delete(snapshotItems)
-        .where(and(eq(snapshotItems.snapshotDate, today), eq(snapshotItems.userId, user.id)))
-        .run()
-      for (const item of resolvedItems) {
-        tx.insert(snapshotItems).values(item).run()
-        snapshotItemsWritten++
-      }
+    const { written, missingAssets } = await rebuildUserSnapshot(db, user.id, today, {
+      fxLookbackDays: options.fxLookbackDays,
     })
+    if (missingAssets.length) console.warn(`[user ${user.id}] Missing assets:`, missingAssets)
+    snapshotItemsWritten += written
   }
 
   return { date: today, prices: priceResults, fxStatus, snapshotItemsWritten }

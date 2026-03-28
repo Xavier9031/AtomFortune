@@ -67,7 +67,7 @@ Market prices and FX rates can be fetched automatically every day, giving you a 
 
 ## Features
 
-- **Dashboard** — Net worth overview, asset allocation donut, 30d / 6m / 1y / all-time trends
+- **Dashboard** — Live net worth, asset allocation donut, 30d / 1y / all history widgets, plus 30d / 6m / 1y change badges
 - **Holdings** — Grouped by account, quick add/edit/delete
 - **Assets** — Full asset list with holding distribution and value history
 - **Accounts** — Bank, broker, crypto exchange, e-wallet management
@@ -130,7 +130,7 @@ If `cloudflared` is not already installed on the machine, set `CLOUDFLARED_SHA25
 | Frontend | [Next.js](https://nextjs.org/) 16 + [Tailwind CSS](https://tailwindcss.com/) v4 + [Recharts](https://recharts.org/) |
 | Market Data | [yahoo-finance2](https://github.com/gadicc/node-yahoo-finance2) (stocks, ETFs, crypto, FX rates) |
 | i18n | [next-intl](https://next-intl-docs.vercel.app/) (zh-TW, en) |
-| Testing | [Vitest](https://vitest.dev/) |
+| Testing | [Vitest](https://vitest.dev/) (API) + [Jest](https://jestjs.io/) (Web) |
 | CI/CD | GitHub Actions (3-platform build on tag) |
 
 ## Project Structure
@@ -228,7 +228,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 
 ## Security
 
-AtomFortune is designed for local/self-hosted use. Browser CORS access is limited to localhost origins by default, and you can optionally protect `/api/v1/*` with `API_TOKEN`. The desktop app generates a per-launch token automatically. Phone sharing prefers a system-installed `cloudflared`; otherwise managed downloads require `CLOUDFLARED_SHA256`. Optional network features contact Yahoo Finance, TWSE, CoinGecko, GitHub Releases, and Cloudflare Tunnel. See [SECURITY.md](SECURITY.md) for details and the vulnerability reporting process.
+AtomFortune is designed for local/self-hosted use. Browser CORS access is limited to localhost origins by default, and you can optionally protect `/api/v1/*` with `API_TOKEN`. The desktop app generates a per-launch token automatically. Multi-profile support is a local data-organization feature inside one instance, not a full account/permission system. Manual snapshot rebuild/backfill endpoints operate on the profile selected by `X-User-Id`; scheduled jobs still process all local profiles. Phone sharing prefers a system-installed `cloudflared`; otherwise managed downloads require `CLOUDFLARED_SHA256`. Optional network features contact Yahoo Finance, TWSE, CoinGecko, GitHub Releases, and Cloudflare Tunnel. See [SECURITY.md](SECURITY.md) for details and the vulnerability reporting process.
 
 ## License
 

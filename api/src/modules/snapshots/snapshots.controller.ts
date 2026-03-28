@@ -54,7 +54,7 @@ snapshotsRouter.post('/rebuild/:date',
     const userId = getUserId(c)
     if (!userId) return c.json({ error: 'x-user-id header required' }, 400)
     const { date } = c.req.valid('param')
-    const result = await service.rebuildDate(date)
+    const result = await service.rebuildDate(userId, date)
     return c.json(result)
   }
 )
@@ -64,8 +64,7 @@ snapshotsRouter.post('/trigger', async (c) => {
   if (!userId) return c.json({ error: 'x-user-id header required' }, 400)
   const dateParam = c.req.query('date')
   const snapshotDate = dateParam ? new Date(dateParam) : new Date()
-  // Trigger runs globally for all users (batch operation)
-  const result = await dailySnapshotJob(db, snapshotDate)
+  const result = await dailySnapshotJob(db, snapshotDate, { userId })
   return c.json(result)
 })
 
@@ -78,7 +77,7 @@ snapshotsRouter.post('/backfill-prices',
     const userId = getUserId(c)
     if (!userId) return c.json({ error: 'x-user-id header required' }, 400)
     const { from, to } = c.req.valid('json')
-    const result = await service.backfillPricesOnly(from, to)
+    const result = await service.backfillPricesOnly(userId, from, to)
     return c.json(result)
   }
 )
@@ -92,7 +91,7 @@ snapshotsRouter.post('/backfill',
     const userId = getUserId(c)
     if (!userId) return c.json({ error: 'x-user-id header required' }, 400)
     const { from, to } = c.req.valid('json')
-    const result = await service.backfill(from, to)
+    const result = await service.backfill(userId, from, to)
     return c.json(result)
   }
 )
@@ -106,7 +105,7 @@ snapshotsRouter.post('/rebuild-range',
     const userId = getUserId(c)
     if (!userId) return c.json({ error: 'x-user-id header required' }, 400)
     const { from, to } = c.req.valid('json')
-    const result = await service.rebuildRange(from, to)
+    const result = await service.rebuildRange(userId, from, to)
     return c.json(result)
   }
 )

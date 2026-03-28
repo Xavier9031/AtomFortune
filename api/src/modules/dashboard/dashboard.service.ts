@@ -24,7 +24,8 @@ export async function getSummary(userId: string, displayCurrency: DisplayCurrenc
   let changeAmount: number | null = null
   let changePct: number | null = null
   if (prevSummary) {
-    const prevNet = Number(prevSummary.netWorth) / fxRate
+    const prevFxRate = await repo.getFxRateForDisplay(db, displayCurrency, prevSummary.snapshotDate)
+    const prevNet = Number(prevSummary.netWorth) / prevFxRate
     changeAmount = netWorth - prevNet
     changePct = prevNet !== 0 ? (changeAmount / prevNet) * 100 : null
   }
@@ -147,21 +148,25 @@ export async function getLiveData(userId: string, displayCurrency: DisplayCurren
 
 export async function getCategoryHistoryData(userId: string, range: '30d' | '1y' | 'all', displayCurrency: DisplayCurrency) {
   const rows = await repo.getCategoryHistory(db, userId, range)
-  const latestDate = rows.length ? rows[rows.length - 1].snapshotDate : null
-  const fxRate = latestDate ? await repo.getFxRateForDisplay(db, displayCurrency, latestDate) : 1.0
+  const fxRates = await repo.getFxRatesForDisplayDates(
+    db,
+    displayCurrency,
+    rows.map(r => r.snapshotDate),
+  )
 
   const byDate = new Map<string, Map<string, number>>()
   for (const row of rows) {
     if (!byDate.has(row.snapshotDate)) byDate.set(row.snapshotDate, new Map())
     const catMap = byDate.get(row.snapshotDate)!
     const sign = row.assetClass === 'liability' ? -1 : 1
-    catMap.set(row.category, (catMap.get(row.category) ?? 0) + sign * Number(row.value))
+    const fxRate = fxRates.get(row.snapshotDate) ?? 1.0
+    catMap.set(row.category, (catMap.get(row.category) ?? 0) + sign * Number(row.value) / fxRate)
   }
 
   const data = [...byDate.entries()].map(([date, cats]) => {
     const point: Record<string, number | string> = { date }
     for (const [cat, val] of cats) {
-      point[cat] = Math.round(val / fxRate * 100) / 100
+      point[cat] = Math.round(val * 100) / 100
     }
     return point
   })
@@ -171,14 +176,17 @@ export async function getCategoryHistoryData(userId: string, range: '30d' | '1y'
 
 export async function getNetWorthHistoryData(userId: string, range: '30d' | '1y' | 'all', displayCurrency: DisplayCurrency) {
   const rows = await repo.getNetWorthHistory(db, userId, range)
-  const latestDate = rows.length ? rows[rows.length - 1].snapshotDate : null
-  const fxRate = latestDate ? await repo.getFxRateForDisplay(db, displayCurrency, latestDate) : 1.0
+  const fxRates = await repo.getFxRatesForDisplayDates(
+    db,
+    displayCurrency,
+    rows.map(r => r.snapshotDate),
+  )
 
   return {
     displayCurrency,
     data: rows.map(r => ({
       date: r.snapshotDate,
-      netWorth: Math.round(Number(r.netWorth) / fxRate * 100) / 100,
+      netWorth: Math.round(Number(r.netWorth) / (fxRates.get(r.snapshotDate) ?? 1.0) * 100) / 100,
     })),
   }
 }

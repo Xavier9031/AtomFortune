@@ -62,7 +62,17 @@ backupRouter.get('/export', async (c) => {
     db.select().from(accounts).where(eq(accounts.userId, userId)),
     db.select().from(holdings).where(eq(holdings.userId, userId)),
     db.select().from(transactions).where(eq(transactions.userId, userId)),
-    db.select().from(prices),          // global
+    db.select({
+      assetId: prices.assetId,
+      priceDate: prices.priceDate,
+      price: prices.price,
+      source: prices.source,
+      createdAt: prices.createdAt,
+      updatedAt: prices.updatedAt,
+    })
+      .from(prices)
+      .innerJoin(assets, eq(prices.assetId, assets.id))
+      .where(eq(assets.userId, userId)),
     db.select().from(fxRates),         // global
     db.select().from(snapshotItems).where(eq(snapshotItems.userId, userId)),
     db.select().from(recurringEntries).where(eq(recurringEntries.userId, userId)),

@@ -77,6 +77,10 @@ describe('POST /api/v1/snapshots/rebuild/:date', () => {
     expect(res.status).toBe(200)
     const body = await res.json()
     expect(body.rebuilt).toBe(1)
+    expect(dailySnapshotJob).toHaveBeenCalledWith(expect.anything(), new Date('2026-03-22'), {
+      skipPriceFetch: true,
+      userId: TEST_USER_ID,
+    })
   })
 })
 
@@ -94,6 +98,10 @@ describe('POST /api/v1/snapshots/rebuild-range', () => {
     const body = await res.json()
     expect(body.rebuilt).toBe(3)
     expect(dailySnapshotJob).toHaveBeenCalledTimes(3)
+    expect(dailySnapshotJob).toHaveBeenNthCalledWith(1, expect.anything(), new Date('2026-03-20'), {
+      skipPriceFetch: true,
+      userId: TEST_USER_ID,
+    })
   })
 
   it('returns 400 if from > to', async () => {

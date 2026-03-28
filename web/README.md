@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AtomFortune Web
 
-## Getting Started
+Next.js frontend for AtomFortune.
 
-First, run the development server:
+## Development
+
+Run the web app from the `web/` directory:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The app runs on `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+By default the browser talks to the local Next.js proxy at `/api/v1`, and the proxy forwards to `API_ORIGIN` (default: `http://localhost:8000`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+- `npm run dev` — start the Next.js dev server
+- `npm run build` — production build
+- `npm run start` — run the production server
+- `npm test` — Jest test suite
 
-To learn more about Next.js, take a look at the following resources:
+## Notes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `NEXT_PUBLIC_API_BASE_URL` is set to `/api/v1` in [next.config.ts](./next.config.ts)
+- When `API_TOKEN` is configured, the Next.js route handler adds it server-side before proxying to the API
+- `X-User-Id` selects the active local profile; it is not a standalone auth system
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Related Files
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [`app/api/v1/[...path]/route.ts`](./app/api/v1/[...path]/route.ts) — API proxy
+- [`lib/api.ts`](./lib/api.ts) — SWR hooks and base fetch helpers
+- [`lib/user.ts`](./lib/user.ts) — active profile helpers and `X-User-Id` injection
