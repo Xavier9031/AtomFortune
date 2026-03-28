@@ -1,4 +1,4 @@
-import { eq, and, sql } from 'drizzle-orm'
+import { eq, and, sql, asc } from 'drizzle-orm'
 import { DrizzleDB } from '../../db/client'
 import { holdings, assets, accounts, snapshotItems } from '../../db/schema'
 
@@ -33,10 +33,11 @@ export class HoldingsRepository {
       .innerJoin(assets, eq(holdings.assetId, assets.id))
       .innerJoin(accounts, eq(holdings.accountId, accounts.id))
 
+    const order = [asc(assets.category), asc(assets.subKind), asc(assets.name)]
     if (accountId) {
-      return query.where(and(eq(holdings.userId, userId), eq(holdings.accountId, accountId)))
+      return query.where(and(eq(holdings.userId, userId), eq(holdings.accountId, accountId))).orderBy(...order)
     }
-    return query.where(eq(holdings.userId, userId))
+    return query.where(eq(holdings.userId, userId)).orderBy(...order)
   }
 
   findOne(userId: string, assetId: string, accountId: string) {
