@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.9](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.8...atomfortune-v0.0.9) (2026-03-28)
+
+
+### Bug Fixes
+
+* per-user snapshot scope, historical FX rates, backup isolation ([8845c40](https://github.com/Xavier9031/AtomFortune/commit/8845c40ec93af25beadf5400cf47af91a1f063ff))
+
 ## [0.0.8](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.7...atomfortune-v0.0.8) (2026-03-28)
 
 
