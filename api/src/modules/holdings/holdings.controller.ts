@@ -7,9 +7,6 @@ import { HoldingsService } from './holdings.service'
 import { AssetsRepository } from '../assets/assets.repository'
 import { AccountsRepository } from '../accounts/accounts.repository'
 import { HoldingUpsertSchema } from './holdings.schema'
-import { fetchMarketPrices } from '../../jobs/pricing.service'
-import { refreshUserSnapshot } from '../../jobs/snapshot.job'
-import { prices } from '../../db/schema'
 
 function getUserId(c: Context): string | null {
   return c.req.header('x-user-id') ?? null
@@ -17,6 +14,7 @@ function getUserId(c: Context): string | null {
 
 const holdingsController = new Hono()
 const service = new HoldingsService(
+  db,
   new HoldingsRepository(db),
   new AssetsRepository(db),
   new AccountsRepository(db),
@@ -34,40 +32,9 @@ holdingsController.put('/:assetId/:accountId', zValidator('json', HoldingUpsertS
 }), async (c) => {
   const userId = getUserId(c)
   if (!userId) return c.json({ error: 'Missing X-User-Id header' }, 400)
-  const assetId = c.req.param('assetId')
   const holding = await service.upsert(
-    userId, assetId, c.req.param('accountId'), c.req.valid('json')
+    userId, c.req.param('assetId'), c.req.param('accountId'), c.req.valid('json')
   )
-
-  const today = new Date().toISOString().slice(0, 10)
-
-  // For market assets, fetch latest price first
-  const assetsRepo = new AssetsRepository(db)
-  const asset = await assetsRepo.findById(assetId, userId)
-  if (asset?.pricingMode === 'market' && asset.symbol) {
-    try {
-      const priceMap = await fetchMarketPrices([asset])
-      const price = priceMap.get(assetId)
-      if (price != null) {
-        await db.insert(prices)
-          .values({ assetId, priceDate: today, price: String(price), source: 'yahoo-finance2' })
-          .onConflictDoUpdate({
-            target: [prices.assetId, prices.priceDate],
-            set: { price: String(price), source: 'yahoo-finance2', updatedAt: new Date().toISOString() },
-          })
-      }
-    } catch (err) {
-      console.warn(`Auto price fetch failed for ${asset.symbol}:`, err)
-    }
-  }
-
-  // Refresh snapshot items for ALL of this user's holdings
-  try {
-    await refreshUserSnapshot(db, userId, today)
-  } catch (err) {
-    console.warn('Snapshot refresh failed:', err)
-  }
-
   return c.json(holding)
 })
 

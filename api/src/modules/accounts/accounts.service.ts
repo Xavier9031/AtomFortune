@@ -1,7 +1,7 @@
 import { AccountsRepository } from './accounts.repository'
 import { AccountCreateInput, AccountUpdateInput, BalanceSetInput } from './accounts.schema'
 import { AssetsRepository } from '../assets/assets.repository'
-import { HoldingsRepository } from '../holdings/holdings.repository'
+import { HoldingsService } from '../holdings/holdings.service'
 import { HTTPException } from 'hono/http-exception'
 
 const LIQUID_SUBKINDS: Partial<Record<string, string>> = {
@@ -20,7 +20,7 @@ export class AccountsService {
   constructor(
     private accountRepo: AccountsRepository,
     private assetRepo: AssetsRepository,
-    private holdingsRepo: HoldingsRepository,
+    private holdingsService: HoldingsService,
   ) {}
 
   findAll(userId: string) { return this.accountRepo.findAll(userId) }
@@ -74,6 +74,7 @@ export class AccountsService {
         pricingMode: 'fixed',
       })
     }
-    return this.holdingsRepo.upsert(userId, asset.id, accountId, balance.toString())
+    // Goes through HoldingsService which handles snapshot refresh
+    return this.holdingsService.upsertDirect(userId, asset.id, accountId, balance.toString())
   }
 }
