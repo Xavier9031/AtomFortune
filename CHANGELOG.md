@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.15](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.14...atomfortune-v0.0.15) (2026-04-01)
+
+
+### Bug Fixes
+
+* fetch cloudflared checksums dynamically from GitHub release ([b20423c](https://github.com/Xavier9031/AtomFortune/commit/b20423cc98203f8e34cb224cbc34ac4e95643270))
+* fetch cloudflared checksums dynamically from GitHub release ([bc4c1d0](https://github.com/Xavier9031/AtomFortune/commit/bc4c1d078564a11db1f30a2e6ad6d6dc1f4e914c))
+
 ## [0.0.14](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.13...atomfortune-v0.0.14) (2026-03-28)
 
 
