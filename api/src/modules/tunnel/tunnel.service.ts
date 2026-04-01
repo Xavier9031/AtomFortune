@@ -8,27 +8,46 @@ import { spawn, execSync, execFileSync, ChildProcess } from 'child_process'
 const BIN_DIR = path.join(os.tmpdir(), 'cloudflared-bin')
 const CLOUDFLARED_VERSION = '2026.3.0'
 
-const MANAGED_DOWNLOADS: Record<string, { filename: string; sha256: string }> = {
-  'darwin-amd64': {
-    filename: 'cloudflared-darwin-amd64.tgz',
-    sha256: '0f30140c4a5e213d22f951ef4c964cac5fb6a5f061ba6eba5ea932999f7c0394',
-  },
-  'darwin-arm64': {
-    filename: 'cloudflared-darwin-arm64.tgz',
-    sha256: '2aae4f69b0fc1c671b8353b4f594cbd902cd1e360c8eed2b8cad4602cb1546fb',
-  },
-  'linux-amd64': {
-    filename: 'cloudflared-linux-amd64',
-    sha256: '4a9e50e6d6d798e90fcd01933151a90bf7edd99a0a55c28ad18f2e16263a5c30',
-  },
-  'linux-arm64': {
-    filename: 'cloudflared-linux-arm64',
-    sha256: '0755ba4cbab59980e6148367fcf53a8f3ec85a97deefd63c2420cf7850769bee',
-  },
-  'win32-amd64': {
-    filename: 'cloudflared-windows-amd64.exe',
-    sha256: '59b12880b24af581cf5b1013db601c7d843b9b097e9c78aa5957c7f39f741885',
-  },
+const MANAGED_DOWNLOADS: Record<string, { filename: string }> = {
+  'darwin-amd64': { filename: 'cloudflared-darwin-amd64.tgz' },
+  'darwin-arm64': { filename: 'cloudflared-darwin-arm64.tgz' },
+  'linux-amd64': { filename: 'cloudflared-linux-amd64' },
+  'linux-arm64': { filename: 'cloudflared-linux-arm64' },
+  'win32-amd64': { filename: 'cloudflared-windows-amd64.exe' },
+}
+
+let checksumCache: Map<string, string> | null = null
+
+async function fetchReleaseChecksums(): Promise<Map<string, string>> {
+  if (checksumCache) return checksumCache
+
+  const url = `https://api.github.com/repos/cloudflare/cloudflared/releases/tags/${CLOUDFLARED_VERSION}`
+  const body: string = await new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'AtomFortune' } }, (res) => {
+      if (res.statusCode !== 200) {
+        reject(new Error(`Failed to fetch release info: HTTP ${res.statusCode}`))
+        return
+      }
+      let data = ''
+      res.on('data', (chunk: Buffer) => { data += chunk.toString() })
+      res.on('end', () => resolve(data))
+    }).on('error', reject)
+  })
+
+  const release = JSON.parse(body)
+  const checksums = new Map<string, string>()
+  const match = (release.body as string)?.match(/```\n([\s\S]*?)```/)
+  if (!match) throw new Error('Could not parse checksums from release notes')
+
+  for (const line of match[1].trim().split('\n')) {
+    const parts = line.split(':')
+    if (parts.length === 2) {
+      checksums.set(parts[0].trim(), parts[1].trim())
+    }
+  }
+
+  checksumCache = checksums
+  return checksums
 }
 
 function cloudflaredPath(): string {
@@ -36,7 +55,7 @@ function cloudflaredPath(): string {
   return path.join(BIN_DIR, name)
 }
 
-function managedDownloadSpec(): { url: string; sha256: string; isTgz: boolean } {
+async function managedDownloadSpec(): Promise<{ url: string; sha256: string; isTgz: boolean }> {
   const arch = process.arch === 'arm64' ? 'arm64' : 'amd64'
   const key = `${process.platform}-${arch}`
   const spec = MANAGED_DOWNLOADS[key]
@@ -44,9 +63,17 @@ function managedDownloadSpec(): { url: string; sha256: string; isTgz: boolean } 
     throw new Error(`Managed cloudflared download is not available for ${process.platform}/${process.arch}. Install cloudflared manually.`)
   }
   const overrideSha = process.env.CLOUDFLARED_SHA256?.trim().toLowerCase()
+  let sha256 = overrideSha
+  if (!sha256) {
+    const checksums = await fetchReleaseChecksums()
+    sha256 = checksums.get(spec.filename)
+    if (!sha256) {
+      throw new Error(`No checksum found for ${spec.filename} in release ${CLOUDFLARED_VERSION}`)
+    }
+  }
   return {
     url: `https://github.com/cloudflare/cloudflared/releases/download/${CLOUDFLARED_VERSION}/${spec.filename}`,
-    sha256: overrideSha || spec.sha256,
+    sha256,
     isTgz: spec.filename.endsWith('.tgz'),
   }
 }
@@ -100,7 +127,7 @@ async function ensureCloudflared(): Promise<string> {
   if (systemPath) return systemPath
 
   const cfPath = cloudflaredPath()
-  const spec = managedDownloadSpec()
+  const spec = await managedDownloadSpec()
   if (fs.existsSync(cfPath)) {
     try {
       verifyCloudflaredBinary(cfPath, spec.sha256)
