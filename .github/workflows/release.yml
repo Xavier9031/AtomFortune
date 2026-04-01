@@ -55,6 +55,13 @@ jobs:
         with:
           ref: ${{ steps.ref.outputs.ref }}
 
+      - name: Sync version to sub-packages
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          for dir in desktop web api; do
+            node -e "const fs=require('fs'), p='./${dir}/package.json', j=JSON.parse(fs.readFileSync(p)); j.version='${VERSION}'; fs.writeFileSync(p, JSON.stringify(j,null,2)+'\n')"
+          done
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -102,6 +109,14 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ steps.ref.outputs.ref }}
+
+      - name: Sync version to sub-packages
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          for dir in desktop web api; do
+            node -e "const fs=require('fs'), p='./${dir}/package.json', j=JSON.parse(fs.readFileSync(p)); j.version='${VERSION}'; fs.writeFileSync(p, JSON.stringify(j,null,2)+'\n')"
+          done
 
       - uses: actions/setup-node@v4
         with:
@@ -154,6 +169,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ steps.ref.outputs.ref }}
+
+      - name: Sync version to sub-packages
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          for dir in desktop web api; do
+            node -e "const fs=require('fs'), p='./${dir}/package.json', j=JSON.parse(fs.readFileSync(p)); j.version='${VERSION}'; fs.writeFileSync(p, JSON.stringify(j,null,2)+'\n')"
+          done
 
       - uses: actions/setup-node@v4
         with:
