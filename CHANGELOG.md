@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.16](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.15...atomfortune-v0.0.16) (2026-04-01)
+
+
+### Bug Fixes
+
+* sync sub-package versions from root in release build ([092ed50](https://github.com/Xavier9031/AtomFortune/commit/092ed50f922761c8ff6d1409f2261bdd9f0055df))
+* sync sub-package versions in release build ([d926295](https://github.com/Xavier9031/AtomFortune/commit/d92629556d4a1a346bc0104aa1059cb7a08acf75))
+
 ## [0.0.15](https://github.com/Xavier9031/AtomFortune/compare/atomfortune-v0.0.14...atomfortune-v0.0.15) (2026-04-01)
 
 
